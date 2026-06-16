@@ -1,0 +1,30 @@
+; ============================================================
+; INPUTS for HONEST VALIDATION - GBPUSD (GU / Cable)
+; Load via Strategy Tester -> Inputs tab -> right-click -> Load
+; Pair with the [Tester] settings in
+; POStrategicEA_GBPUSD_VALIDATION.ini (Forward 1/3, real ticks,
+; Sharpe criterion, 2015-2024). Martingale locked OFF.
+; Inputs are IDENTICAL to the EURUSD set - only the market differs.
+; ============================================================
+PastXCandlesForHighLow=2||1||1||12||Y
+EntryTF=16385||15||0||16408||N
+Lotsize=0.1||0.1||0.010000||1.000000||N
+MoneyManagement=true||false||0||true||N
+OriginalPositionRiskAmount=1000||100.0||10.000000||1000.000000||N
+RiskRewardRatio=1.5||1.0||0.25||3||Y
+EnableRecoveryTrade=false||false||0||true||N
+RecoveryPositionRiskMultiplier=1||1||1||10||N
+RecoveryRiskRewardRatio=1.5||0.1||0.05||0.5||N
+text1001=
+StartTime=11:10
+EnableTrailingOnRecoveryTradeOrig=true||false||0||true||N
+StartTrailingAfterPipsProfitOnTradeOrig=0.5||0.4||0.1||1||N
+TrailingStopPipsOrig=15||5||5||50||N
+EnableTrailingOnRecoveryTradeRec=true||false||0||true||N
+StartTrailingAfterPipsProfitOnTradeRec=0.25||0.1||0.1||0.5||N
+TrailingStopPipsRec=10||5||5||50||N
+TakeOrders=3||1||0||3||N
+AlertSwitch=true||false||0||true||N
+slippage=5||5||1||50||N
+MagicNumber=120912||120912||1||1209120||N
+TradeComments=POStrategicEA
