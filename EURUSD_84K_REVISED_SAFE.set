@@ -1,0 +1,49 @@
+; ============================================================
+; REVISED / RISK-SANE PRESET for POStrategicEA_ver12
+; Revised: 2026.06.16
+; Purpose: remove the account-killing mechanics (martingale
+; recovery, inverted risk/reward, no profit protection) so the
+; configuration is DEFENSIBLE for automated use.
+;
+; NOTE: This only changes INPUT PARAMETERS. It cannot fix EA
+; internal logic, add real broker stops, or create an edge.
+; You MUST still validate (see checklist in chat).
+; ============================================================
+;
+; STRATEGY SETTINGS
+PastXCandlesForHighLow=2||1||1||12||N
+EntryTF=16385||15||0||16408||N
+; LOTSIZE CALCULATION FIXED OR AUTO
+Lotsize=0.01||0.1||0.010000||1.000000||N
+MoneyManagement=true||false||0||true||N
+; POSITION RISK AND TARGETS
+; --- CHANGED: risk per trade should be <= 1% of equity.
+; --- 100 = 1% of a 10,000 account. Scale to YOUR balance.
+OriginalPositionRiskAmount=100||100.0||10.000000||1000.000000||N
+; --- CHANGED: 0.4 -> 1.5 so reward EXCEEDS risk.
+; --- Break-even win rate drops from 71.4% to 40%.
+RiskRewardRatio=1.5||0.2||0.10||3||N
+; --- CHANGED: martingale recovery DISABLED.
+EnableRecoveryTrade=false||false||0||true||N
+; --- CHANGED: multiplier 10 -> 1 (no risk escalation).
+RecoveryPositionRiskMultiplier=1||1||1||10||N
+; --- CHANGED: recovery RR set sane (only used if re-enabled).
+RecoveryRiskRewardRatio=1.5||0.1||0.05||0.5||N
+; TRADING LOCAL TIME SETTINGS
+text1001=
+StartTime=11:10
+; ORIGINAL TRADE TRAILING FEATURE
+; --- CHANGED: trailing ENABLED to lock in profit.
+EnableTrailingOnRecoveryTradeOrig=true||false||0||true||N
+StartTrailingAfterPipsProfitOnTradeOrig=0.5||0.4||0.1||1||N
+TrailingStopPipsOrig=15||5||5||50||N
+; RECOVERY TRADE TRAILING FEATURE
+EnableTrailingOnRecoveryTradeRec=true||false||0||true||N
+StartTrailingAfterPipsProfitOnTradeRec=0.25||0.1||0.1||0.5||N
+TrailingStopPipsRec=10||5||5||50||N
+; GENERAL SETTINGS
+TakeOrders=3||1||0||3||N
+AlertSwitch=true||false||0||true||N
+slippage=5||5||1||50||N
+MagicNumber=120912||120912||1||1209120||N
+TradeComments=POStrategicEA
