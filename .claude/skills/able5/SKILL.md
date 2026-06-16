@@ -1,5 +1,5 @@
 ---
-name: claude-fable-5
+name: able5
 description: Reference copy of the Claude Fable 5 system prompt and behavioral guidelines (product info, refusal handling, child-safety rules, tone/formatting, wellbeing, search/copyright, computer use). Use when you need to consult or quote Claude Fable 5's documented behavior and policies.
 ---
 
