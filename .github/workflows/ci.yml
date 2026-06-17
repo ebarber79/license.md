@@ -34,3 +34,19 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  lighthouse:
+    name: Lighthouse (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true # non-blocking: reports budgets, never fails the gate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble clean site dir
+        run: |
+          mkdir -p _lhci_site
+          cp index.html style.css game.js analytics.js engine.js qrcode.js \
+             register-sw.js manifest.json sw.js icon.svg _lhci_site/
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./lighthouserc.json

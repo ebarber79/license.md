@@ -281,8 +281,9 @@
   }
 
   function onPress(e) {
-    // Don't hijack taps on UI buttons.
-    if (e.target.closest(".btn") || e.target.closest(".icon-btn")) return;
+    // Don't hijack taps/keys on any UI button (PLAY, mute, pause, shop chips,
+    // ...) — let their native click / Space-Enter activation through.
+    if (e.target.closest("button")) return;
     audio.ensure(); // unlock WebAudio on first user gesture
     if (e.type === "keydown") {
       if (e.code !== "Space" && e.code !== "ArrowUp" && e.key !== "w") return;
@@ -1048,6 +1049,8 @@
       const chip = document.createElement("button");
       chip.className = "skin-chip" + (isSel ? " selected" : "") + (isOwned ? "" : " locked");
       chip.type = "button";
+      chip.setAttribute("aria-label",
+        s.name + " skin" + (isOwned ? (isSel ? ", active" : ", owned") : ", costs " + s.cost + " gems"));
 
       const sw = document.createElement("div");
       sw.className = "swatch";
@@ -1088,17 +1091,38 @@
   }
 
   // ---- QR code: encodes the live URL so a phone can scan to play ----
-  function renderQR() {
-    if (!qrEl || typeof qrcode === "undefined") return;
-    try {
-      const url = location.href;
-      const qr = qrcode(0, "M"); // type 0 = auto-fit, error-correction M
-      qr.addData(url);
-      qr.make();
-      qrEl.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-    } catch (e) {
-      qrEl.parentElement && qrEl.parentElement.classList.add("hidden");
+  // The encoder (~60KB) is lazy-loaded off the critical path so it doesn't
+  // block first paint / interactivity; same-origin src, so CSP-safe, and the
+  // service worker already caches qrcode.js for offline use.
+  let qrLibPromise = null;
+  function loadQrLib() {
+    if (window.qrcode) return Promise.resolve(window.qrcode);
+    if (!qrLibPromise) {
+      qrLibPromise = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "qrcode.js";
+        s.async = true;
+        s.onload = () => resolve(window.qrcode);
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
     }
+    return qrLibPromise;
+  }
+  function renderQR() {
+    if (!qrEl) return;
+    loadQrLib().then((qrcode) => {
+      try {
+        const qr = qrcode(0, "M"); // type 0 = auto-fit, error-correction M
+        qr.addData(location.href);
+        qr.make();
+        qrEl.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      } catch (e) {
+        if (qrEl.parentElement) qrEl.parentElement.classList.add("hidden");
+      }
+    }).catch(() => {
+      if (qrEl.parentElement) qrEl.parentElement.classList.add("hidden");
+    });
   }
 
   function showMenu() {
@@ -1118,9 +1142,11 @@
     bestEl.textContent = best;
     updateMuteUI();
     renderShop();
-    renderQR();
     drawStaticBackdrop();
     startIdle();
+    // QR is non-essential chrome: build it when the main thread is idle so it
+    // never competes with first paint / interactivity.
+    (window.requestIdleCallback || ((fn) => setTimeout(fn, 200)))(renderQR);
   }
 
   // ---- Test hooks (H4): only exposed with ?test=1, for E2E automation ----

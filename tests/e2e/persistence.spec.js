@@ -50,6 +50,19 @@ test("ND-REG-01: production load + start works with no uncaught errors (unseeded
   expect(errors).toEqual([]);
 });
 
+test("ND-A11Y-04b: Space activates a focused shop chip (no gameplay hijack)", async ({ page }) => {
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  await page.evaluate(() => localStorage.setItem("neondash.bank", "500"));
+  await page.reload();
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  // Focus the magenta chip and activate it with the keyboard. The global
+  // key handler must NOT preventDefault Space here, or native activation fails.
+  await page.locator(".skin-chip").nth(1).focus();
+  await page.keyboard.press("Space");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("neondash.skin"))).toBe("magenta");
+});
+
 test("ND-OFF-01: service worker registers", async ({ page }) => {
   await page.goto("/index.html");
   const hasController = await page.evaluate(async () => {
