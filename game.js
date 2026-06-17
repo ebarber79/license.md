@@ -303,8 +303,8 @@
   });
 
   function startGame() {
-    resize();
     buildBackground();
+    resize();
     reset();
     audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
     paused = false;
@@ -664,12 +664,13 @@
   function drawStaticBackdrop() {
     // Used on menu/over so the canvas isn't blank.
     ctx.clearRect(0, 0, W, H);
-    if (!stars) buildBackground();
+    if (!stars || !hills) buildBackground();
     drawSky();
     drawGround();
   }
 
   function drawSky() {
+    if (!stars || !hills) buildBackground();
     // Themed gradient backdrop (drawn in-canvas so it can shift over time).
     const grad = ctx.createLinearGradient(0, 0, 0, groundY);
     grad.addColorStop(0, theme.top);
@@ -1098,8 +1099,8 @@
 
   // ---- Boot ----
   function init() {
-    resize();
     buildBackground();
+    resize();
     best = loadBest();
     startBestEl.textContent = best;
     bestEl.textContent = best;
@@ -1131,7 +1132,9 @@
         return {
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
-          obstacles: obstacles.length, gems: gems.length, powerups: powerups.length,
+          obstacles: obstacles ? obstacles.length : 0,
+          gems: gems ? gems.length : 0,
+          powerups: powerups ? powerups.length : 0,
           player: player ? { x: player.x, y: player.y, vy: player.vy, onGround: player.onGround, jumps: player.jumps, size: player.size } : null,
           groundY,
         };
