@@ -1,0 +1,55 @@
+TestCaseID,Domain,Description,Preconditions,Steps,ExpectedResult,Priority,AcceptanceCriteria,AutomationCandidate,RecommendedTool
+ND-ON-01,Onboarding,First load shows start screen,Fresh browser (no localStorage),Open site URL,"Start screen renders with title, PLAY, shop, QR, Best=0",P0,Start screen visible <2s; PLAY tappable; no console errors,Yes,Playwright
+ND-ON-02,Onboarding,PWA installable,HTTPS origin; supported browser,Open site; trigger Add to Home Screen,Install prompt offered; icon + name correct from manifest,P1,App installs; launches fullscreen standalone,Partial,Lighthouse PWA audit
+ND-ON-03,Onboarding,Offline first paint after install,Installed PWA; visited once online,Go offline; relaunch installed app,App loads and is playable offline,P1,No network; start screen + gameplay work,Yes,Playwright offline mode
+ND-AUTH-01,Authentication,N/A - no user accounts,App has no auth/login,Inspect app for auth surfaces,No login/account flow exists by design,P3,Confirmed no auth code paths; documented as N/A,No,N/A
+ND-NAV-01,Navigation,Start to Play transition,On start screen,Tap PLAY,"Game starts; HUD shows; pause btn appears; overlays hidden",P0,State=playing; loop running; first frame <500ms,Yes,Playwright
+ND-NAV-02,Navigation,Pause then Resume,In active game,Tap pause; tap RESUME,Game freezes on pause; resumes without time jump,P1,No dt spike on resume; positions continuous,Yes,Playwright + state hooks
+ND-NAV-03,Navigation,Pause then Quit to menu,In active game,Tap pause; tap QUIT,Returns to menu; gems banked; HUD hidden,P1,Bank increases by run gems exactly once,Yes,Playwright
+ND-NAV-04,Navigation,Game over to Play Again,After a crash,Tap PLAY AGAIN,New run starts fresh; score/gems reset,P0,Score=0; obstacles cleared; loop runs,Yes,Playwright
+ND-NAV-05,Navigation,Game over to Menu and Skins,After a crash,Tap MENU & SKINS,Returns to menu; shop reflects banked gems,P1,Bank shown matches post-run total,Yes,Playwright
+ND-CORE-01,Core Gameplay,Single jump from ground,In active game; player grounded,Tap once,Player jumps with gravity arc; lands,P0,vy set to jump velocity; returns to ground,Yes,Unit (physics) + Playwright
+ND-CORE-02,Core Gameplay,Double jump in mid-air,In active game; airborne after 1 jump,Tap again before landing,Second smaller jump applied; no third,P0,jumps capped at 2; third tap ignored,Yes,Unit (physics)
+ND-CORE-03,Core Gameplay,Spike collision ends run,In active game; no shield,Run into ground spikes,Crash; game over screen,P0,State=over; crash particles + sound,Yes,Playwright deterministic seed
+ND-CORE-04,Core Gameplay,Bar collision ends run,In active game; no shield,Collide with floating bar,Crash; game over screen,P0,State=over on overlap,Yes,Unit (collision)
+ND-CORE-05,Core Gameplay,Gem collection,In active game; gem on screen,Touch a gem,Gem count +1; burst + coin sound,P1,coins increments; gem removed,Yes,Unit + Playwright
+ND-CORE-06,Core Gameplay,Shield absorbs one hit,Shield active,Hit an obstacle,Shield consumed; obstacle cleared; survive,P1,shieldTime->0; state stays playing; one hit only,Yes,Unit (collision+shield)
+ND-CORE-07,Core Gameplay,Magnet attracts gems,Magnet active; gems near,Run near gems within range,Gems pulled toward player,P2,Gems within MAGNET_RANGE move toward player,Yes,Unit (vector pull)
+ND-CORE-08,Core Gameplay,Slow-mo reduces world speed,Slow-mo active,Observe obstacle approach,World speed scaled by factor; jump physics unchanged,P2,worldSpeed = speed*SLOWMO_FACTOR while active,Yes,Unit
+ND-CORE-09,Core Gameplay,Difficulty ramp,In active game,Survive over time,Speed increases up to MAX_SPEED; spacing fair,P1,speed monotonic up to cap; no impossible gaps,Yes,Unit + soak
+ND-CORE-10,Core Gameplay,Score increments by distance,In active game,Survive; watch score,Score increases with distance,P1,score == floor(distance/10),Yes,Unit
+ND-CORE-11,Core Gameplay,Theme shifts with score,In active game,Reach higher scores,Background palette interpolates across themes,P3,Theme index advances with score; no flf flicker,Partial,Visual snapshot
+ND-DATA-01,Persistence,High score persists,Set a best score,Reload page,Best score retained,P1,localStorage neondash.best == last best,Yes,Playwright storage
+ND-DATA-02,Persistence,Gem bank persists,Earn gems; end run,Reload page,Bank total retained,P1,neondash.bank matches accumulated,Yes,Playwright storage
+ND-DATA-03,Persistence,Skin ownership and selection persist,Buy and select a skin,Reload page,Owned + selected skin retained,P1,neondash.skins + neondash.skin correct,Yes,Playwright storage
+ND-DATA-04,Persistence,Mute preference persists,Toggle mute,Reload page,Mute state retained,P2,neondash.muted reflects choice,Yes,Playwright storage
+ND-DATA-05,Persistence,Graceful when storage unavailable,Private mode / storage disabled,Play; toggle mute; buy skin,No crash; defaults used,P1,All setItem wrapped; no uncaught exception,Yes,Playwright (block storage)
+ND-OFF-01,Offline,Service worker registers,Online; supported browser,Load site,SW registered and active,P1,navigator.serviceWorker controller present,Yes,Playwright
+ND-OFF-02,Offline,Full offline play,Visited once online,Go offline; reload,Game fully playable offline,P1,All assets served from cache; no failed fetch,Yes,Playwright offline
+ND-OFF-03,Offline,Cache update on new version,SW v(n) cached,Deploy v(n+1); reload twice,New assets served after activate,P2,Old caches purged; new CACHE name active,Partial,Manual + Playwright
+ND-UI-01,UI/UX,Responsive portrait layout,Phone viewport,Load on 360x800 and 414x896,Layout fits; no overflow/clipping,P1,No horizontal scroll; controls reachable,Partial,Playwright viewports
+ND-UI-02,UI/UX,Safe-area insets honored,Device with notch,View HUD + mute + pause,Elements clear of notch/home bar,P2,env(safe-area-inset) applied; no overlap,No,Manual device
+ND-UI-03,UI/UX,HiDPI crispness,Retina/HiDPI device,Observe canvas rendering,Sharp rendering; dpr capped at 2,P2,canvas backing scaled by dpr,No,Manual device
+ND-UI-04,UI/UX,Resize/orientation handling,In active game or menu,Rotate / resize window,Canvas + groundY recompute; no distortion,P2,resize() updates dims; no stretched sprites,Partial,Playwright resize
+ND-UI-05,UI/UX,Tap target sizing,Any screen,Inspect interactive buttons,Targets >=44x44 CSS px,P2,All buttons meet min size,Yes,Lighthouse/axe
+ND-UI-06,UI/UX,QR renders and scans,Start screen,Render QR; scan with phone,QR encodes current URL; scannable,P2,Decoded value == location.href,Partial,Manual scan + unit(encoder)
+ND-PERF-01,Performance,Sustained 60fps,Mid-tier device,Play 2 min,Frame rate ~60fps; no sustained jank,P1,p95 frame time <= {frame_budget_ms},Partial,Lighthouse / WebPageTest / RUM
+ND-PERF-02,Performance,No unbounded memory growth,Long session,Play/soak 10 min,Heap stable; arrays pruned,P1,No monotonic heap growth across runs,Partial,Chrome DevTools memory / automated
+ND-PERF-03,Performance,Tab-switch time clamp,In active game,Switch tab; return,No physics teleport on return,P1,dt clamped (<=0.05); positions sane,Yes,Unit (loop dt)
+ND-PERF-04,Performance,Initial load size/time,Cold cache,Load site,Fast first load; small payload,P2,TTI <= {tti_target}; payload <= {kb_target},Yes,Lighthouse CI
+ND-BAT-01,Battery/Network,Pause loop when hidden,In active game,Background the tab,rAF idle while hidden; auto-pause recommended,P2,No active rendering while hidden,Yes,Playwright visibility
+ND-NET-01,Battery/Network,No unexpected network calls,In active game,Record network,Only same-origin asset/SW traffic,P2,Zero third-party/tracking requests pre-consent,Yes,Playwright net intercept
+ND-SEC-01,Security,HTTPS enforced,Production URL,Load over http,Served over HTTPS only,P1,http redirects to https; HSTS if configured,Yes,curl/ZAP
+ND-SEC-02,Security,No injection via persisted/QR data,Any,Tamper localStorage values; inspect QR input,No HTML/script injection; safe parse,P1,JSON.parse guarded; no innerHTML of untrusted data,Yes,Unit + manual
+ND-SEC-03,Security,Content Security Policy present,Production,Inspect response headers,CSP restricts sources; no inline-exec gaps,P2,CSP header present and enforced,Yes,ZAP/securityheaders
+ND-SEC-04,Security,Service worker scope safe,Production,Inspect SW scope/registration,SW scoped to app path; no over-broad scope,P2,Scope limited; only intended assets cached,No,Manual review
+ND-A11Y-01,Accessibility,Reduced motion respected,prefers-reduced-motion=reduce,Enable OS reduce-motion; load,Heavy motion (shake/flash/pulse) reduced,P1,Animations gated by media query,Yes,axe + manual
+ND-A11Y-02,Accessibility,Controls have accessible names,Any,Inspect buttons with a11y tree,All buttons have labels,P2,Mute/pause/PLAY/shop have names,Yes,axe-core
+ND-A11Y-03,Accessibility,Text contrast,Menus/HUD,Run contrast audit,Text meets WCAG AA where feasible,P2,Contrast >= 4.5:1 for body text,Yes,axe-core
+ND-A11Y-04,Accessibility,Keyboard play,Desktop,Use Space/Arrow/W,Jump works via keyboard,P2,Keydown triggers jump; no scroll,Yes,Playwright keyboard
+ND-A11Y-05,Accessibility,Non-visual alternative/labeling,Screen reader,Navigate with SR,Canvas labeled; menus reachable,P3,Canvas has aria-label; menu buttons SR-usable,Partial,Manual SR
+ND-AN-01,Analytics,game_start event fires,Instrumentation added,Start a game,Event logged with payload,P1,Event present with session/run id,Yes,Analytics QA harness
+ND-AN-02,Analytics,game_over event with score/gems,Instrumentation added,Finish a run,Event logged with score+gems,P1,Payload fields present and accurate,Yes,Analytics QA harness
+ND-AN-03,Analytics,powerup_collected event,Instrumentation added,Collect a power-up,Event logged with type,P2,type in {shield,magnet,slowmo},Yes,Analytics QA harness
+ND-AN-04,Analytics,skin_purchased / skin_selected,Instrumentation added,Buy and select a skin,Events logged with skin id + cost,P2,Payload correct; no double-fire,Yes,Analytics QA harness
+ND-AN-05,Analytics,error/crash logging fires,Instrumentation added,Force a JS error,Error captured with stack + context,P0,window.onerror/onunhandledrejection -> sink,Yes,Synthetic error test
