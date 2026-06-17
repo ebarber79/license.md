@@ -34,6 +34,26 @@
   const qrEl = document.getElementById("qr");
   const menuBtn = document.getElementById("menu-btn");
 
+  // ---- Telemetry + platform helpers ----
+  function track(event, props) {
+    try { if (window.NeonAnalytics) window.NeonAnalytics.track(event, props); } catch (e) { /* ignore */ }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* storage may be unavailable (ND-DATA-05) */ }
+  }
+  // Respect prefers-reduced-motion (BUG-01 / ND-A11Y-01).
+  const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  let reduceMotion = motionQuery ? motionQuery.matches : false;
+  if (motionQuery && motionQuery.addEventListener) {
+    motionQuery.addEventListener("change", (e) => { reduceMotion = e.matches; });
+  }
+  // PWA install funnel (ND-AN: pwa_installed).
+  window.addEventListener("appinstalled", () => track("pwa_installed", {}));
+
+  let runId = null;
+  let runStart = 0;
+  let lastCrashCause = "unknown";
+
   // ---- Audio (synthesized, no asset files) ----
   const audio = {
     ctx: null,
@@ -73,7 +93,7 @@
   muteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     audio.muted = !audio.muted;
-    localStorage.setItem("neondash.muted", audio.muted ? "1" : "0");
+    safeSet("neondash.muted", audio.muted ? "1" : "0");
     updateMuteUI();
   });
 
@@ -282,7 +302,11 @@
     resize();
     buildBackground();
     reset();
+    audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
     paused = false;
+    runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
+    runStart = performance.now();
+    track("game_start", { skin: selectedSkin });
     state = STATE.PLAYING;
     startScreen.classList.add("hidden");
     gameoverScreen.classList.add("hidden");
@@ -295,12 +319,18 @@
     requestAnimationFrame(loop);
   }
 
+  // BUG-04: auto-pause when the tab/app is backgrounded mid-run.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && state === STATE.PLAYING && !paused) togglePause();
+  });
+
   function togglePause() {
     if (state !== STATE.PLAYING) return;
     paused = !paused;
     pauseScreen.classList.toggle("hidden", !paused);
     pauseBtn.textContent = paused ? "▶" : "❚❚";
     if (!paused) {
+      audio.ensure(); // BUG-03: ensure audio is unlocked after resume
       lastTime = performance.now(); // avoid a huge dt after resuming
       requestAnimationFrame(loop);
     }
@@ -331,6 +361,14 @@
     if (newRecord) { best = score; saveBest(best); }
     bank += coinCount;
     persistProgress();
+    track("game_over", {
+      run_id: runId,
+      score: score,
+      gems: coinCount,
+      duration_ms: Math.round(performance.now() - runStart),
+      cause: lastCrashCause,
+      new_record: newRecord,
+    });
     finalScoreEl.textContent = score;
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
@@ -402,6 +440,7 @@
     else if (type === "slowmo") slowTime = SLOWMO_DURATION;
     audio.power();
     vibrate(35);
+    track("powerup_collected", { type: type });
     spawnRingBurst(POWER_COLORS[type] || "0,255,180");
   }
 
@@ -550,6 +589,7 @@
           spawnRingBurst("0,255,180");
           obstacles.splice(i, 1);
         } else {
+          lastCrashCause = o.type; // "spikes" | "bar"
           return crash();
         }
       }
@@ -728,7 +768,7 @@
     if (magnetTime > 0) auras.push({ t: magnetTime, color: "#ffd84d", rad: 1.02 });
     if (slowTime > 0) auras.push({ t: slowTime, color: "#78b4ff", rad: 1.18 });
     for (const a of auras) {
-      const flashing = a.t < 1.5 && Math.floor(a.t * 8) % 2 === 0;
+      const flashing = !reduceMotion && a.t < 1.5 && Math.floor(a.t * 8) % 2 === 0;
       ctx.globalAlpha = flashing ? 0.3 : 0.7;
       ctx.strokeStyle = a.color;
       ctx.lineWidth = 3;
@@ -875,7 +915,7 @@
   function render() {
     ctx.clearRect(0, 0, W, H);
     ctx.save();
-    if (shake > 0) {
+    if (shake > 0 && !reduceMotion) {
       ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     }
     drawSky();
@@ -1025,12 +1065,14 @@
     if (owned.has(s.id)) {
       selectedSkin = s.id;
       audio.coin();
+      track("skin_selected", { skin_id: s.id });
     } else if (bank >= s.cost) {
       bank -= s.cost;
       owned.add(s.id);
       selectedSkin = s.id;
       audio.power();
       vibrate(30);
+      track("skin_purchased", { skin_id: s.id, cost: s.cost, bank_after: bank });
     } else {
       // Can't afford: gentle nudge.
       audio.shieldBreak();

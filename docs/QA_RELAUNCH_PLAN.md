@@ -23,13 +23,15 @@ Neon Dash is a feature-complete, single-screen endless-runner PWA that is **live
 
 These are concrete issues found by inspecting the current source — they seed the remediation plan (not hypothetical).
 
-| ID | Severity | Area | Finding | Fix summary |
-|----|----------|------|---------|-------------|
-| BUG-01 | **P1** | A11y | No `prefers-reduced-motion` handling; title pulse, screen shake, flashing power-up auras, theme strobe run unconditionally — photosensitivity/UX risk. | Gate non-essential motion behind the media query; provide reduced variants. |
-| BUG-02 | **P2** | Persistence | Mute toggle calls `localStorage.setItem("neondash.muted", …)` **without** try/catch (unlike `saveBest`/`persistProgress`). Throws in Safari private mode / storage-disabled. | Wrap in try/catch (reuse a `safeSet` helper). |
-| BUG-03 | **P2** | Audio | `audio.ensure()` is skipped when the gesture targets a `.btn`/`.icon-btn`, so tapping **PLAY** does not unlock WebAudio; sound is silent until the first in-canvas tap. | Unlock audio on PLAY/RESUME clicks too. |
-| BUG-04 | **P2** | Lifecycle | No `visibilitychange` auto-pause; backgrounding mid-run relies on rAF throttling and dt-clamp. Functionally safe but no explicit pause and a wasted partial frame on return. | Auto-pause on `document.hidden`. |
-| BUG-05 | **P2** | Observability | No error logging, crash reporting, or analytics anywhere. We cannot measure crash-free rate or funnels. | Add error sink + analytics events (§7). |
+> **Status update (this build):** BUG-01–BUG-04 are **FIXED**, and BUG-05 is **addressed** by the new `analytics.js` telemetry module (pluggable sink + global error/rejection capture). These still require formal test-case verification (§4) before they count toward the §5 gate.
+
+| ID | Severity | Area | Finding | Fix summary | Status |
+|----|----------|------|---------|-------------|--------|
+| BUG-01 | **P1** | A11y | No `prefers-reduced-motion` handling; title pulse, screen shake, flashing power-up auras run unconditionally — photosensitivity/UX risk. | Gate motion behind media query (CSS) + `reduceMotion` flag (canvas shake/flash). | ✅ Fixed |
+| BUG-02 | **P2** | Persistence | Mute toggle's `localStorage.setItem` was **not** try/catch-guarded; throws in Safari private mode. | Routed through `safeSet()`. | ✅ Fixed |
+| BUG-03 | **P2** | Audio | `audio.ensure()` skipped for `.btn` taps, so PLAY didn't unlock WebAudio. | `audio.ensure()` on PLAY + RESUME. | ✅ Fixed |
+| BUG-04 | **P2** | Lifecycle | No `visibilitychange` auto-pause when backgrounded mid-run. | Auto-pause on `document.hidden`. | ✅ Fixed |
+| BUG-05 | **P2** | Observability | No error logging, crash reporting, or analytics anywhere. | `analytics.js`: events + `onerror`/`onunhandledrejection` capture. | ✅ Addressed |
 | BUG-06 | **P2** | Security | No Content-Security-Policy. Low exploit surface (no untrusted HTML injection found), but headers are missing. | Add CSP (note: GitHub Pages can't set headers — see §6 mitigation). |
 | BUG-07 | **P3** | UX | Stale-cache update story: cache-first SW serves old `index.html` until the SW activates on a later load; users may see the previous version once after a deploy. | Document; consider update toast / `skipWaiting` UX. |
 
@@ -42,12 +44,14 @@ Effort = forward planning estimate in engineer-days (S≤0.5, M≈1–2, L≈3�
 ### 3.1 IMMEDIATE HOTFIXES — `CRITICAL` (block basic use / verification)
 > Target: complete before Sprint 1 testing begins.
 
-| # | Item | Why critical | Owner | Effort |
-|---|------|--------------|-------|--------|
-| H1 | Add **error/crash logging** (`window.onerror`, `onunhandledrejection`) → sink | Without it we cannot prove the crash-free gate | {fe_eng} | M |
-| H2 | Add **core analytics events** (`game_start`, `game_over`, `error`) | Required to measure §5 gates and §6 rollout | {fe_eng} | M |
-| H3 | Fix **BUG-02** unguarded storage write | Uncaught exception path in common config (private mode) | {fe_eng} | S |
-| H4 | Establish **deterministic test seed hook** (inject RNG + state getters for tests) | Prerequisite for automating P0 gameplay cases | {fe_eng} | M |
+| # | Item | Why critical | Owner | Effort | Status |
+|---|------|--------------|-------|--------|--------|
+| H1 | Add **error/crash logging** (`window.onerror`, `onunhandledrejection`) → sink | Without it we cannot prove the crash-free gate | {fe_eng} | M | ✅ Done (`analytics.js`) |
+| H2 | Add **analytics events** (`game_start`/`game_over`/`powerup_collected`/`skin_*`/`pwa_installed`/`error`) | Required to measure §5 gates and §6 rollout | {fe_eng} | M | ✅ Done |
+| H3 | Fix **BUG-02** unguarded storage write | Uncaught exception path (private mode) | {fe_eng} | S | ✅ Done |
+| H4 | Establish **deterministic test seed hook** (inject RNG + state getters for tests) | Prerequisite for automating P0 gameplay cases | {fe_eng} | M | ⬜ Next |
+
+> Also completed early from Sprint 1: **S1** reduced-motion (BUG-01), **S2** audio-unlock (BUG-03), **S3** visibility auto-pause (BUG-04). Remaining hotfix **H4** (test hooks) is the gateway to automating the P0 suite (S4).
 
 ### 3.2 SHORT-TERM — Sprint 1
 | # | Item | Owner | Effort |
