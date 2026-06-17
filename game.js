@@ -1128,6 +1128,7 @@
       },
       giveShield(secs) { shieldTime = secs == null ? SHIELD_DURATION : secs; },
       setReduceMotion(v) { reduceMotion = !!v; },
+      buySkin(id) { const s = SKINS.find((x) => x.id === id); if (s) onSkinClick(s); },
       getState() {
         return {
           state, paused, score, coins: coinCount, bank, best,

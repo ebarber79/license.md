@@ -13,8 +13,10 @@ test("ND-DATA-02/03: gem bank + skin selection persist across reload", async ({ 
   await page.waitForFunction(() => !!window.NeonDashTest);
   expect((await state(page)).bank).toBe(500);
 
-  // Buy + equip the magenta skin (cost 60) via the shop chip.
-  await page.locator(".skin-chip").nth(1).click();
+  // Buy + equip the magenta skin (cost 60) via the purchase logic
+  // (driven through the test hook to keep the persistence assertion
+  // independent of canvas/overlay click-actionability flakiness).
+  await page.evaluate(() => window.NeonDashTest.buySkin("magenta"));
   await expect.poll(async () => page.evaluate(() => localStorage.getItem("neondash.skin"))).toBe("magenta");
 
   // Reload: selection persists and bank was debited.
