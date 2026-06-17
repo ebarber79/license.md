@@ -36,7 +36,7 @@
 
   // ---- Deterministic RNG (seedable for tests; Math.random in production) ----
   let rng = null;
-  function rnd() { return rng ? rng() : rnd(); }
+  function rnd() { return rng ? rng() : Math.random(); }
 
   // ---- Telemetry + platform helpers ----
   function track(event, props) {
@@ -44,6 +44,10 @@
   }
   function safeSet(key, value) {
     try { localStorage.setItem(key, value); } catch (e) { /* storage may be unavailable (ND-DATA-05) */ }
+  }
+  function safeGet(key) {
+    // localStorage access can throw in private mode / when storage is blocked.
+    try { return localStorage.getItem(key); } catch (e) { return null; }
   }
   // Respect prefers-reduced-motion (BUG-01 / ND-A11Y-01).
   const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -61,7 +65,7 @@
   // ---- Audio (synthesized, no asset files) ----
   const audio = {
     ctx: null,
-    muted: localStorage.getItem("neondash.muted") === "1",
+    muted: safeGet("neondash.muted") === "1",
     ensure() {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -170,22 +174,23 @@
   let lastTime = 0;
   let shake = 0;
   let paused = false;
+  let rafId = 0; // handle of the in-flight animation frame (single loop chain)
 
   // Progression state
-  let bank = parseInt(localStorage.getItem(BANK_KEY) || "0", 10) || 0;
+  let bank = parseInt(safeGet(BANK_KEY) || "0", 10) || 0;
   let owned = loadOwned();
-  let selectedSkin = localStorage.getItem(SKIN_KEY) || "cyan";
+  let selectedSkin = safeGet(SKIN_KEY) || "cyan";
 
   function loadBest() {
-    const v = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || "0", 10);
+    const v = parseInt(safeGet(HIGH_SCORE_KEY) || "0", 10);
     return Number.isFinite(v) ? v : 0;
   }
   function saveBest(v) {
-    try { localStorage.setItem(HIGH_SCORE_KEY, String(v)); } catch (e) { /* ignore */ }
+    safeSet(HIGH_SCORE_KEY, String(v));
   }
   function loadOwned() {
     try {
-      const arr = JSON.parse(localStorage.getItem(OWNED_KEY) || "[]");
+      const arr = JSON.parse(safeGet(OWNED_KEY) || "[]");
       const set = new Set(Array.isArray(arr) ? arr : []);
       set.add("cyan"); // default is always owned
       return set;
@@ -303,9 +308,12 @@
   });
 
   function startGame() {
+    cancelAnimationFrame(rafId); // avoid a leftover OVER/idle frame double-driving the loop
     buildBackground();
     resize();
     reset();
+    scoreEl.textContent = "0";
+    coinsEl.textContent = "0";
     audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
     paused = false;
     runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
@@ -320,7 +328,7 @@
     bestEl.textContent = best;
     updateMuteUI();
     lastTime = performance.now();
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
   // BUG-04: auto-pause when the tab/app is backgrounded mid-run.
@@ -336,7 +344,8 @@
     if (!paused) {
       audio.ensure(); // BUG-03: ensure audio is unlocked after resume
       lastTime = performance.now(); // avoid a huge dt after resuming
-      requestAnimationFrame(loop);
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loop);
     }
   }
 
@@ -955,12 +964,12 @@
       if (paused) return; // frozen until resume re-arms the loop
       update(dt);
       render();
-      requestAnimationFrame(loop);
+      rafId = requestAnimationFrame(loop);
     } else if (state === STATE.OVER) {
       // Keep particles/shake animating briefly on the game-over backdrop.
       update0Effects(dt);
       render();
-      if (particles.length > 0 || shake > 0) requestAnimationFrame(loop);
+      if (particles.length > 0 || shake > 0) rafId = requestAnimationFrame(loop);
     }
   }
 

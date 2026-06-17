@@ -35,6 +35,19 @@ test("ND-DATA-01: high score persists across reload", async ({ page }) => {
   expect((await state(page)).best).toBe(1234);
 });
 
+test("ND-REG-01: production load + start works with no uncaught errors (unseeded RNG)", async ({ page }) => {
+  // Regression for the rnd() self-recursion: with no test seed, the game
+  // must fall back to Math.random() and start cleanly. pageerror is wired
+  // before navigation so an init-time RangeError would be caught.
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  await page.evaluate(() => window.NeonDashTest.start()); // deliberately not seeded
+  expect((await page.evaluate(() => window.NeonDashTest.getState())).state).toBe("playing");
+  expect(errors).toEqual([]);
+});
+
 test("ND-OFF-01: service worker registers", async ({ page }) => {
   await page.goto("/index.html");
   const hasController = await page.evaluate(async () => {
