@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["claude/mobile-app-game-tjpjlk"]
+    branches: ["master", "claude/mobile-app-game-tjpjlk"]
   pull_request:
   workflow_dispatch:
 

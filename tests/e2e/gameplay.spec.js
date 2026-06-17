@@ -2,8 +2,13 @@
 const { test, expect } = require("@playwright/test");
 
 // All tests load with ?test=1 to expose window.NeonDashTest (H4 hooks),
-// and seed RNG for determinism.
+// and seed RNG for determinism. Console/page-error listeners are attached
+// BEFORE navigation so init-time errors are captured (ND-ON-01).
+let initErrors;
 test.beforeEach(async ({ page }) => {
+  initErrors = [];
+  page.on("console", (m) => { if (m.type() === "error") initErrors.push(m.text()); });
+  page.on("pageerror", (e) => initErrors.push(e.stack || String(e)));
   await page.goto("/index.html?test=1");
   await page.waitForFunction(() => !!window.NeonDashTest);
   await page.evaluate(() => window.NeonDashTest.seed(1));
@@ -12,11 +17,9 @@ test.beforeEach(async ({ page }) => {
 const state = (page) => page.evaluate(() => window.NeonDashTest.getState());
 
 test("ND-ON-01: start screen renders with no console errors", async ({ page }) => {
-  const errors = [];
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await expect(page.locator("#start-screen")).toBeVisible();
   await expect(page.locator("#start-btn")).toBeVisible();
-  expect(errors).toEqual([]);
+  expect(initErrors).toEqual([]); // captured from before navigation
 });
 
 test("ND-NAV-01: Start -> Play enters playing state", async ({ page }) => {
