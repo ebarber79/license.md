@@ -1,0 +1,42 @@
+; ============================================================
+; FTMO LIVE-TRADE PRESET  -  $100,000 account, BALANCED (0.5%)
+; For an FTMO Challenge/Verification/Funded account.
+; This is a LIVE preset (single values, no optimization flags).
+;
+; *** VERIFY current FTMO rules at ftmo.com before use ***
+;
+; To use other account sizes, change OriginalPositionRiskAmount:
+;   $10k=50  $25k=125  $50k=250  $100k=500  $200k=1000   (Balanced 0.5%)
+; See FTMO_PROP_PLAN.md for Conservative/Aggressive columns.
+;
+; COMPLIANCE: recovery OFF, no lot escalation, RR>=1.5, ~0.5% risk.
+; Worst 10-loss streak = 5% drawdown (half the FTMO 10% wall).
+; NOTE: EA has no daily-loss stop -> rely on small fixed risk and/or
+; an external equity-guardian (see plan, section 5).
+; ============================================================
+PastXCandlesForHighLow=2
+EntryTF=16385
+Lotsize=0.1
+MoneyManagement=true
+; --- 0.5% of 100k. SCALE per table above for other sizes.
+OriginalPositionRiskAmount=500
+; --- reward >= risk so break-even win rate is only 40%
+RiskRewardRatio=1.5
+; --- martingale recovery HARD OFF for FTMO compliance
+EnableRecoveryTrade=false
+RecoveryPositionRiskMultiplier=1
+RecoveryRiskRewardRatio=1.5
+text1001=
+StartTime=11:10
+; --- trailing on to protect open profit
+EnableTrailingOnRecoveryTradeOrig=true
+StartTrailingAfterPipsProfitOnTradeOrig=0.5
+TrailingStopPipsOrig=15
+EnableTrailingOnRecoveryTradeRec=true
+StartTrailingAfterPipsProfitOnTradeRec=0.25
+TrailingStopPipsRec=10
+TakeOrders=3
+AlertSwitch=true
+slippage=5
+MagicNumber=120912
+TradeComments=POStrategicEA_FTMO
