@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Neon Dash — Endless Runner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-item">
+        <span class="hud-label">SCORE</span>
+        <span id="score">0</span>
+      </div>
+      <div class="hud-item hud-coins">
+        <span class="hud-label">◆</span>
+        <span id="coins">0</span>
+      </div>
+      <div class="hud-item hud-best">
+        <span class="hud-label">BEST</span>
+        <span id="best">0</span>
+      </div>
+    </div>
+
+    <!-- Start screen -->
+    <div id="start-screen" class="overlay">
+      <h1 class="title">NEON<span>DASH</span></h1>
+      <p class="tagline">Tap to jump. Tap twice to double-jump.<br />Dodge the spikes, grab the gems.</p>
+      <button id="start-btn" class="btn">PLAY</button>
+      <p class="hint">Best: <span id="start-best">0</span></p>
+    </div>
+
+    <!-- Game over screen -->
+    <div id="gameover-screen" class="overlay hidden">
+      <h2 class="gameover-title">GAME OVER</h2>
+      <div class="results">
+        <div class="result-row"><span>Score</span><span id="final-score">0</span></div>
+        <div class="result-row"><span>Gems</span><span id="final-coins">0</span></div>
+        <div class="result-row best-row"><span>Best</span><span id="final-best">0</span></div>
+      </div>
+      <p id="new-record" class="new-record hidden">★ NEW RECORD! ★</p>
+      <button id="restart-btn" class="btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
