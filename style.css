@@ -72,6 +72,31 @@ html, body {
   text-shadow: 0 0 10px rgba(255, 94, 199, 0.7);
 }
 
+/* ---------- Mute button ---------- */
+.icon-btn {
+  position: absolute;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 50px;
+  height: 50px;
+  font-size: 22px;
+  line-height: 1;
+  border: 1px solid rgba(0, 245, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(13, 13, 26, 0.55);
+  color: #fff;
+  cursor: pointer;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
 /* ---------- Overlays ---------- */
 .overlay {
   position: absolute;

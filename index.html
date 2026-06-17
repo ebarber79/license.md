@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Neon Dash — Endless Runner</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -28,6 +31,9 @@
         <span id="best">0</span>
       </div>
     </div>
+
+    <!-- Mute toggle -->
+    <button id="mute-btn" class="icon-btn" aria-label="Toggle sound">🔊</button>
 
     <!-- Start screen -->
     <div id="start-screen" class="overlay">
@@ -51,5 +57,12 @@
   </div>
 
   <script src="game.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

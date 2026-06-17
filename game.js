@@ -24,6 +24,50 @@
   const finalCoinsEl = document.getElementById("final-coins");
   const finalBestEl = document.getElementById("final-best");
   const newRecordEl = document.getElementById("new-record");
+  const muteBtn = document.getElementById("mute-btn");
+
+  // ---- Audio (synthesized, no asset files) ----
+  const audio = {
+    ctx: null,
+    muted: localStorage.getItem("neondash.muted") === "1",
+    ensure() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    },
+    tone(freq, dur, type = "square", vol = 0.15, slideTo = null) {
+      if (this.muted || !this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain).connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+    },
+    jump() { this.tone(420, 0.16, "square", 0.12, 720); },
+    doubleJump() { this.tone(620, 0.16, "square", 0.12, 980); },
+    coin() { this.tone(880, 0.08, "triangle", 0.16, 1320); },
+    power() { this.tone(300, 0.25, "sawtooth", 0.14, 900); },
+    shieldBreak() { this.tone(500, 0.2, "sawtooth", 0.16, 120); },
+    crash() { this.tone(220, 0.45, "sawtooth", 0.2, 60); },
+  };
+
+  function updateMuteUI() {
+    muteBtn.textContent = audio.muted ? "🔇" : "🔊";
+  }
+  muteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    audio.muted = !audio.muted;
+    localStorage.setItem("neondash.muted", audio.muted ? "1" : "0");
+    updateMuteUI();
+  });
 
   // ---- World constants (in CSS pixels) ----
   const GROUND_RATIO = 0.82;   // ground line as fraction of height
@@ -34,6 +78,7 @@
   const START_SPEED = 360;     // px/s
   const MAX_SPEED = 900;
   const SPEED_RAMP = 11;       // px/s gained per second
+  const SHIELD_DURATION = 7;   // seconds of protection per shield pickup
   const HIGH_SCORE_KEY = "neondash.best";
 
   // ---- Runtime sizing ----
@@ -57,8 +102,9 @@
   const STATE = { MENU: "menu", PLAYING: "playing", OVER: "over" };
   let state = STATE.MENU;
 
-  let player, obstacles, gems, particles, stars, hills;
-  let speed, distance, score, coinCount, spawnTimer, gemTimer;
+  let player, obstacles, gems, particles, stars, hills, powerups;
+  let speed, distance, score, coinCount, spawnTimer, gemTimer, powerTimer;
+  let shieldTime = 0; // seconds of shield remaining
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
@@ -107,12 +153,15 @@
     obstacles = [];
     gems = [];
     particles = [];
+    powerups = [];
     speed = START_SPEED;
     distance = 0;
     score = 0;
     coinCount = 0;
     spawnTimer = 0.8;
     gemTimer = 1.4;
+    powerTimer = 7 + Math.random() * 4;
+    shieldTime = 0;
     shake = 0;
     bgScroll = 0;
   }
@@ -125,16 +174,19 @@
       player.onGround = false;
       player.jumps = 1;
       spawnJumpDust();
+      audio.jump();
     } else if (player.jumps < 2) {
       player.vy = JUMP_VELOCITY * 0.86;
       player.jumps = 2;
       spawnJumpDust();
+      audio.doubleJump();
     }
   }
 
   function onPress(e) {
     // Don't hijack taps on UI buttons.
-    if (e.target.closest(".btn")) return;
+    if (e.target.closest(".btn") || e.target.closest(".icon-btn")) return;
+    audio.ensure(); // unlock WebAudio on first user gesture
     if (e.type === "keydown") {
       if (e.code !== "Space" && e.code !== "ArrowUp" && e.key !== "w") return;
       e.preventDefault();
@@ -158,6 +210,7 @@
     gameoverScreen.classList.add("hidden");
     hud.classList.remove("hidden");
     bestEl.textContent = best;
+    updateMuteUI();
     lastTime = performance.now();
     requestAnimationFrame(loop);
   }
@@ -216,6 +269,17 @@
     }
   }
 
+  function spawnPowerup() {
+    powerups.push({
+      type: "shield",
+      x: W + 50,
+      y: groundY - 90 - Math.random() * 100,
+      r: 16,
+      bob: Math.random() * Math.PI * 2,
+      spin: 0,
+    });
+  }
+
   // ---- Particles ----
   function spawnJumpDust() {
     for (let i = 0; i < 8; i++) {
@@ -263,6 +327,23 @@
     }
   }
 
+  function spawnShieldBurst() {
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const sp = 180;
+      particles.push({
+        x: player.x + player.size / 2,
+        y: player.y + player.size / 2,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 0.5,
+        max: 0.5,
+        color: "0,255,180",
+        r: Math.random() * 3 + 1.5,
+      });
+    }
+  }
+
   // ---- Collision (AABB) ----
   function hits(px, py, pw, ph, ox, oy, ow, oh) {
     return px < ox + ow && px + pw > ox && py < oy + oh && py + ph > oy;
@@ -306,6 +387,14 @@
       spawnGemArc();
       gemTimer = 1.6 + Math.random() * 1.8;
     }
+    // Spawn shield power-ups (rare)
+    powerTimer -= dt;
+    if (powerTimer <= 0) {
+      spawnPowerup();
+      powerTimer = 12 + Math.random() * 8;
+    }
+    // Countdown active shield
+    if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
 
     // Move + test obstacles
     const px = player.x, py = player.y, ps = player.size;
@@ -314,15 +403,39 @@
       o.x -= speed * dt;
       if (o.x + o.w < -10) { obstacles.splice(i, 1); continue; }
 
+      let hit = false;
       if (o.type === "spikes") {
         // Slightly forgiving hitbox: inset the spikes.
-        if (hits(px + 6, py + 6, ps - 12, ps - 6, o.x + 4, groundY - o.h, o.w - 8, o.h)) {
-          return crash();
-        }
+        hit = hits(px + 6, py + 6, ps - 12, ps - 6, o.x + 4, groundY - o.h, o.w - 8, o.h);
       } else { // bar
-        if (hits(px + 6, py + 4, ps - 12, ps - 8, o.x, o.y, o.w, o.h)) {
+        hit = hits(px + 6, py + 4, ps - 12, ps - 8, o.x, o.y, o.w, o.h);
+      }
+      if (hit) {
+        if (shieldTime > 0) {
+          // Shield absorbs the hit: shatter it and clear this obstacle.
+          shieldTime = 0;
+          shake = 10;
+          audio.shieldBreak();
+          spawnShieldBurst();
+          obstacles.splice(i, 1);
+        } else {
           return crash();
         }
+      }
+    }
+
+    // Move + collect power-ups
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const pu = powerups[i];
+      pu.x -= speed * dt;
+      pu.bob += dt * 4;
+      pu.spin += dt * 3;
+      if (pu.x + pu.r < -10) { powerups.splice(i, 1); continue; }
+      if (hits(px, py, ps, ps, pu.x - pu.r, pu.y - pu.r, pu.r * 2, pu.r * 2)) {
+        shieldTime = SHIELD_DURATION;
+        audio.power();
+        spawnShieldBurst();
+        powerups.splice(i, 1);
       }
     }
 
@@ -337,6 +450,7 @@
         coinCount++;
         coinsEl.textContent = coinCount;
         spawnGemBurst(g.x, g.y);
+        audio.coin();
         gems.splice(i, 1);
       }
     }
@@ -358,6 +472,7 @@
 
   function crash() {
     spawnCrash();
+    audio.crash();
     shake = 16;
     gameOver();
   }
@@ -441,6 +556,22 @@
 
     const cx = player.x + player.size / 2;
     const cy = player.y + player.size / 2;
+
+    // Shield aura (flashes when about to expire)
+    if (shieldTime > 0) {
+      const flashing = shieldTime < 1.5 && Math.floor(shieldTime * 8) % 2 === 0;
+      ctx.globalAlpha = flashing ? 0.3 : 0.7;
+      ctx.strokeStyle = "#00ffb4";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#00ffb4";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(cx, cy, player.size * 0.85, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(player.rot);
@@ -506,6 +637,36 @@
     ctx.shadowBlur = 0;
   }
 
+  function drawPowerups() {
+    for (const pu of powerups) {
+      const yy = pu.y + Math.sin(pu.bob) * 5;
+      ctx.save();
+      ctx.translate(pu.x, yy);
+      ctx.shadowColor = "#00ffb4";
+      ctx.shadowBlur = 18;
+      // Outer ring
+      ctx.strokeStyle = "#00ffb4";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, pu.r, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner shield glyph
+      ctx.rotate(pu.spin);
+      ctx.fillStyle = "rgba(0, 255, 180, 0.85)";
+      ctx.beginPath();
+      ctx.moveTo(0, -pu.r * 0.55);
+      ctx.lineTo(pu.r * 0.5, -pu.r * 0.15);
+      ctx.lineTo(pu.r * 0.5, pu.r * 0.25);
+      ctx.lineTo(0, pu.r * 0.6);
+      ctx.lineTo(-pu.r * 0.5, pu.r * 0.25);
+      ctx.lineTo(-pu.r * 0.5, -pu.r * 0.15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.shadowBlur = 0;
+  }
+
   function drawParticles() {
     for (const p of particles) {
       ctx.globalAlpha = Math.max(0, p.life / p.max);
@@ -527,6 +688,7 @@
     drawGround();
     drawObstacles();
     drawGems();
+    drawPowerups();
     if (state === STATE.PLAYING) drawPlayer();
     drawParticles();
     ctx.restore();
@@ -582,6 +744,7 @@
     best = loadBest();
     startBestEl.textContent = best;
     bestEl.textContent = best;
+    updateMuteUI();
     drawStaticBackdrop();
     // Gentle idle animation on the menu backdrop.
     (function idle() {
