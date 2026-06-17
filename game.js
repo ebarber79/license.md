@@ -34,6 +34,10 @@
   const qrEl = document.getElementById("qr");
   const menuBtn = document.getElementById("menu-btn");
 
+  // ---- Deterministic RNG (seedable for tests; Math.random in production) ----
+  let rng = null;
+  function rnd() { return rng ? rng() : rnd(); }
+
   // ---- Telemetry + platform helpers ----
   function track(event, props) {
     try { if (window.NeonAnalytics) window.NeonAnalytics.track(event, props); } catch (e) { /* ignore */ }
@@ -208,17 +212,17 @@
     stars = [];
     for (let i = 0; i < 70; i++) {
       stars.push({
-        x: Math.random(),
-        y: Math.random() * 0.7,
-        r: Math.random() * 1.6 + 0.4,
-        tw: Math.random() * Math.PI * 2,
+        x: rnd(),
+        y: rnd() * 0.7,
+        r: rnd() * 1.6 + 0.4,
+        tw: rnd() * Math.PI * 2,
       });
     }
     hills = [];
     let x = 0;
     while (x < 1.4) {
-      hills.push({ x, h: 0.10 + Math.random() * 0.16, w: 0.18 + Math.random() * 0.14 });
-      x += 0.16 + Math.random() * 0.12;
+      hills.push({ x, h: 0.10 + rnd() * 0.16, w: 0.18 + rnd() * 0.14 });
+      x += 0.16 + rnd() * 0.12;
     }
   }
 
@@ -246,7 +250,7 @@
     coinCount = 0;
     spawnTimer = 0.8;
     gemTimer = 1.4;
-    powerTimer = 7 + Math.random() * 4;
+    powerTimer = 7 + rnd() * 4;
     shieldTime = 0;
     magnetTime = 0;
     slowTime = 0;
@@ -381,9 +385,9 @@
   // ---- Spawning ----
   function spawnObstacle() {
     // Either ground spikes (1-3) or a floating bar to duck/jump-time.
-    const r = Math.random();
+    const r = rnd();
     if (r < 0.78) {
-      const count = 1 + Math.floor(Math.random() * 3);
+      const count = 1 + Math.floor(rnd() * 3);
       const spikeW = 26;
       obstacles.push({
         type: "spikes",
@@ -407,15 +411,15 @@
   }
 
   function spawnGemArc() {
-    const n = 3 + Math.floor(Math.random() * 3);
-    const baseY = groundY - 70 - Math.random() * 120;
+    const n = 3 + Math.floor(rnd() * 3);
+    const baseY = groundY - 70 - rnd() * 120;
     for (let i = 0; i < n; i++) {
       gems.push({
         x: W + 40 + i * 46,
         y: baseY - Math.sin((i / (n - 1)) * Math.PI) * 60,
         r: 11,
         got: false,
-        bob: Math.random() * Math.PI * 2,
+        bob: rnd() * Math.PI * 2,
       });
     }
   }
@@ -423,11 +427,11 @@
   const POWER_TYPES = ["shield", "magnet", "slowmo"];
   function spawnPowerup() {
     powerups.push({
-      type: POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)],
+      type: POWER_TYPES[Math.floor(rnd() * POWER_TYPES.length)],
       x: W + 50,
-      y: groundY - 90 - Math.random() * 100,
+      y: groundY - 90 - rnd() * 100,
       r: 16,
-      bob: Math.random() * Math.PI * 2,
+      bob: rnd() * Math.PI * 2,
       spin: 0,
     });
   }
@@ -450,19 +454,19 @@
       particles.push({
         x: player.x + player.size / 2,
         y: player.y + player.size,
-        vx: (Math.random() - 0.5) * 160,
-        vy: Math.random() * -120 - 20,
+        vx: (rnd() - 0.5) * 160,
+        vy: rnd() * -120 - 20,
         life: 0.4,
         max: 0.4,
         color: "0,245,255",
-        r: Math.random() * 3 + 1,
+        r: rnd() * 3 + 1,
       });
     }
   }
   function spawnGemBurst(x, y) {
     for (let i = 0; i < 12; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = Math.random() * 200 + 50;
+      const a = rnd() * Math.PI * 2;
+      const sp = rnd() * 200 + 50;
       particles.push({
         x, y,
         vx: Math.cos(a) * sp,
@@ -470,14 +474,14 @@
         life: 0.5,
         max: 0.5,
         color: "255,216,77",
-        r: Math.random() * 3 + 1.5,
+        r: rnd() * 3 + 1.5,
       });
     }
   }
   function spawnCrash() {
     for (let i = 0; i < 26; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = Math.random() * 320 + 60;
+      const a = rnd() * Math.PI * 2;
+      const sp = rnd() * 320 + 60;
       particles.push({
         x: player.x + player.size / 2,
         y: player.y + player.size / 2,
@@ -486,7 +490,7 @@
         life: 0.7,
         max: 0.7,
         color: "255,77,109",
-        r: Math.random() * 4 + 2,
+        r: rnd() * 4 + 2,
       });
     }
   }
@@ -503,15 +507,13 @@
         life: 0.5,
         max: 0.5,
         color,
-        r: Math.random() * 3 + 1.5,
+        r: rnd() * 3 + 1.5,
       });
     }
   }
 
   // ---- Collision (AABB) ----
-  function hits(px, py, pw, ph, ox, oy, ow, oh) {
-    return px < ox + ow && px + pw > ox && py < oy + oh && py + ph > oy;
-  }
+  const hits = NeonEngine.hits;
 
   // ---- Update ----
   function update(dt) {
@@ -520,7 +522,7 @@
     // Slow-mo scales how fast the world moves toward the player.
     const worldSpeed = speed * (slowTime > 0 ? SLOWMO_FACTOR : 1);
     distance += worldSpeed * dt;
-    score = Math.floor(distance / 10);
+    score = NeonEngine.scoreFromDistance(distance);
     scoreEl.textContent = score;
     bgScroll += worldSpeed * dt;
     theme = currentTheme();
@@ -546,19 +548,19 @@
       spawnObstacle();
       // Spacing shrinks as speed rises, but never unfair.
       const base = Math.max(0.7, 1.6 - (speed - START_SPEED) / 900);
-      spawnTimer = base + Math.random() * 0.6;
+      spawnTimer = base + rnd() * 0.6;
     }
     // Spawn gems
     gemTimer -= dt;
     if (gemTimer <= 0) {
       spawnGemArc();
-      gemTimer = 1.6 + Math.random() * 1.8;
+      gemTimer = 1.6 + rnd() * 1.8;
     }
     // Spawn shield power-ups (rare)
     powerTimer -= dt;
     if (powerTimer <= 0) {
       spawnPowerup();
-      powerTimer = 12 + Math.random() * 8;
+      powerTimer = 12 + rnd() * 8;
     }
     // Countdown active power-ups
     if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
@@ -916,7 +918,7 @@
     ctx.clearRect(0, 0, W, H);
     ctx.save();
     if (shake > 0 && !reduceMotion) {
-      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+      ctx.translate((rnd() - 0.5) * shake, (rnd() - 0.5) * shake);
     }
     drawSky();
     drawGround();
@@ -976,17 +978,7 @@
   }
 
   // ---- Theme interpolation ----
-  function hexToRgb(h) {
-    const n = parseInt(h.slice(1), 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  }
-  function lerpColor(a, b, t) {
-    const ca = hexToRgb(a), cb = hexToRgb(b);
-    const r = Math.round(ca[0] + (cb[0] - ca[0]) * t);
-    const g = Math.round(ca[1] + (cb[1] - ca[1]) * t);
-    const bl = Math.round(ca[2] + (cb[2] - ca[2]) * t);
-    return `rgb(${r},${g},${bl})`;
-  }
+  const lerpColor = NeonEngine.lerpColor;
   // Smoothly cycle themes; one full theme roughly every 250 score.
   function currentTheme() {
     const prog = score / 250;
@@ -1116,6 +1108,35 @@
     renderQR();
     drawStaticBackdrop();
     startIdle();
+  }
+
+  // ---- Test hooks (H4): only exposed with ?test=1, for E2E automation ----
+  if (/[?&]test=1/.test(location.search)) {
+    window.NeonDashTest = {
+      seed(n) { rng = NeonEngine.mulberry32(n >>> 0); },
+      start() { startGame(); },
+      jump() { jump(); },
+      pause() { if (!paused) togglePause(); },
+      resume() { if (paused) togglePause(); },
+      clearObstacles() { obstacles.length = 0; },
+      spawnSpikeAhead() {
+        obstacles.push({ type: "spikes", x: player.x, w: 60, h: 34, count: 2, spikeW: 26 });
+      },
+      addGemAhead() {
+        gems.push({ x: player.x + player.size / 2, y: player.y + player.size / 2, r: 11, got: false, bob: 0 });
+      },
+      giveShield(secs) { shieldTime = secs == null ? SHIELD_DURATION : secs; },
+      setReduceMotion(v) { reduceMotion = !!v; },
+      getState() {
+        return {
+          state, paused, score, coins: coinCount, bank, best,
+          speed, shieldTime, magnetTime, slowTime, reduceMotion,
+          obstacles: obstacles.length, gems: gems.length, powerups: powerups.length,
+          player: player ? { x: player.x, y: player.y, vy: player.vy, onGround: player.onGround, jumps: player.jumps, size: player.size } : null,
+          groundY,
+        };
+      },
+    };
   }
 
   init();

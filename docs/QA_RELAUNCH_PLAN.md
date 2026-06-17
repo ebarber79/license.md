@@ -49,9 +49,15 @@ Effort = forward planning estimate in engineer-days (S≤0.5, M≈1–2, L≈3�
 | H1 | Add **error/crash logging** (`window.onerror`, `onunhandledrejection`) → sink | Without it we cannot prove the crash-free gate | {fe_eng} | M | ✅ Done (`analytics.js`) |
 | H2 | Add **analytics events** (`game_start`/`game_over`/`powerup_collected`/`skin_*`/`pwa_installed`/`error`) | Required to measure §5 gates and §6 rollout | {fe_eng} | M | ✅ Done |
 | H3 | Fix **BUG-02** unguarded storage write | Uncaught exception path (private mode) | {fe_eng} | S | ✅ Done |
-| H4 | Establish **deterministic test seed hook** (inject RNG + state getters for tests) | Prerequisite for automating P0 gameplay cases | {fe_eng} | M | ⬜ Next |
+| H4 | Establish **deterministic test seed hook** (seedable RNG + state getters + spawn helpers, gated by `?test=1`) | Prerequisite for automating P0 gameplay cases | {fe_eng} | M | ✅ Done (`window.NeonDashTest`) |
 
-> Also completed early from Sprint 1: **S1** reduced-motion (BUG-01), **S2** audio-unlock (BUG-03), **S3** visibility auto-pause (BUG-04). Remaining hotfix **H4** (test hooks) is the gateway to automating the P0 suite (S4).
+> Also completed early from Sprint 1: **S1** reduced-motion (BUG-01), **S2** audio-unlock (BUG-03), **S3** visibility auto-pause (BUG-04).
+
+**Test infrastructure now in place (S4/S5):**
+- Pure logic extracted to `engine.js` (collision, score, seedable PRNG, color lerp).
+- **Unit tests** (`tests/unit/*.test.mjs`, Node's built-in runner — zero deps): **8 passing** covering engine + analytics/error capture. Run: `npm run test:unit`.
+- **E2E suite** (`tests/e2e/*.spec.js`, Playwright, mobile + desktop projects): **20 tests** covering ND-ON-01, ND-NAV-01/02, ND-CORE-01/02/03/05/06, ND-DATA-01/02/03, ND-OFF-01. Run: `npm run test:e2e`.
+- **CI** (`.github/workflows/ci.yml`) runs both on every push/PR. *(E2E browser download is blocked in the authoring sandbox; it runs on GitHub-hosted runners.)*
 
 ### 3.2 SHORT-TERM — Sprint 1
 | # | Item | Owner | Effort |
