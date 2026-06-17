@@ -991,9 +991,12 @@
   const lerpColor = NeonEngine.lerpColor;
   // Smoothly cycle themes; one full theme roughly every 250 score.
   function currentTheme() {
-    const prog = score / 250;
-    const i = Math.floor(prog) % THEMES.length;
-    const j = (i + 1) % THEMES.length;
+    const n = THEMES.length;
+    // Guard against a non-finite score producing an out-of-range index.
+    const prog = (Number.isFinite(score) ? score : 0) / 250;
+    let i = Math.floor(prog) % n;
+    if (i < 0) i += n;
+    const j = (i + 1) % n;
     const t = prog - Math.floor(prog);
     const a = THEMES[i], b = THEMES[j];
     return {

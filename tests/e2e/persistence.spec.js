@@ -40,10 +40,12 @@ test("ND-REG-01: production load + start works with no uncaught errors (unseeded
   // must fall back to Math.random() and start cleanly. pageerror is wired
   // before navigation so an init-time RangeError would be caught.
   const errors = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("pageerror", (e) => errors.push(e.stack || String(e)));
   await page.goto("/index.html?test=1");
   await page.waitForFunction(() => !!window.NeonDashTest);
-  await page.evaluate(() => window.NeonDashTest.start()); // deliberately not seeded
+  // Not seeded (exercise the Math.random() fallback); step() advances the sim
+  // deterministically so this doesn't depend on rAF/visibility timing.
+  await page.evaluate(() => { window.NeonDashTest.start(); window.NeonDashTest.step(8); });
   expect((await page.evaluate(() => window.NeonDashTest.getState())).state).toBe("playing");
   expect(errors).toEqual([]);
 });
