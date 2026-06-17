@@ -1048,6 +1048,8 @@
       const chip = document.createElement("button");
       chip.className = "skin-chip" + (isSel ? " selected" : "") + (isOwned ? "" : " locked");
       chip.type = "button";
+      chip.setAttribute("aria-label",
+        s.name + " skin" + (isOwned ? (isSel ? ", active" : ", owned") : ", costs " + s.cost + " gems"));
 
       const sw = document.createElement("div");
       sw.className = "swatch";
