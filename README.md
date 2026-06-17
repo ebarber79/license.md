@@ -16,15 +16,21 @@ No frameworks, no build step, no install — just open it in any mobile or deskt
 ## Goal
 
 Run as far as you can. Dodge the red **spikes** and pink **bars**, and grab the
-golden **gems** along the way. Snag a green **shield** 🛡️ to survive one hit.
-The longer you survive, the faster it gets. Your best score is saved locally
-on your device.
+golden **gems** along the way. Grab floating power-ups — a 🛡️ **shield** to
+survive one hit, a 🧲 **magnet** to vacuum up gems, or a ⏱️ **slow-mo** to ease
+through tight spots. The longer you survive, the faster it gets, and the world
+shifts through new color themes. Your best score is saved locally on your device.
 
 ## Features
 
 - Smooth, frame-rate-independent physics with gravity + double jump
 - Procedurally spawned obstacles and collectible gem arcs
-- **Shield power-ups** that absorb one hit (with a flashing expiry warning)
+- **Three power-ups**, each with its own aura, icon, and expiry warning:
+  - 🛡️ **Shield** (green) — absorbs one hit
+  - 🧲 **Magnet** (yellow) — pulls nearby gems toward you
+  - ⏱️ **Slow-mo** (blue) — slows the world so obstacles are easier to read
+- **Dynamic theme shifts** — the sky, hills, and neon accents smoothly cycle
+  through five color palettes as your score climbs
 - **Synthesized sound effects** (WebAudio — no audio files) with a mute toggle
 - **Installable PWA** with offline support — add to your home screen and play
   without a connection

@@ -79,7 +79,21 @@
   const MAX_SPEED = 900;
   const SPEED_RAMP = 11;       // px/s gained per second
   const SHIELD_DURATION = 7;   // seconds of protection per shield pickup
+  const MAGNET_DURATION = 6;   // seconds gems are pulled toward the player
+  const SLOWMO_DURATION = 5;   // seconds of slow-motion
+  const SLOWMO_FACTOR = 0.5;   // world speed multiplier during slow-mo
+  const MAGNET_RANGE = 230;    // px radius the magnet attracts gems within
   const HIGH_SCORE_KEY = "neondash.best";
+
+  // Background themes the world cycles through as the score climbs.
+  // Each: [skyTop, skyBottom, accent (ground/grid), hill color].
+  const THEMES = [
+    { top: "#1a1a3e", bot: "#3d1f5e", accent: "#00f5ff", hill: "#502878" }, // twilight
+    { top: "#2e1a3e", bot: "#5e1f3d", accent: "#ff5ec7", hill: "#78284f" }, // dusk
+    { top: "#0d2340", bot: "#1f4e5e", accent: "#00ffb4", hill: "#1f5e55" }, // deep sea
+    { top: "#3e2a1a", bot: "#5e3a1f", accent: "#ffb347", hill: "#785028" }, // sunset
+    { top: "#0d0d1a", bot: "#1a1a3e", accent: "#9d6cff", hill: "#3a2878" }, // midnight
+  ];
 
   // ---- Runtime sizing ----
   let W = 0, H = 0, groundY = 0, dpr = 1;
@@ -104,7 +118,9 @@
 
   let player, obstacles, gems, particles, stars, hills, powerups;
   let speed, distance, score, coinCount, spawnTimer, gemTimer, powerTimer;
-  let shieldTime = 0; // seconds of shield remaining
+  let shieldTime = 0;  // seconds of shield remaining
+  let magnetTime = 0;  // seconds of gem-magnet remaining
+  let slowTime = 0;    // seconds of slow-motion remaining
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
@@ -162,6 +178,8 @@
     gemTimer = 1.4;
     powerTimer = 7 + Math.random() * 4;
     shieldTime = 0;
+    magnetTime = 0;
+    slowTime = 0;
     shake = 0;
     bgScroll = 0;
   }
@@ -269,15 +287,26 @@
     }
   }
 
+  const POWER_TYPES = ["shield", "magnet", "slowmo"];
   function spawnPowerup() {
     powerups.push({
-      type: "shield",
+      type: POWER_TYPES[Math.floor(Math.random() * POWER_TYPES.length)],
       x: W + 50,
       y: groundY - 90 - Math.random() * 100,
       r: 16,
       bob: Math.random() * Math.PI * 2,
       spin: 0,
     });
+  }
+
+  const POWER_COLORS = { shield: "0,255,180", magnet: "255,216,77", slowmo: "120,180,255" };
+
+  function applyPowerup(type) {
+    if (type === "shield") shieldTime = SHIELD_DURATION;
+    else if (type === "magnet") magnetTime = MAGNET_DURATION;
+    else if (type === "slowmo") slowTime = SLOWMO_DURATION;
+    audio.power();
+    spawnRingBurst(POWER_COLORS[type] || "0,255,180");
   }
 
   // ---- Particles ----
@@ -327,7 +356,7 @@
     }
   }
 
-  function spawnShieldBurst() {
+  function spawnRingBurst(color) {
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * Math.PI * 2;
       const sp = 180;
@@ -338,7 +367,7 @@
         vy: Math.sin(a) * sp,
         life: 0.5,
         max: 0.5,
-        color: "0,255,180",
+        color,
         r: Math.random() * 3 + 1.5,
       });
     }
@@ -353,10 +382,13 @@
   function update(dt) {
     // Difficulty ramp
     speed = Math.min(MAX_SPEED, speed + SPEED_RAMP * dt);
-    distance += speed * dt;
+    // Slow-mo scales how fast the world moves toward the player.
+    const worldSpeed = speed * (slowTime > 0 ? SLOWMO_FACTOR : 1);
+    distance += worldSpeed * dt;
     score = Math.floor(distance / 10);
     scoreEl.textContent = score;
-    bgScroll += speed * dt;
+    bgScroll += worldSpeed * dt;
+    theme = currentTheme();
 
     // Player physics
     player.vy += GRAVITY * dt;
@@ -393,14 +425,16 @@
       spawnPowerup();
       powerTimer = 12 + Math.random() * 8;
     }
-    // Countdown active shield
+    // Countdown active power-ups
     if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
+    if (magnetTime > 0) magnetTime = Math.max(0, magnetTime - dt);
+    if (slowTime > 0) slowTime = Math.max(0, slowTime - dt);
 
     // Move + test obstacles
     const px = player.x, py = player.y, ps = player.size;
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const o = obstacles[i];
-      o.x -= speed * dt;
+      o.x -= worldSpeed * dt;
       if (o.x + o.w < -10) { obstacles.splice(i, 1); continue; }
 
       let hit = false;
@@ -416,7 +450,7 @@
           shieldTime = 0;
           shake = 10;
           audio.shieldBreak();
-          spawnShieldBurst();
+          spawnRingBurst("0,255,180");
           obstacles.splice(i, 1);
         } else {
           return crash();
@@ -427,23 +461,33 @@
     // Move + collect power-ups
     for (let i = powerups.length - 1; i >= 0; i--) {
       const pu = powerups[i];
-      pu.x -= speed * dt;
+      pu.x -= worldSpeed * dt;
       pu.bob += dt * 4;
       pu.spin += dt * 3;
       if (pu.x + pu.r < -10) { powerups.splice(i, 1); continue; }
       if (hits(px, py, ps, ps, pu.x - pu.r, pu.y - pu.r, pu.r * 2, pu.r * 2)) {
-        shieldTime = SHIELD_DURATION;
-        audio.power();
-        spawnShieldBurst();
+        applyPowerup(pu.type);
         powerups.splice(i, 1);
       }
     }
 
     // Move + collect gems
+    const pcx = px + ps / 2, pcy = py + ps / 2;
     for (let i = gems.length - 1; i >= 0; i--) {
       const g = gems[i];
-      g.x -= speed * dt;
+      g.x -= worldSpeed * dt;
       g.bob += dt * 4;
+      // Magnet: pull nearby gems toward the player.
+      if (magnetTime > 0) {
+        const dx = pcx - g.x, dy = pcy - g.y;
+        const dist2 = dx * dx + dy * dy;
+        if (dist2 < MAGNET_RANGE * MAGNET_RANGE) {
+          const d = Math.sqrt(dist2) || 1;
+          const pull = 520 * dt;
+          g.x += (dx / d) * pull;
+          g.y += (dy / d) * pull;
+        }
+      }
       if (g.x + g.r < -10) { gems.splice(i, 1); continue; }
       if (!g.got && hits(px, py, ps, ps, g.x - g.r, g.y - g.r, g.r * 2, g.r * 2)) {
         g.got = true;
@@ -487,6 +531,13 @@
   }
 
   function drawSky() {
+    // Themed gradient backdrop (drawn in-canvas so it can shift over time).
+    const grad = ctx.createLinearGradient(0, 0, 0, groundY);
+    grad.addColorStop(0, theme.top);
+    grad.addColorStop(1, theme.bot);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, groundY);
+
     // Stars
     for (const s of stars) {
       const alpha = 0.4 + Math.sin(s.tw) * 0.35;
@@ -500,7 +551,8 @@
 
     // Distant hills (parallax slow)
     const hillScroll = (bgScroll * 0.2) % (W * 1.4);
-    ctx.fillStyle = "rgba(80, 40, 120, 0.5)";
+    ctx.fillStyle = theme.hill;
+    ctx.globalAlpha = 0.5;
     for (const hl of hills) {
       let hx = hl.x * W - hillScroll;
       if (hx < -W * 0.4) hx += W * 1.4;
@@ -513,6 +565,7 @@
       ctx.closePath();
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
   function drawGround() {
@@ -520,9 +573,9 @@
     ctx.fillStyle = "#14142e";
     ctx.fillRect(0, groundY, W, H - groundY);
     // Neon ground line
-    ctx.strokeStyle = "#00f5ff";
+    ctx.strokeStyle = theme.accent;
     ctx.lineWidth = 3;
-    ctx.shadowColor = "#00f5ff";
+    ctx.shadowColor = theme.accent;
     ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.moveTo(0, groundY);
@@ -531,7 +584,8 @@
     ctx.shadowBlur = 0;
 
     // Scrolling grid lines for motion feel
-    ctx.strokeStyle = "rgba(0, 245, 255, 0.18)";
+    ctx.strokeStyle = theme.accent;
+    ctx.globalAlpha = 0.18;
     ctx.lineWidth = 2;
     const spacing = 60;
     const off = bgScroll % spacing;
@@ -541,6 +595,7 @@
       ctx.lineTo(x - 40, H);
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
   }
 
   function drawPlayer() {
@@ -557,16 +612,20 @@
     const cx = player.x + player.size / 2;
     const cy = player.y + player.size / 2;
 
-    // Shield aura (flashes when about to expire)
-    if (shieldTime > 0) {
-      const flashing = shieldTime < 1.5 && Math.floor(shieldTime * 8) % 2 === 0;
+    // Power-up auras: one ring per active effect, stacked at different radii.
+    const auras = [];
+    if (shieldTime > 0) auras.push({ t: shieldTime, color: "#00ffb4", rad: 0.85 });
+    if (magnetTime > 0) auras.push({ t: magnetTime, color: "#ffd84d", rad: 1.02 });
+    if (slowTime > 0) auras.push({ t: slowTime, color: "#78b4ff", rad: 1.18 });
+    for (const a of auras) {
+      const flashing = a.t < 1.5 && Math.floor(a.t * 8) % 2 === 0;
       ctx.globalAlpha = flashing ? 0.3 : 0.7;
-      ctx.strokeStyle = "#00ffb4";
+      ctx.strokeStyle = a.color;
       ctx.lineWidth = 3;
-      ctx.shadowColor = "#00ffb4";
+      ctx.shadowColor = a.color;
       ctx.shadowBlur = 16;
       ctx.beginPath();
-      ctx.arc(cx, cy, player.size * 0.85, 0, Math.PI * 2);
+      ctx.arc(cx, cy, player.size * a.rad, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
@@ -637,31 +696,56 @@
     ctx.shadowBlur = 0;
   }
 
+  const POWER_HEX = { shield: "#00ffb4", magnet: "#ffd84d", slowmo: "#78b4ff" };
   function drawPowerups() {
     for (const pu of powerups) {
       const yy = pu.y + Math.sin(pu.bob) * 5;
+      const col = POWER_HEX[pu.type] || "#00ffb4";
+      const r = pu.r;
       ctx.save();
       ctx.translate(pu.x, yy);
-      ctx.shadowColor = "#00ffb4";
+      ctx.shadowColor = col;
       ctx.shadowBlur = 18;
       // Outer ring
-      ctx.strokeStyle = "#00ffb4";
+      ctx.strokeStyle = col;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(0, 0, pu.r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.stroke();
-      // Inner shield glyph
       ctx.rotate(pu.spin);
-      ctx.fillStyle = "rgba(0, 255, 180, 0.85)";
-      ctx.beginPath();
-      ctx.moveTo(0, -pu.r * 0.55);
-      ctx.lineTo(pu.r * 0.5, -pu.r * 0.15);
-      ctx.lineTo(pu.r * 0.5, pu.r * 0.25);
-      ctx.lineTo(0, pu.r * 0.6);
-      ctx.lineTo(-pu.r * 0.5, pu.r * 0.25);
-      ctx.lineTo(-pu.r * 0.5, -pu.r * 0.15);
-      ctx.closePath();
-      ctx.fill();
+      ctx.fillStyle = col;
+      ctx.strokeStyle = col;
+
+      if (pu.type === "shield") {
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.55);
+        ctx.lineTo(r * 0.5, -r * 0.15);
+        ctx.lineTo(r * 0.5, r * 0.25);
+        ctx.lineTo(0, r * 0.6);
+        ctx.lineTo(-r * 0.5, r * 0.25);
+        ctx.lineTo(-r * 0.5, -r * 0.15);
+        ctx.closePath();
+        ctx.fill();
+      } else if (pu.type === "magnet") {
+        // Horseshoe magnet: a thick C with two prongs.
+        ctx.lineWidth = r * 0.32;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.45, Math.PI * 0.85, Math.PI * 0.15, false);
+        ctx.stroke();
+        ctx.fillRect(r * 0.3, -r * 0.05, r * 0.28, r * 0.5);
+        ctx.fillRect(-r * 0.58, -r * 0.05, r * 0.28, r * 0.5);
+      } else { // slowmo — a clock
+        ctx.lineWidth = r * 0.12;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -r * 0.4);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(r * 0.3, 0);
+        ctx.stroke();
+      }
       ctx.restore();
     }
     ctx.shadowBlur = 0;
@@ -692,6 +776,20 @@
     if (state === STATE.PLAYING) drawPlayer();
     drawParticles();
     ctx.restore();
+
+    // Full-screen tints for time-based power-ups (drawn unshaken).
+    if (slowTime > 0) {
+      ctx.globalAlpha = 0.12 * Math.min(1, slowTime);
+      ctx.fillStyle = "#78b4ff";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+    if (magnetTime > 0) {
+      ctx.globalAlpha = 0.08 * Math.min(1, magnetTime);
+      ctx.fillStyle = "#ffd84d";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // ---- Main loop ----
@@ -725,6 +823,34 @@
     for (const s of stars) s.tw += dt * 2;
     if (shake > 0) shake = Math.max(0, shake - dt * 60);
   }
+
+  // ---- Theme interpolation ----
+  function hexToRgb(h) {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function lerpColor(a, b, t) {
+    const ca = hexToRgb(a), cb = hexToRgb(b);
+    const r = Math.round(ca[0] + (cb[0] - ca[0]) * t);
+    const g = Math.round(ca[1] + (cb[1] - ca[1]) * t);
+    const bl = Math.round(ca[2] + (cb[2] - ca[2]) * t);
+    return `rgb(${r},${g},${bl})`;
+  }
+  // Smoothly cycle themes; one full theme roughly every 250 score.
+  function currentTheme() {
+    const prog = score / 250;
+    const i = Math.floor(prog) % THEMES.length;
+    const j = (i + 1) % THEMES.length;
+    const t = prog - Math.floor(prog);
+    const a = THEMES[i], b = THEMES[j];
+    return {
+      top: lerpColor(a.top, b.top, t),
+      bot: lerpColor(a.bot, b.bot, t),
+      accent: lerpColor(a.accent, b.accent, t),
+      hill: lerpColor(a.hill, b.hill, t),
+    };
+  }
+  let theme = THEMES[0];
 
   // ---- Helpers ----
   function roundRect(c, x, y, w, h, r) {
