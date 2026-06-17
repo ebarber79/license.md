@@ -3,4 +3,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+.lighthouseci/
+_lhci_site/
 *.log
