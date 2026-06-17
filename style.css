@@ -97,6 +97,13 @@ html, body {
   transform: scale(0.9);
 }
 
+.icon-btn-left {
+  right: auto;
+  left: 16px;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
 /* ---------- Overlays ---------- */
 .overlay {
   position: absolute;
@@ -162,10 +169,120 @@ html, body {
 }
 
 .hint {
-  margin-top: 28px;
+  margin-top: 22px;
   font-size: 15px;
   opacity: 0.6;
   letter-spacing: 1px;
+}
+
+.btn-ghost {
+  margin-top: 16px;
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: none;
+}
+
+/* ---------- Shop ---------- */
+#shop {
+  margin-top: 26px;
+  width: min(360px, 86vw);
+}
+
+.shop-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  letter-spacing: 3px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.shop-head .bank {
+  color: #ffd84d;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 216, 77, 0.6);
+}
+
+#skin-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+
+#skin-row::-webkit-scrollbar { display: none; }
+
+.skin-chip {
+  flex: 0 0 auto;
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.2s ease;
+}
+
+.skin-chip:active { transform: scale(0.93); }
+
+.skin-chip.selected {
+  border-color: #00f5ff;
+  box-shadow: 0 0 14px rgba(0, 245, 255, 0.5);
+}
+
+.skin-chip.locked .swatch { opacity: 0.45; }
+
+.swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.skin-price {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.skin-price.owned { color: #00ffb4; }
+.skin-price.afford { color: #ffd84d; }
+.skin-price.cant { color: #ff6b8a; }
+
+/* ---------- QR ---------- */
+#qr-box {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#qr {
+  background: #fff;
+  padding: 8px;
+  border-radius: 10px;
+  line-height: 0;
+  box-shadow: 0 0 18px rgba(0, 245, 255, 0.35);
+}
+
+#qr svg, #qr img, #qr canvas, #qr table {
+  display: block;
+  width: 116px;
+  height: 116px;
+}
+
+.qr-cap {
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.6;
 }
 
 .gameover-title {

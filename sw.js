@@ -1,10 +1,11 @@
 /* Service worker — cache-first offline support for Neon Dash. */
-const CACHE = "neondash-v1";
+const CACHE = "neondash-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./game.js",
+  "./qrcode.js",
   "./manifest.json",
   "./icon.svg",
 ];

@@ -25,6 +25,14 @@
   const finalBestEl = document.getElementById("final-best");
   const newRecordEl = document.getElementById("new-record");
   const muteBtn = document.getElementById("mute-btn");
+  const pauseBtn = document.getElementById("pause-btn");
+  const pauseScreen = document.getElementById("pause-screen");
+  const resumeBtn = document.getElementById("resume-btn");
+  const quitBtn = document.getElementById("quit-btn");
+  const bankEl = document.getElementById("bank");
+  const skinRow = document.getElementById("skin-row");
+  const qrEl = document.getElementById("qr");
+  const menuBtn = document.getElementById("menu-btn");
 
   // ---- Audio (synthesized, no asset files) ----
   const audio = {
@@ -84,6 +92,19 @@
   const SLOWMO_FACTOR = 0.5;   // world speed multiplier during slow-mo
   const MAGNET_RANGE = 230;    // px radius the magnet attracts gems within
   const HIGH_SCORE_KEY = "neondash.best";
+  const BANK_KEY = "neondash.bank";
+  const OWNED_KEY = "neondash.skins";
+  const SKIN_KEY = "neondash.skin";
+
+  // Unlockable player skins. `rainbow` animates its hue at runtime.
+  const SKINS = [
+    { id: "cyan",    name: "Cyan",    cost: 0,   c0: "#7afcff", c1: "#0091ff", trail: "#00f5ff" },
+    { id: "magenta", name: "Magenta", cost: 60,  c0: "#ff9be0", c1: "#c01f8f", trail: "#ff5ec7" },
+    { id: "gold",    name: "Gold",    cost: 150, c0: "#fff0a0", c1: "#e0a020", trail: "#ffd84d" },
+    { id: "emerald", name: "Emerald", cost: 300, c0: "#9bffce", c1: "#1f9e6e", trail: "#00ffb4" },
+    { id: "ember",   name: "Ember",   cost: 500, c0: "#ffb37a", c1: "#d83a1f", trail: "#ff6b3a" },
+    { id: "rainbow", name: "Rainbow", cost: 900, rainbow: true, trail: "#ffffff" },
+  ];
 
   // Background themes the world cycles through as the score climbs.
   // Each: [skyTop, skyBottom, accent (ground/grid), hill color].
@@ -124,6 +145,12 @@
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
+  let paused = false;
+
+  // Progression state
+  let bank = parseInt(localStorage.getItem(BANK_KEY) || "0", 10) || 0;
+  let owned = loadOwned();
+  let selectedSkin = localStorage.getItem(SKIN_KEY) || "cyan";
 
   function loadBest() {
     const v = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || "0", 10);
@@ -131,6 +158,29 @@
   }
   function saveBest(v) {
     try { localStorage.setItem(HIGH_SCORE_KEY, String(v)); } catch (e) { /* ignore */ }
+  }
+  function loadOwned() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(OWNED_KEY) || "[]");
+      const set = new Set(Array.isArray(arr) ? arr : []);
+      set.add("cyan"); // default is always owned
+      return set;
+    } catch (e) { return new Set(["cyan"]); }
+  }
+  function persistProgress() {
+    try {
+      localStorage.setItem(BANK_KEY, String(bank));
+      localStorage.setItem(OWNED_KEY, JSON.stringify([...owned]));
+      localStorage.setItem(SKIN_KEY, selectedSkin);
+    } catch (e) { /* ignore */ }
+  }
+  function activeSkin() {
+    return SKINS.find((s) => s.id === selectedSkin) || SKINS[0];
+  }
+  function vibrate(ms) {
+    if (navigator.vibrate && !audio.muted) {
+      try { navigator.vibrate(ms); } catch (e) { /* ignore */ }
+    }
   }
 
   // ---- Background layers (built once, scroll independently) ----
@@ -186,7 +236,7 @@
 
   // ---- Input ----
   function jump() {
-    if (state !== STATE.PLAYING) return;
+    if (state !== STATE.PLAYING || paused) return;
     if (player.onGround) {
       player.vy = JUMP_VELOCITY;
       player.onGround = false;
@@ -218,30 +268,75 @@
 
   startBtn.addEventListener("click", () => startGame());
   restartBtn.addEventListener("click", () => startGame());
+  pauseBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
+  resumeBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
+  quitBtn.addEventListener("click", (e) => { e.stopPropagation(); quitToMenu(); });
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    state = STATE.MENU;
+    gameoverScreen.classList.add("hidden");
+    showMenu();
+  });
 
   function startGame() {
     resize();
     buildBackground();
     reset();
+    paused = false;
     state = STATE.PLAYING;
     startScreen.classList.add("hidden");
     gameoverScreen.classList.add("hidden");
+    pauseScreen.classList.add("hidden");
     hud.classList.remove("hidden");
+    pauseBtn.classList.remove("hidden");
     bestEl.textContent = best;
     updateMuteUI();
     lastTime = performance.now();
     requestAnimationFrame(loop);
   }
 
+  function togglePause() {
+    if (state !== STATE.PLAYING) return;
+    paused = !paused;
+    pauseScreen.classList.toggle("hidden", !paused);
+    pauseBtn.textContent = paused ? "▶" : "❚❚";
+    if (!paused) {
+      lastTime = performance.now(); // avoid a huge dt after resuming
+      requestAnimationFrame(loop);
+    }
+  }
+
+  function quitToMenu() {
+    paused = false;
+    bankCoins();
+    state = STATE.MENU;
+    pauseScreen.classList.add("hidden");
+    pauseBtn.classList.add("hidden");
+    hud.classList.add("hidden");
+    showMenu();
+  }
+
+  function bankCoins() {
+    if (coinCount > 0) {
+      bank += coinCount;
+      coinCount = 0;
+      persistProgress();
+    }
+  }
+
   function gameOver() {
     state = STATE.OVER;
+    vibrate([40, 30, 80]);
     const newRecord = score > best;
     if (newRecord) { best = score; saveBest(best); }
+    bank += coinCount;
+    persistProgress();
     finalScoreEl.textContent = score;
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
     newRecordEl.classList.toggle("hidden", !newRecord);
     hud.classList.add("hidden");
+    pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
   }
 
@@ -306,6 +401,7 @@
     else if (type === "magnet") magnetTime = MAGNET_DURATION;
     else if (type === "slowmo") slowTime = SLOWMO_DURATION;
     audio.power();
+    vibrate(35);
     spawnRingBurst(POWER_COLORS[type] || "0,255,180");
   }
 
@@ -450,6 +546,7 @@
           shieldTime = 0;
           shake = 10;
           audio.shieldBreak();
+          vibrate(60);
           spawnRingBurst("0,255,180");
           obstacles.splice(i, 1);
         } else {
@@ -599,12 +696,25 @@
   }
 
   function drawPlayer() {
+    const skin = activeSkin();
+    // Resolve skin colors (rainbow cycles its hue over time).
+    let c0, c1, glow, trailCol;
+    if (skin.rainbow) {
+      const hue = (bgScroll * 0.4) % 360;
+      c0 = `hsl(${hue}, 100%, 70%)`;
+      c1 = `hsl(${(hue + 60) % 360}, 100%, 50%)`;
+      glow = `hsl(${hue}, 100%, 60%)`;
+      trailCol = c0;
+    } else {
+      c0 = skin.c0; c1 = skin.c1; glow = skin.c1; trailCol = skin.trail;
+    }
+
     // Trail
     for (let i = player.trail.length - 1; i >= 0; i--) {
       const t = player.trail[i];
       const a = (1 - i / player.trail.length) * 0.25;
       ctx.globalAlpha = a;
-      ctx.fillStyle = "#00f5ff";
+      ctx.fillStyle = trailCol;
       ctx.fillRect(t.x, t.y, player.size, player.size);
     }
     ctx.globalAlpha = 1;
@@ -634,13 +744,13 @@
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(player.rot);
-    ctx.shadowColor = "#00f5ff";
+    ctx.shadowColor = glow;
     ctx.shadowBlur = 18;
     // Body
     const s = player.size;
     const grad = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
-    grad.addColorStop(0, "#7afcff");
-    grad.addColorStop(1, "#0091ff");
+    grad.addColorStop(0, c0);
+    grad.addColorStop(1, c1);
     ctx.fillStyle = grad;
     roundRect(ctx, -s / 2, -s / 2, s, s, 8);
     ctx.fill();
@@ -799,6 +909,7 @@
     if (dt > 0.05) dt = 0.05; // clamp after tab-switch / hiccups
 
     if (state === STATE.PLAYING) {
+      if (paused) return; // frozen until resume re-arms the loop
       update(dt);
       render();
       requestAnimationFrame(loop);
@@ -863,16 +974,8 @@
     c.closePath();
   }
 
-  // ---- Boot ----
-  function init() {
-    resize();
-    buildBackground();
-    best = loadBest();
-    startBestEl.textContent = best;
-    bestEl.textContent = best;
-    updateMuteUI();
-    drawStaticBackdrop();
-    // Gentle idle animation on the menu backdrop.
+  // Gentle idle animation on the menu backdrop.
+  function startIdle() {
     (function idle() {
       if (state === STATE.MENU) {
         bgScroll += 0.5;
@@ -881,6 +984,96 @@
         requestAnimationFrame(idle);
       }
     })();
+  }
+
+  // ---- Shop / skins UI ----
+  function skinSwatchStyle(s) {
+    if (s.rainbow) {
+      return "background: linear-gradient(135deg, #ff5ec7, #ffd84d, #00ffb4, #00f5ff);";
+    }
+    return `background: linear-gradient(135deg, ${s.c0}, ${s.c1});`;
+  }
+
+  function renderShop() {
+    bankEl.textContent = bank;
+    skinRow.innerHTML = "";
+    for (const s of SKINS) {
+      const isOwned = owned.has(s.id);
+      const isSel = s.id === selectedSkin;
+      const chip = document.createElement("button");
+      chip.className = "skin-chip" + (isSel ? " selected" : "") + (isOwned ? "" : " locked");
+      chip.type = "button";
+
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.setAttribute("style", skinSwatchStyle(s));
+
+      const price = document.createElement("span");
+      price.className = "skin-price";
+      if (isOwned) { price.textContent = isSel ? "ACTIVE" : "OWNED"; price.classList.add("owned"); }
+      else if (bank >= s.cost) { price.textContent = "◆ " + s.cost; price.classList.add("afford"); }
+      else { price.textContent = "◆ " + s.cost; price.classList.add("cant"); }
+
+      chip.appendChild(sw);
+      chip.appendChild(price);
+      chip.addEventListener("click", (e) => { e.stopPropagation(); onSkinClick(s); });
+      skinRow.appendChild(chip);
+    }
+  }
+
+  function onSkinClick(s) {
+    if (owned.has(s.id)) {
+      selectedSkin = s.id;
+      audio.coin();
+    } else if (bank >= s.cost) {
+      bank -= s.cost;
+      owned.add(s.id);
+      selectedSkin = s.id;
+      audio.power();
+      vibrate(30);
+    } else {
+      // Can't afford: gentle nudge.
+      audio.shieldBreak();
+      return;
+    }
+    persistProgress();
+    renderShop();
+  }
+
+  // ---- QR code: encodes the live URL so a phone can scan to play ----
+  function renderQR() {
+    if (!qrEl || typeof qrcode === "undefined") return;
+    try {
+      const url = location.href;
+      const qr = qrcode(0, "M"); // type 0 = auto-fit, error-correction M
+      qr.addData(url);
+      qr.make();
+      qrEl.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    } catch (e) {
+      qrEl.parentElement && qrEl.parentElement.classList.add("hidden");
+    }
+  }
+
+  function showMenu() {
+    startScreen.classList.remove("hidden");
+    startBestEl.textContent = best;
+    renderShop();
+    drawStaticBackdrop();
+    startIdle();
+  }
+
+  // ---- Boot ----
+  function init() {
+    resize();
+    buildBackground();
+    best = loadBest();
+    startBestEl.textContent = best;
+    bestEl.textContent = best;
+    updateMuteUI();
+    renderShop();
+    renderQR();
+    drawStaticBackdrop();
+    startIdle();
   }
 
   init();

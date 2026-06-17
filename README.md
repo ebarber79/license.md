@@ -31,6 +31,12 @@ shifts through new color themes. Your best score is saved locally on your device
   - ⏱️ **Slow-mo** (blue) — slows the world so obstacles are easier to read
 - **Dynamic theme shifts** — the sky, hills, and neon accents smoothly cycle
   through five color palettes as your score climbs
+- **Gem shop with unlockable skins** — gems banked across runs are spent on six
+  player skins (including an animated rainbow), with your choice saved
+- **Pause button** and a pause menu (resume / quit to menu)
+- **Haptic feedback** on supported phones (jump-free events: crashes, pickups)
+- **Scan-to-play QR code** on the start screen that encodes the live page URL —
+  open it on desktop, scan with your phone, and play instantly
 - **Synthesized sound effects** (WebAudio — no audio files) with a mute toggle
 - **Installable PWA** with offline support — add to your home screen and play
   without a connection
@@ -51,7 +57,9 @@ and works offline thanks to the service worker (`sw.js`).
 |------|---------|
 | `index.html` | Markup, HUD, and start / game-over overlays |
 | `style.css`  | Neon theme, responsive layout, safe-area handling |
-| `game.js`    | Game loop, physics, spawning, collision, rendering |
+| `game.js`    | Game loop, physics, spawning, collision, rendering, shop, QR |
+| `qrcode.js`  | Vendored QR encoder ([qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), MIT) |
+| `manifest.json` / `sw.js` / `icon.svg` | PWA manifest, offline service worker, app icon |
 
 ## Tuning
 
