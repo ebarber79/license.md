@@ -1120,6 +1120,13 @@
       pause() { if (!paused) togglePause(); },
       resume() { if (paused) togglePause(); },
       clearObstacles() { obstacles.length = 0; },
+      // Advance the simulation deterministically, independent of rAF /
+      // page visibility (which are throttled for backgrounded test pages).
+      step(n, dt) {
+        const frames = n || 1;
+        const d = dt || 1 / 60;
+        for (let i = 0; i < frames && state === STATE.PLAYING; i++) update(d);
+      },
       spawnSpikeAhead() {
         obstacles.push({ type: "spikes", x: player.x, w: 60, h: 34, count: 2, spikeW: 26 });
       },

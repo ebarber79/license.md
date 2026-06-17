@@ -40,30 +40,32 @@ test("ND-CORE-01/02: single + double jump, capped at two", async ({ page }) => {
 });
 
 test("ND-CORE-03: spike collision ends the run", async ({ page }) => {
+  // Drive the sim deterministically via step() (rAF is throttled for
+  // backgrounded parallel test pages, which otherwise flakes this test).
   await page.evaluate(() => {
     const t = window.NeonDashTest;
-    t.start(); t.clearObstacles(); t.spawnSpikeAhead();
+    t.start(); t.clearObstacles(); t.spawnSpikeAhead(); t.step(10);
   });
-  await expect.poll(async () => (await state(page)).state, { timeout: 4000 }).toBe("over");
+  expect((await state(page)).state).toBe("over");
   await expect(page.locator("#gameover-screen")).toBeVisible();
 });
 
 test("ND-CORE-06: shield absorbs one hit (survive)", async ({ page }) => {
   await page.evaluate(() => {
     const t = window.NeonDashTest;
-    t.start(); t.clearObstacles(); t.giveShield(); t.spawnSpikeAhead();
+    t.start(); t.clearObstacles(); t.giveShield(); t.spawnSpikeAhead(); t.step(10);
   });
-  // Shield should be consumed but the run continues.
-  await expect.poll(async () => (await state(page)).shieldTime).toBe(0);
-  expect((await state(page)).state).toBe("playing");
+  const s = await state(page);
+  expect(s.shieldTime).toBe(0); // shield consumed
+  expect(s.state).toBe("playing"); // but the run continues
 });
 
 test("ND-CORE-05: gem collection increments count", async ({ page }) => {
   await page.evaluate(() => {
     const t = window.NeonDashTest;
-    t.start(); t.clearObstacles(); t.addGemAhead();
+    t.start(); t.clearObstacles(); t.addGemAhead(); t.step(3);
   });
-  await expect.poll(async () => (await state(page)).coins).toBeGreaterThan(0);
+  expect((await state(page)).coins).toBeGreaterThan(0);
 });
 
 test("ND-NAV-02: pause freezes, resume continues", async ({ page }) => {
