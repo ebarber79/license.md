@@ -1,0 +1,16 @@
+{
+  "name": "neon-dash",
+  "version": "1.0.0",
+  "description": "Neon Dash — HTML5 Canvas endless runner (PWA)",
+  "private": true,
+  "scripts": {
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "serve": "python3 -m http.server 8000",
+    "test": "npm run test:unit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}
