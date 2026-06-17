@@ -10,6 +10,11 @@
  * To wire a real sink later, set before this script loads:
  *   window.NEONDASH_ANALYTICS_URL = "https://your-collector/ingest";
  *   window.NEONDASH_BUILD = "2026-06-17.1";
+ *
+ * NOTE: the page ships a strict CSP with `connect-src 'self'`. If you point
+ * NEONDASH_ANALYTICS_URL at a cross-origin collector, add that origin to the
+ * `connect-src` directive in index.html (or proxy beacons through a
+ * same-origin endpoint), otherwise the browser will block sendBeacon().
  * ========================================================================= */
 
 (function (global) {

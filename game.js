@@ -281,8 +281,9 @@
   }
 
   function onPress(e) {
-    // Don't hijack taps on UI buttons.
-    if (e.target.closest(".btn") || e.target.closest(".icon-btn")) return;
+    // Don't hijack taps/keys on any UI button (PLAY, mute, pause, shop chips,
+    // ...) — let their native click / Space-Enter activation through.
+    if (e.target.closest("button")) return;
     audio.ensure(); // unlock WebAudio on first user gesture
     if (e.type === "keydown") {
       if (e.code !== "Space" && e.code !== "ArrowUp" && e.key !== "w") return;
