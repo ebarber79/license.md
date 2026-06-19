@@ -15,7 +15,12 @@ rewarded "double gems" surface are wired through a portal-agnostic adapter
 |---------|-------|-----------------------|-----------------|
 | `gameplayStart` / `gameplayStop` | `startGame()` / `gameOver()` | no-op (logs with `?debug=1`) | tells the portal when a run is active (required by most) |
 | Interstitial (commercial break) | every 3rd **Play Again** | resolves instantly | shows a full-screen ad between runs |
-| Rewarded video | **🎬 Double Gems** button on game-over | auto-grants (so UX is testable) | shows a rewarded ad; gems double only if watched |
+| Rewarded — **Revive** (highest ROI) | **▶ Continue** button on game-over (once/run) | auto-grants | shows a rewarded ad; continues the run only if watched |
+| Rewarded — **Double Gems** | **🎬 Double Gems** button on game-over | auto-grants (so UX is testable) | shows a rewarded ad; gems double only if watched |
+
+> Gems are banked once per run by `bankRun()` (on Play Again / Menu / Quit /
+> tab-hide), applying the double multiplier — never on game-over — so a Revive
+> can continue the same run without double-counting.
 
 All of it goes through `window.NeonAds` (see `ads.js`). The reward grants are
 analytics-tracked (`reward_granted`) and covered by tests (`ads.test.mjs`,
