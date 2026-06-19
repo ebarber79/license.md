@@ -183,6 +183,19 @@ html, body {
   box-shadow: none;
 }
 
+.btn-reward {
+  background: linear-gradient(135deg, #ffd84d, #ff9d2e);
+  color: #2a1a00;
+  box-shadow: 0 0 24px rgba(255, 216, 77, 0.6);
+  margin-bottom: 14px;
+}
+
+.btn-reward:disabled {
+  opacity: 0.5;
+  filter: grayscale(0.4);
+  box-shadow: none;
+}
+
 /* ---------- Shop ---------- */
 #shop {
   margin-top: 26px;
@@ -332,6 +345,92 @@ html, body {
 .hidden {
   display: none !important;
 }
+
+/* ---------- Reward toast ---------- */
+.toast {
+  position: absolute;
+  top: max(70px, calc(env(safe-area-inset-top) + 60px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  max-width: 86vw;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(13, 13, 26, 0.92);
+  border: 1px solid rgba(255, 216, 77, 0.6);
+  color: #ffe9a8;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 20px rgba(255, 216, 77, 0.35);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: pre-line;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(6px);
+}
+
+/* ---------- Progress panel (streak / daily / missions) ---------- */
+#progress-panel {
+  margin-top: 22px;
+  width: min(360px, 86vw);
+  text-align: left;
+}
+
+.streak-badge {
+  font-size: 15px;
+  font-weight: bold;
+  color: #ffb347;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.5);
+}
+
+.prog-row {
+  font-size: 12.5px;
+  letter-spacing: 0.3px;
+  margin: 6px 0;
+  opacity: 0.92;
+}
+
+.prog-row.done { color: #00ffb4; }
+
+.prog-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.prog-head .reward { color: #ffd84d; }
+
+.prog-bar {
+  position: relative;
+  height: 5px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.prog-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #00f5ff, #00ffb4);
+  border-radius: 3px;
+}
+
+#missions {
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+}
+
+#missions .prog-label { font-size: 11px; letter-spacing: 2px; opacity: 0.55; }
 
 /* ---------- Reduced motion (BUG-01 / ND-A11Y-01) ---------- */
 @media (prefers-reduced-motion: reduce) {

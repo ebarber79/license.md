@@ -71,6 +71,65 @@ test("ND-CORE-05: gem collection increments count", async ({ page }) => {
   expect((await state(page)).coins).toBeGreaterThan(0);
 });
 
+test("ND-ADS-01: rewarded 'double gems' doubles the run's gems when banked", async ({ page }) => {
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start(); t.clearObstacles(); t.addGemAhead(); t.step(3); // collect >=1 gem
+  });
+  const before = await state(page);
+  expect(before.coins).toBeGreaterThan(0);
+  const bankBefore = before.bank;
+  // End the run — gems are NOT banked yet (so a revive could continue).
+  await page.evaluate(() => { const t = window.NeonDashTest; t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
+  const over = await state(page);
+  expect(over.state).toBe("over");
+  expect(over.bank).toBe(bankBefore); // not banked on game over
+  // Claim the rewarded double (stub auto-grants) -> multiplier 2, still not banked.
+  await page.evaluate(() => window.NeonDashTest.doubleGems());
+  expect((await state(page)).gemMultiplier).toBe(2);
+  // Leaving the run (new game) banks the prior run at 2x.
+  await page.evaluate(() => window.NeonDashTest.start());
+  expect((await state(page)).bank).toBe(bankBefore + before.coins * 2);
+});
+
+test("ND-ADS-02: rewarded revive continues the same run once", async ({ page }) => {
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start(); t.clearObstacles(); t.addGemAhead(); t.step(3);
+  });
+  const mid = await state(page);
+  expect(mid.coins).toBeGreaterThan(0);
+  await page.evaluate(() => { const t = window.NeonDashTest; t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
+  expect((await state(page)).state).toBe("over");
+  await page.evaluate(() => window.NeonDashTest.revive()); // stub auto-grants
+  const after = await state(page);
+  expect(after.state).toBe("playing");   // same run continues
+  expect(after.reviveUsed).toBe(true);
+  expect(after.obstacles).toBe(0);        // threats cleared
+  expect(after.coins).toBe(mid.coins);    // gems preserved
+  expect(after.shieldTime).toBeGreaterThan(0); // grace shield
+});
+
+test("ND-ADS-03: double-gems stays claimed across a revive", async ({ page }) => {
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start(); t.clearObstacles(); t.addGemAhead(); t.step(3);
+    t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); // die
+  });
+  expect((await state(page)).state).toBe("over");
+  await page.evaluate(() => window.NeonDashTest.doubleGems()); // multiplier 2
+  await page.evaluate(() => window.NeonDashTest.revive());     // continue same run
+  expect((await state(page)).reviveUsed).toBe(true);
+  // Die again on the revived run (clear the revive grace shield first so the
+  // spike is lethal).
+  await page.evaluate(() => { const t = window.NeonDashTest; t.giveShield(0); t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
+  const s = await state(page);
+  expect(s.state).toBe("over");
+  expect(s.gemMultiplier).toBe(2);     // still doubled, not reset
+  expect(s.doubleClaimed).toBe(true);  // not re-offered
+  await expect(page.locator("#double-gems-btn")).toBeHidden(); // button hidden, no wasted ad
+});
+
 test("ND-NAV-02: pause freezes, resume continues", async ({ page }) => {
   await page.evaluate(() => { window.NeonDashTest.start(); window.NeonDashTest.clearObstacles(); });
   await page.evaluate(() => window.NeonDashTest.pause());

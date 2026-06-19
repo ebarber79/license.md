@@ -33,6 +33,31 @@
   const skinRow = document.getElementById("skin-row");
   const qrEl = document.getElementById("qr");
   const menuBtn = document.getElementById("menu-btn");
+  const doubleGemsBtn = document.getElementById("double-gems-btn");
+  const reviveBtn = document.getElementById("revive-btn");
+  const toastEl = document.getElementById("toast");
+  const streakEl = document.getElementById("streak");
+  const dailyRowEl = document.getElementById("daily-row");
+  const missionsEl = document.getElementById("missions");
+
+  // ---- Retention progress (streak / daily / missions); stub-safe ----
+  const progress = window.NeonProgress || {
+    startDay() { return { isNewDay: false, streak: 0, reward: 0 }; },
+    recordRun() { return { rewards: 0, completed: [] }; },
+    summary() { return { streak: 0, daily: { progress: 0, target: 0, done: false }, missions: [] }; },
+  };
+  let powerupsUsedRun = 0;
+  let runPending = false;
+
+  // ---- Ads / monetization (portal-agnostic; stub by default) ----
+  const ads = window.NeonAds || {
+    init() {}, gameplayStart() {}, gameplayStop() {},
+    commercialBreak() { return Promise.resolve(); },
+    rewarded() { return Promise.resolve(false); },
+    available: false,
+  };
+  ads.init();
+  let runCount = 0;
 
   // ---- Deterministic RNG (seedable for tests; Math.random in production) ----
   let rng = null;
@@ -170,6 +195,9 @@
   let shieldTime = 0;  // seconds of shield remaining
   let magnetTime = 0;  // seconds of gem-magnet remaining
   let slowTime = 0;    // seconds of slow-motion remaining
+  let gemMultiplier = 1; // 2 after a rewarded "double gems"
+  let reviveUsed = false; // a run gets at most one rewarded revive
+  let doubleClaimed = false; // double-gems claimed this run (persists across Revive)
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
@@ -253,6 +281,10 @@
     distance = 0;
     score = 0;
     coinCount = 0;
+    gemMultiplier = 1;
+    reviveUsed = false;
+    doubleClaimed = false;
+    powerupsUsedRun = 0;
     spawnTimer = 0.8;
     gemTimer = 1.4;
     powerTimer = 7 + rnd() * 4;
@@ -297,19 +329,53 @@
   window.addEventListener("keydown", onPress, { passive: false });
 
   startBtn.addEventListener("click", () => startGame());
-  restartBtn.addEventListener("click", () => startGame());
+  // Portal interstitial at a natural break — every 3rd replay, not every run.
+  restartBtn.addEventListener("click", () => {
+    if (runCount > 0 && runCount % 3 === 0) {
+      ads.commercialBreak().catch(() => {}).then(() => startGame());
+    } else {
+      startGame();
+    }
+  });
+  doubleGemsBtn.addEventListener("click", (e) => { e.stopPropagation(); claimDoubleGems(); });
   pauseBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
   resumeBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
   quitBtn.addEventListener("click", (e) => { e.stopPropagation(); quitToMenu(); });
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
+    bankRun();
     state = STATE.MENU;
     gameoverScreen.classList.add("hidden");
     showMenu();
   });
+  reviveBtn.addEventListener("click", (e) => { e.stopPropagation(); claimRevive(); });
+  // Safety net: finalize a pending run (gems + daily/mission progress) if the
+  // tab is closed/backgrounded mid-run, while paused, or on the game-over
+  // screen. runPending stays true from startGame() until bankRun() clears it.
+  // If gameplay was still active (PLAYING), balance the ads lifecycle too —
+  // gameOver()/quitToMenu() already stop it on their own exit paths.
+  window.addEventListener("pagehide", () => {
+    if (!runPending) return;
+    if (state === STATE.PLAYING) ads.gameplayStop();
+    bankRun();
+  });
+  // If the page is restored from the back/forward cache after pagehide already
+  // finalized the run, don't resume a banked run — return to the menu.
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted && !runPending && (state === STATE.PLAYING || state === STATE.OVER)) {
+      paused = false;
+      state = STATE.MENU;
+      hud.classList.add("hidden");
+      pauseBtn.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameoverScreen.classList.add("hidden");
+      showMenu();
+    }
+  });
 
   function startGame() {
     cancelAnimationFrame(rafId); // avoid a leftover OVER/idle frame double-driving the loop
+    bankRun(); // bank the previous run's gems before starting a fresh one
     buildBackground();
     resize();
     reset();
@@ -319,7 +385,10 @@
     paused = false;
     runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
     runStart = performance.now();
+    runCount++;
+    runPending = true;
     track("game_start", { skin: selectedSkin });
+    ads.gameplayStart();
     state = STATE.PLAYING;
     startScreen.classList.add("hidden");
     gameoverScreen.classList.add("hidden");
@@ -352,7 +421,8 @@
 
   function quitToMenu() {
     paused = false;
-    bankCoins();
+    ads.gameplayStop(); // balance the gameplayStart() from startGame() on this exit path
+    bankRun();
     state = STATE.MENU;
     pauseScreen.classList.add("hidden");
     pauseBtn.classList.add("hidden");
@@ -360,11 +430,77 @@
     showMenu();
   }
 
-  function bankCoins() {
-    if (coinCount > 0) {
-      bank += coinCount;
-      coinCount = 0;
+  // Bank a finished run's gems exactly once, applying any rewarded multiplier.
+  // Called when leaving a finished run (Play Again / Menu / Quit / page hide) —
+  // NOT in gameOver(), so a rewarded Revive can continue without double-counting.
+  function bankRun() {
+    // Record the finished run for retention (streak/daily/missions) once, and
+    // pay out any completed goals.
+    if (runPending) {
+      runPending = false;
+      const res = progress.recordRun({ score: score, gems: coinCount, powerups: powerupsUsedRun });
+      if (res && res.rewards > 0) bank += res.rewards;
+      if (res && res.completed && res.completed.length) showRewardToast(res.completed);
+    }
+    const gain = (coinCount || 0) * (gemMultiplier || 1);
+    if (gain > 0) bank += gain;
+    persistProgress();
+    coinCount = 0;
+    gemMultiplier = 1;
+  }
+
+  // ---- Retention UI ----
+  let toastTimer = 0;
+  function showToast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.remove("hidden");
+    requestAnimationFrame(() => toastEl.classList.add("show"));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove("show");
+      setTimeout(() => toastEl.classList.add("hidden"), 350);
+    }, 2600);
+  }
+  function showRewardToast(completed) {
+    const total = completed.reduce((s, c) => s + c.reward, 0);
+    const what = completed.length === 1 ? completed[0].desc : (completed.length + " goals complete");
+    showToast("✓ " + what + "\n+" + total + " ◆");
+  }
+
+  // Daily login: streak + bonus gems, once per calendar day.
+  function dailyCheckin() {
+    const r = progress.startDay();
+    if (r.reward > 0) {
+      bank += r.reward;
       persistProgress();
+      showToast("🔥 Day " + r.streak + " streak\n+" + r.reward + " ◆ daily bonus");
+    }
+  }
+
+  function bar(progressVal, target) {
+    const pct = target > 0 ? Math.min(100, Math.round((progressVal / target) * 100)) : 0;
+    return '<div class="prog-bar"><span style="width:' + pct + '%"></span></div>';
+  }
+  function renderProgress() {
+    const s = progress.summary();
+    if (streakEl) streakEl.textContent = s.streak;
+    if (dailyRowEl) {
+      const d = s.daily;
+      dailyRowEl.className = "prog-row" + (d.done ? " done" : "");
+      dailyRowEl.innerHTML =
+        '<div class="prog-head"><span>Daily: ' + (d.desc || "") + (d.done ? " ✓" : "") +
+        '</span><span class="reward">+' + (d.reward || 0) + " ◆</span></div>" +
+        (d.done ? "" : bar(d.progress, d.target));
+    }
+    if (missionsEl) {
+      missionsEl.innerHTML = '<div class="prog-label">MISSIONS</div>' +
+        s.missions.map((m) =>
+          '<div class="prog-row' + (m.done ? " done" : "") + '">' +
+          '<div class="prog-head"><span>' + m.desc + (m.done ? " ✓" : "") +
+          '</span><span class="reward">+' + m.reward + " ◆</span></div>" +
+          (m.done ? "" : bar(m.progress, m.target)) + "</div>"
+        ).join("");
     }
   }
 
@@ -373,7 +509,8 @@
     vibrate([40, 30, 80]);
     const newRecord = score > best;
     if (newRecord) { best = score; saveBest(best); }
-    bank += coinCount;
+    // NOTE: gems are NOT banked here — bankRun() does that when the run is
+    // truly left, so a rewarded Revive can continue the same run cleanly.
     persistProgress();
     track("game_over", {
       run_id: runId,
@@ -383,13 +520,84 @@
       cause: lastCrashCause,
       new_record: newRecord,
     });
+    ads.gameplayStop();
     finalScoreEl.textContent = score;
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
     newRecordEl.classList.toggle("hidden", !newRecord);
+    // Rewarded surfaces. Revive: once per run. Double gems: once per run,
+    // so it stays claimed across a Revive (no second ad for no extra reward).
+    reviveBtn.disabled = false;
+    reviveBtn.textContent = "▶ CONTINUE · watch ad";
+    reviveBtn.classList.toggle("hidden", reviveUsed);
+    if (!doubleClaimed) {
+      doubleGemsBtn.disabled = false;
+      doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
+    }
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed);
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
+  }
+
+  // Watch a rewarded ad to double this run's gems — applied via gemMultiplier
+  // and banked by bankRun() when the run is left. Returns a Promise.
+  function claimDoubleGems() {
+    if (doubleClaimed) return Promise.resolve(false);
+    const token = runId; // bind the reward to THIS game-over run
+    doubleGemsBtn.disabled = true;
+    return ads.rewarded("double_gems").then((ok) => {
+      // Ignore a late async reward if the player already left this run.
+      if (state !== STATE.OVER || runId !== token) return false;
+      if (ok) {
+        doubleClaimed = true;
+        gemMultiplier = 2;
+        finalCoinsEl.textContent = String(coinCount * 2);
+        doubleGemsBtn.textContent = "✓ GEMS DOUBLED";
+        track("reward_granted", { type: "double_gems", gems: coinCount });
+      } else {
+        doubleGemsBtn.disabled = false; // ad not completed — allow retry
+      }
+      return ok;
+    });
+  }
+
+  // Watch a rewarded ad to continue the same run from where it ended.
+  function claimRevive() {
+    if (reviveUsed || state !== STATE.OVER) return Promise.resolve(false);
+    const token = runId; // bind the reward to THIS game-over run
+    reviveBtn.disabled = true;
+    return ads.rewarded("revive").then((ok) => {
+      // Ignore a late async reward if the player already left this run.
+      if (state !== STATE.OVER || runId !== token) return false;
+      if (ok) { revive(); }
+      else { reviveBtn.disabled = false; }
+      return ok;
+    });
+  }
+  function revive() {
+    reviveUsed = true;
+    track("reward_granted", { type: "revive", score: score });
+    // Clear immediate threats and give a short grace window.
+    obstacles.length = 0;
+    particles.length = 0;
+    shieldTime = Math.max(shieldTime, 2.5);
+    spawnTimer = Math.max(spawnTimer, 1.2);
+    if (player) {
+      player.y = groundY - player.size;
+      player.vy = 0;
+      player.onGround = true;
+      player.jumps = 0;
+    }
+    gameoverScreen.classList.add("hidden");
+    hud.classList.remove("hidden");
+    pauseBtn.classList.remove("hidden");
+    paused = false;
+    state = STATE.PLAYING;
+    ads.gameplayStart(); // resumed gameplay
+    lastTime = performance.now();
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
   }
 
   // ---- Spawning ----
@@ -454,6 +662,7 @@
     else if (type === "slowmo") slowTime = SLOWMO_DURATION;
     audio.power();
     vibrate(35);
+    powerupsUsedRun++;
     track("powerup_collected", { type: type });
     spawnRingBurst(POWER_COLORS[type] || "0,255,180");
   }
@@ -1128,7 +1337,9 @@
   function showMenu() {
     startScreen.classList.remove("hidden");
     startBestEl.textContent = best;
+    dailyCheckin();
     renderShop();
+    renderProgress();
     drawStaticBackdrop();
     startIdle();
   }
@@ -1141,7 +1352,9 @@
     startBestEl.textContent = best;
     bestEl.textContent = best;
     updateMuteUI();
+    dailyCheckin();
     renderShop();
+    renderProgress();
     drawStaticBackdrop();
     startIdle();
     // QR is non-essential chrome: build it when the main thread is idle so it
@@ -1174,10 +1387,14 @@
       giveShield(secs) { shieldTime = secs == null ? SHIELD_DURATION : secs; },
       setReduceMotion(v) { reduceMotion = !!v; },
       buySkin(id) { const s = SKINS.find((x) => x.id === id); if (s) onSkinClick(s); },
+      doubleGems() { return claimDoubleGems(); },
+      revive() { return claimRevive(); },
+      progressSummary() { return progress.summary(); },
       getState() {
         return {
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
+          gemMultiplier, reviveUsed, doubleClaimed,
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,

@@ -33,6 +33,9 @@
       </div>
     </div>
 
+    <!-- Reward / event toast -->
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
     <!-- Mute toggle -->
     <button id="mute-btn" class="icon-btn" aria-label="Toggle sound">🔊</button>
 
@@ -44,6 +47,12 @@
       <h1 class="title">NEON<span>DASH</span></h1>
       <p class="tagline">Tap to jump. Tap twice to double-jump.<br />Dodge the spikes, grab the gems.</p>
       <button id="start-btn" class="btn">PLAY</button>
+
+      <div id="progress-panel">
+        <div class="streak-badge">🔥 <span id="streak">0</span>-day streak</div>
+        <div id="daily-row" class="prog-row"></div>
+        <div id="missions"></div>
+      </div>
 
       <div id="shop">
         <div class="shop-head">
@@ -77,12 +86,16 @@
         <div class="result-row best-row"><span>Best</span><span id="final-best">0</span></div>
       </div>
       <p id="new-record" class="new-record hidden">★ NEW RECORD! ★</p>
+      <button id="revive-btn" class="btn btn-reward hidden">▶ CONTINUE · watch ad</button>
+      <button id="double-gems-btn" class="btn btn-reward hidden">🎬 DOUBLE GEMS</button>
       <button id="restart-btn" class="btn">PLAY AGAIN</button>
       <button id="menu-btn" class="btn btn-ghost">MENU &amp; SKINS</button>
     </div>
   </div>
 
   <script src="analytics.js"></script>
+  <script src="ads.js"></script>
+  <script src="progress.js"></script>
   <script src="engine.js"></script>
   <script src="game.js"></script>
   <script src="register-sw.js"></script>
