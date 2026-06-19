@@ -399,6 +399,7 @@
 
   function quitToMenu() {
     paused = false;
+    ads.gameplayStop(); // balance the gameplayStart() from startGame() on this exit path
     bankRun();
     state = STATE.MENU;
     pauseScreen.classList.add("hidden");

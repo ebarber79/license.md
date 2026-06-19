@@ -27,6 +27,18 @@ test("stub: rewarded() auto-grants (resolves true) so the UX is testable", async
   assert.equal(ok, true);
 });
 
+test("a rejected provider promise degrades to false (no unhandled rejection)", async () => {
+  delete require.cache[require.resolve("../../ads.js")];
+  window.NEONDASH_AD_PROVIDER = {
+    available: true,
+    rewarded() { return Promise.reject(new Error("ad failed")); },
+    init() {}, gameplayStart() {}, gameplayStop() {}, commercialBreak() {},
+  };
+  require("../../ads.js");
+  const ok = await window.NeonAds.rewarded("revive");
+  assert.equal(ok, false, "rejected ad resolves to false, not a throw");
+});
+
 test("a thrown provider degrades safely", async () => {
   // Re-evaluate ads.js with a broken provider to exercise the try/catch path.
   delete require.cache[require.resolve("../../ads.js")];

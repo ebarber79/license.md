@@ -43,14 +43,19 @@
   var provider = global.NEONDASH_AD_PROVIDER || stub;
 
   function call(fn, arg) {
+    // rewarded must yield a boolean; other calls are fire-and-forget.
+    var safe = (fn === "rewarded" ? false : undefined);
     try {
       var impl = (provider && provider[fn]) ? provider[fn].bind(provider) : stub[fn];
       var r = impl(arg);
-      return (r && typeof r.then === "function") ? r : Promise.resolve(r);
+      if (r && typeof r.then === "function") {
+        // Degrade safely if the provider's promise rejects (ad/init failure).
+        return r.then(function (v) { return v; }, function (e) { log("rejected in", fn, e); return safe; });
+      }
+      return Promise.resolve(r);
     } catch (e) {
       log("error in", fn, e);
-      // rewarded must resolve to a boolean (no reward on error); others void.
-      return Promise.resolve(fn === "rewarded" ? false : undefined);
+      return Promise.resolve(safe);
     }
   }
 
