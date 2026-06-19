@@ -347,9 +347,10 @@
     showMenu();
   });
   reviveBtn.addEventListener("click", (e) => { e.stopPropagation(); claimRevive(); });
-  // Safety net: bank a finished run if the player leaves the game-over screen
-  // by closing/backgrounding the tab.
-  window.addEventListener("pagehide", () => { if (state === STATE.OVER) bankRun(); });
+  // Safety net: finalize a pending run (gems + daily/mission progress) if the
+  // tab is closed/backgrounded mid-run, while paused, or on the game-over
+  // screen. runPending stays true from startGame() until bankRun() clears it.
+  window.addEventListener("pagehide", () => { if (runPending) bankRun(); });
 
   function startGame() {
     cancelAnimationFrame(rafId); // avoid a leftover OVER/idle frame double-driving the loop
