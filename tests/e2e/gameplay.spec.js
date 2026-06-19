@@ -120,8 +120,9 @@ test("ND-ADS-03: double-gems stays claimed across a revive", async ({ page }) =>
   await page.evaluate(() => window.NeonDashTest.doubleGems()); // multiplier 2
   await page.evaluate(() => window.NeonDashTest.revive());     // continue same run
   expect((await state(page)).reviveUsed).toBe(true);
-  // Die again on the revived run.
-  await page.evaluate(() => { const t = window.NeonDashTest; t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
+  // Die again on the revived run (clear the revive grace shield first so the
+  // spike is lethal).
+  await page.evaluate(() => { const t = window.NeonDashTest; t.giveShield(0); t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
   const s = await state(page);
   expect(s.state).toBe("over");
   expect(s.gemMultiplier).toBe(2);     // still doubled, not reset
