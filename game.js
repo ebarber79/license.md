@@ -197,6 +197,7 @@
   let slowTime = 0;    // seconds of slow-motion remaining
   let gemMultiplier = 1; // 2 after a rewarded "double gems"
   let reviveUsed = false; // a run gets at most one rewarded revive
+  let doubleClaimed = false; // double-gems claimed this run (persists across Revive)
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
@@ -282,6 +283,7 @@
     coinCount = 0;
     gemMultiplier = 1;
     reviveUsed = false;
+    doubleClaimed = false;
     powerupsUsedRun = 0;
     spawnTimer = 0.8;
     gemTimer = 1.4;
@@ -350,7 +352,13 @@
   // Safety net: finalize a pending run (gems + daily/mission progress) if the
   // tab is closed/backgrounded mid-run, while paused, or on the game-over
   // screen. runPending stays true from startGame() until bankRun() clears it.
-  window.addEventListener("pagehide", () => { if (runPending) bankRun(); });
+  // If gameplay was still active (PLAYING), balance the ads lifecycle too —
+  // gameOver()/quitToMenu() already stop it on their own exit paths.
+  window.addEventListener("pagehide", () => {
+    if (!runPending) return;
+    if (state === STATE.PLAYING) ads.gameplayStop();
+    bankRun();
+  });
 
   function startGame() {
     cancelAnimationFrame(rafId); // avoid a leftover OVER/idle frame double-driving the loop
@@ -504,14 +512,16 @@
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
     newRecordEl.classList.toggle("hidden", !newRecord);
-    // Rewarded surfaces. Revive: once per run. Double gems: only if any earned.
+    // Rewarded surfaces. Revive: once per run. Double gems: once per run,
+    // so it stays claimed across a Revive (no second ad for no extra reward).
     reviveBtn.disabled = false;
     reviveBtn.textContent = "▶ CONTINUE · watch ad";
     reviveBtn.classList.toggle("hidden", reviveUsed);
-    doubleClaimed = false;
-    doubleGemsBtn.disabled = false;
-    doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
-    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0);
+    if (!doubleClaimed) {
+      doubleGemsBtn.disabled = false;
+      doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
+    }
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed);
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
@@ -519,7 +529,6 @@
 
   // Watch a rewarded ad to double this run's gems — applied via gemMultiplier
   // and banked by bankRun() when the run is left. Returns a Promise.
-  let doubleClaimed = false;
   function claimDoubleGems() {
     if (doubleClaimed) return Promise.resolve(false);
     doubleGemsBtn.disabled = true;
@@ -1366,7 +1375,7 @@
         return {
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
-          gemMultiplier, reviveUsed,
+          gemMultiplier, reviveUsed, doubleClaimed,
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,
