@@ -63,6 +63,17 @@ test("ND-A11Y-04b: Space activates a focused shop chip (no gameplay hijack)", as
   await expect.poll(() => page.evaluate(() => localStorage.getItem("neondash.skin"))).toBe("magenta");
 });
 
+test("ND-RET-01: first-day streak grants a login bonus and renders progress", async ({ page }) => {
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  // Fresh profile -> day-1 login bonus banked, streak = 1.
+  expect((await page.evaluate(() => window.NeonDashTest.getState())).bank).toBeGreaterThan(0);
+  const sum = await page.evaluate(() => window.NeonDashTest.progressSummary());
+  expect(sum.streak).toBe(1);
+  expect(sum.missions.length).toBe(5);
+  await expect(page.locator("#streak")).toHaveText("1");
+});
+
 test("ND-OFF-01: service worker registers", async ({ page }) => {
   await page.goto("/index.html");
   const hasController = await page.evaluate(async () => {

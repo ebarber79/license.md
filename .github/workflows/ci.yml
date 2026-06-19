@@ -44,7 +44,7 @@ jobs:
       - name: Assemble clean site dir
         run: |
           mkdir -p _lhci_site
-          cp index.html style.css game.js analytics.js ads.js engine.js qrcode.js \
+          cp index.html style.css game.js analytics.js ads.js progress.js engine.js qrcode.js \
              register-sw.js manifest.json sw.js icon.svg _lhci_site/
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12

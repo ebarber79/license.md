@@ -33,6 +33,9 @@
       </div>
     </div>
 
+    <!-- Reward / event toast -->
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
     <!-- Mute toggle -->
     <button id="mute-btn" class="icon-btn" aria-label="Toggle sound">🔊</button>
 
@@ -44,6 +47,12 @@
       <h1 class="title">NEON<span>DASH</span></h1>
       <p class="tagline">Tap to jump. Tap twice to double-jump.<br />Dodge the spikes, grab the gems.</p>
       <button id="start-btn" class="btn">PLAY</button>
+
+      <div id="progress-panel">
+        <div class="streak-badge">🔥 <span id="streak">0</span>-day streak</div>
+        <div id="daily-row" class="prog-row"></div>
+        <div id="missions"></div>
+      </div>
 
       <div id="shop">
         <div class="shop-head">
@@ -86,6 +95,7 @@
 
   <script src="analytics.js"></script>
   <script src="ads.js"></script>
+  <script src="progress.js"></script>
   <script src="engine.js"></script>
   <script src="game.js"></script>
   <script src="register-sw.js"></script>

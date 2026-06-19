@@ -35,6 +35,19 @@
   const menuBtn = document.getElementById("menu-btn");
   const doubleGemsBtn = document.getElementById("double-gems-btn");
   const reviveBtn = document.getElementById("revive-btn");
+  const toastEl = document.getElementById("toast");
+  const streakEl = document.getElementById("streak");
+  const dailyRowEl = document.getElementById("daily-row");
+  const missionsEl = document.getElementById("missions");
+
+  // ---- Retention progress (streak / daily / missions); stub-safe ----
+  const progress = window.NeonProgress || {
+    startDay() { return { isNewDay: false, streak: 0, reward: 0 }; },
+    recordRun() { return { rewards: 0, completed: [] }; },
+    summary() { return { streak: 0, daily: { progress: 0, target: 0, done: false }, missions: [] }; },
+  };
+  let powerupsUsedRun = 0;
+  let runPending = false;
 
   // ---- Ads / monetization (portal-agnostic; stub by default) ----
   const ads = window.NeonAds || {
@@ -269,6 +282,7 @@
     coinCount = 0;
     gemMultiplier = 1;
     reviveUsed = false;
+    powerupsUsedRun = 0;
     spawnTimer = 0.8;
     gemTimer = 1.4;
     powerTimer = 7 + rnd() * 4;
@@ -350,6 +364,7 @@
     runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
     runStart = performance.now();
     runCount++;
+    runPending = true;
     track("game_start", { skin: selectedSkin });
     ads.gameplayStart();
     state = STATE.PLAYING;
@@ -396,10 +411,74 @@
   // Called when leaving a finished run (Play Again / Menu / Quit / page hide) —
   // NOT in gameOver(), so a rewarded Revive can continue without double-counting.
   function bankRun() {
+    // Record the finished run for retention (streak/daily/missions) once, and
+    // pay out any completed goals.
+    if (runPending) {
+      runPending = false;
+      const res = progress.recordRun({ score: score, gems: coinCount, powerups: powerupsUsedRun });
+      if (res && res.rewards > 0) bank += res.rewards;
+      if (res && res.completed && res.completed.length) showRewardToast(res.completed);
+    }
     const gain = (coinCount || 0) * (gemMultiplier || 1);
-    if (gain > 0) { bank += gain; persistProgress(); }
+    if (gain > 0) bank += gain;
+    persistProgress();
     coinCount = 0;
     gemMultiplier = 1;
+  }
+
+  // ---- Retention UI ----
+  let toastTimer = 0;
+  function showToast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.remove("hidden");
+    requestAnimationFrame(() => toastEl.classList.add("show"));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove("show");
+      setTimeout(() => toastEl.classList.add("hidden"), 350);
+    }, 2600);
+  }
+  function showRewardToast(completed) {
+    const total = completed.reduce((s, c) => s + c.reward, 0);
+    const what = completed.length === 1 ? completed[0].desc : (completed.length + " goals complete");
+    showToast("✓ " + what + "\n+" + total + " ◆");
+  }
+
+  // Daily login: streak + bonus gems, once per calendar day.
+  function dailyCheckin() {
+    const r = progress.startDay();
+    if (r.reward > 0) {
+      bank += r.reward;
+      persistProgress();
+      showToast("🔥 Day " + r.streak + " streak\n+" + r.reward + " ◆ daily bonus");
+    }
+  }
+
+  function bar(progressVal, target) {
+    const pct = target > 0 ? Math.min(100, Math.round((progressVal / target) * 100)) : 0;
+    return '<div class="prog-bar"><span style="width:' + pct + '%"></span></div>';
+  }
+  function renderProgress() {
+    const s = progress.summary();
+    if (streakEl) streakEl.textContent = s.streak;
+    if (dailyRowEl) {
+      const d = s.daily;
+      dailyRowEl.className = "prog-row" + (d.done ? " done" : "");
+      dailyRowEl.innerHTML =
+        '<div class="prog-head"><span>Daily: ' + (d.desc || "") + (d.done ? " ✓" : "") +
+        '</span><span class="reward">+' + (d.reward || 0) + " ◆</span></div>" +
+        (d.done ? "" : bar(d.progress, d.target));
+    }
+    if (missionsEl) {
+      missionsEl.innerHTML = '<div class="prog-label">MISSIONS</div>' +
+        s.missions.map((m) =>
+          '<div class="prog-row' + (m.done ? " done" : "") + '">' +
+          '<div class="prog-head"><span>' + m.desc + (m.done ? " ✓" : "") +
+          '</span><span class="reward">+' + m.reward + " ◆</span></div>" +
+          (m.done ? "" : bar(m.progress, m.target)) + "</div>"
+        ).join("");
+    }
   }
 
   function gameOver() {
@@ -553,6 +632,7 @@
     else if (type === "slowmo") slowTime = SLOWMO_DURATION;
     audio.power();
     vibrate(35);
+    powerupsUsedRun++;
     track("powerup_collected", { type: type });
     spawnRingBurst(POWER_COLORS[type] || "0,255,180");
   }
@@ -1227,7 +1307,9 @@
   function showMenu() {
     startScreen.classList.remove("hidden");
     startBestEl.textContent = best;
+    dailyCheckin();
     renderShop();
+    renderProgress();
     drawStaticBackdrop();
     startIdle();
   }
@@ -1240,7 +1322,9 @@
     startBestEl.textContent = best;
     bestEl.textContent = best;
     updateMuteUI();
+    dailyCheckin();
     renderShop();
+    renderProgress();
     drawStaticBackdrop();
     startIdle();
     // QR is non-essential chrome: build it when the main thread is idle so it
@@ -1275,6 +1359,7 @@
       buySkin(id) { const s = SKINS.find((x) => x.id === id); if (s) onSkinClick(s); },
       doubleGems() { return claimDoubleGems(); },
       revive() { return claimRevive(); },
+      progressSummary() { return progress.summary(); },
       getState() {
         return {
           state, paused, score, coins: coinCount, bank, best,
