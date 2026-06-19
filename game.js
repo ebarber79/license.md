@@ -531,8 +531,11 @@
   // and banked by bankRun() when the run is left. Returns a Promise.
   function claimDoubleGems() {
     if (doubleClaimed) return Promise.resolve(false);
+    const token = runId; // bind the reward to THIS game-over run
     doubleGemsBtn.disabled = true;
     return ads.rewarded("double_gems").then((ok) => {
+      // Ignore a late async reward if the player already left this run.
+      if (state !== STATE.OVER || runId !== token) return false;
       if (ok) {
         doubleClaimed = true;
         gemMultiplier = 2;
@@ -549,8 +552,11 @@
   // Watch a rewarded ad to continue the same run from where it ended.
   function claimRevive() {
     if (reviveUsed || state !== STATE.OVER) return Promise.resolve(false);
+    const token = runId; // bind the reward to THIS game-over run
     reviveBtn.disabled = true;
     return ads.rewarded("revive").then((ok) => {
+      // Ignore a late async reward if the player already left this run.
+      if (state !== STATE.OVER || runId !== token) return false;
       if (ok) { revive(); }
       else { reviveBtn.disabled = false; }
       return ok;
