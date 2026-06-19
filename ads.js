@@ -42,8 +42,24 @@
 
   var provider = global.NEONDASH_AD_PROVIDER || stub;
 
-  function call(fn, arg) {
-    // rewarded must yield a boolean; other calls are fire-and-forget.
+  // Run provider.init() once and gate every other call on it, so a real SDK
+  // that must finish initializing before gameplay/ad requests is never called
+  // too early (a dropped init() promise on the game side can't race it).
+  var initPromise = null;
+  function ensureInit() {
+    if (!initPromise) {
+      initPromise = new Promise(function (resolve) {
+        try {
+          var r = (provider && provider.init) ? provider.init() : undefined;
+          if (r && typeof r.then === "function") r.then(resolve, function (e) { log("init failed", e); resolve(); });
+          else resolve();
+        } catch (e) { log("init threw", e); resolve(); }
+      });
+    }
+    return initPromise;
+  }
+
+  function invoke(fn, arg) {
     var safe = (fn === "rewarded" ? false : undefined);
     try {
       var impl = (provider && provider[fn]) ? provider[fn].bind(provider) : stub[fn];
@@ -58,9 +74,11 @@
       return Promise.resolve(safe);
     }
   }
+  // Non-init calls wait for init to settle first.
+  function call(fn, arg) { return ensureInit().then(function () { return invoke(fn, arg); }); }
 
   global.NeonAds = {
-    init: function () { return call("init"); },
+    init: function () { return ensureInit(); },
     gameplayStart: function () { return call("gameplayStart"); },
     gameplayStop: function () { return call("gameplayStop"); },
     commercialBreak: function () { return call("commercialBreak"); },

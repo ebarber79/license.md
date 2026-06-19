@@ -37,32 +37,46 @@ analytics-tracked (`reward_granted`) and covered by tests (`ads.test.mjs`,
 ## 3. Plug in the SDK (one small adapter)
 
 Provide `window.NEONDASH_AD_PROVIDER` **before** `ads.js` loads. Example shape
-for **CrazyGames** (verify against their current SDK docs):
+for **CrazyGames** (verify against their current SDK docs).
+
+> **CSP note:** the shipped policy is `script-src 'self'` with **no** `'unsafe-inline'`,
+> so the provider must be defined in a **same-origin file** (not an inline
+> `<script>`), and the SDK's own origin must be added to `script-src` (see §4).
+> Don't inline the adapter — it would be blocked and `ads.js` would silently
+> fall back to the stub.
+
+Create a same-origin `ad-provider.js`:
+
+```js
+// ad-provider.js — must load BEFORE ads.js; same-origin so CSP 'self' allows it.
+window.NEONDASH_AD_PROVIDER = {
+  available: true,
+  init() { return window.CrazyGames.SDK.init ? window.CrazyGames.SDK.init() : Promise.resolve(); },
+  gameplayStart() { window.CrazyGames.SDK.game.gameplayStart(); },
+  gameplayStop()  { window.CrazyGames.SDK.game.gameplayStop(); },
+  commercialBreak() { return window.CrazyGames.SDK.ad.requestAd("midgame").catch(() => {}); },
+  rewarded() {
+    return new Promise((resolve) => {
+      window.CrazyGames.SDK.ad.requestAd("rewarded", {
+        adFinished: () => resolve(true),
+        adError:    () => resolve(false),
+      });
+    });
+  },
+};
+```
+
+Then load the SDK (from its origin) and the provider **before** `ads.js` in
+`index.html` — all via `src`, no inline scripts:
 
 ```html
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
-<script>
-  window.NEONDASH_AD_PROVIDER = {
-    available: true,
-    async init() { window.CrazyGames.SDK.init && await window.CrazyGames.SDK.init(); },
-    gameplayStart() { window.CrazyGames.SDK.game.gameplayStart(); },
-    gameplayStop()  { window.CrazyGames.SDK.game.gameplayStop(); },
-    commercialBreak() {
-      return window.CrazyGames.SDK.ad.requestAd("midgame").catch(() => {});
-    },
-    rewarded() {
-      return new Promise((resolve) => {
-        window.CrazyGames.SDK.ad.requestAd("rewarded", {
-          adFinished: () => resolve(true),
-          adError:    () => resolve(false),
-        });
-      });
-    },
-  };
-</script>
+<script src="ad-provider.js"></script>
+<!-- existing: <script src="ads.js"></script> ... -->
 ```
 
-No game code changes are needed — `ads.js` picks the provider up automatically.
+No game code changes are needed — `ads.js` picks the provider up automatically
+and gates all gameplay/ad calls on `init()` settling.
 
 ## 4. ⚠️ CSP must allow the portal's origins
 

@@ -359,6 +359,19 @@
     if (state === STATE.PLAYING) ads.gameplayStop();
     bankRun();
   });
+  // If the page is restored from the back/forward cache after pagehide already
+  // finalized the run, don't resume a banked run — return to the menu.
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted && !runPending && (state === STATE.PLAYING || state === STATE.OVER)) {
+      paused = false;
+      state = STATE.MENU;
+      hud.classList.add("hidden");
+      pauseBtn.classList.add("hidden");
+      pauseScreen.classList.add("hidden");
+      gameoverScreen.classList.add("hidden");
+      showMenu();
+    }
+  });
 
   function startGame() {
     cancelAnimationFrame(rafId); // avoid a leftover OVER/idle frame double-driving the loop
