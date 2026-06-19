@@ -33,6 +33,17 @@
   const skinRow = document.getElementById("skin-row");
   const qrEl = document.getElementById("qr");
   const menuBtn = document.getElementById("menu-btn");
+  const doubleGemsBtn = document.getElementById("double-gems-btn");
+
+  // ---- Ads / monetization (portal-agnostic; stub by default) ----
+  const ads = window.NeonAds || {
+    init() {}, gameplayStart() {}, gameplayStop() {},
+    commercialBreak() { return Promise.resolve(); },
+    rewarded() { return Promise.resolve(false); },
+    available: false,
+  };
+  ads.init();
+  let runCount = 0;
 
   // ---- Deterministic RNG (seedable for tests; Math.random in production) ----
   let rng = null;
@@ -297,7 +308,15 @@
   window.addEventListener("keydown", onPress, { passive: false });
 
   startBtn.addEventListener("click", () => startGame());
-  restartBtn.addEventListener("click", () => startGame());
+  // Portal interstitial at a natural break — every 3rd replay, not every run.
+  restartBtn.addEventListener("click", () => {
+    if (runCount > 0 && runCount % 3 === 0) {
+      ads.commercialBreak().catch(() => {}).then(() => startGame());
+    } else {
+      startGame();
+    }
+  });
+  doubleGemsBtn.addEventListener("click", (e) => { e.stopPropagation(); claimDoubleGems(); });
   pauseBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
   resumeBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePause(); });
   quitBtn.addEventListener("click", (e) => { e.stopPropagation(); quitToMenu(); });
@@ -319,7 +338,9 @@
     paused = false;
     runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
     runStart = performance.now();
+    runCount++;
     track("game_start", { skin: selectedSkin });
+    ads.gameplayStart();
     state = STATE.PLAYING;
     startScreen.classList.add("hidden");
     gameoverScreen.classList.add("hidden");
@@ -383,13 +404,41 @@
       cause: lastCrashCause,
       new_record: newRecord,
     });
+    ads.gameplayStop();
     finalScoreEl.textContent = score;
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
     newRecordEl.classList.toggle("hidden", !newRecord);
+    // Rewarded surface: offer to double this run's gems (only if any earned).
+    doubleClaimed = false;
+    doubleGemsBtn.disabled = false;
+    doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0);
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
+  }
+
+  // Watch a rewarded ad to double the gems earned this run (banked once in
+  // gameOver; a granted reward banks the same amount again). Returns a Promise.
+  let doubleClaimed = false;
+  function claimDoubleGems() {
+    if (doubleClaimed) return Promise.resolve(false);
+    doubleGemsBtn.disabled = true;
+    return ads.rewarded("double_gems").then((ok) => {
+      if (ok) {
+        doubleClaimed = true;
+        bank += coinCount;
+        persistProgress();
+        bankEl.textContent = bank;
+        finalCoinsEl.textContent = String(coinCount * 2);
+        doubleGemsBtn.textContent = "✓ GEMS DOUBLED";
+        track("reward_granted", { type: "double_gems", gems: coinCount });
+      } else {
+        doubleGemsBtn.disabled = false; // ad not completed — allow retry
+      }
+      return ok;
+    });
   }
 
   // ---- Spawning ----
@@ -1174,6 +1223,7 @@
       giveShield(secs) { shieldTime = secs == null ? SHIELD_DURATION : secs; },
       setReduceMotion(v) { reduceMotion = !!v; },
       buySkin(id) { const s = SKINS.find((x) => x.id === id); if (s) onSkinClick(s); },
+      doubleGems() { return claimDoubleGems(); },
       getState() {
         return {
           state, paused, score, coins: coinCount, bank, best,

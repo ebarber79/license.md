@@ -183,6 +183,19 @@ html, body {
   box-shadow: none;
 }
 
+.btn-reward {
+  background: linear-gradient(135deg, #ffd84d, #ff9d2e);
+  color: #2a1a00;
+  box-shadow: 0 0 24px rgba(255, 216, 77, 0.6);
+  margin-bottom: 14px;
+}
+
+.btn-reward:disabled {
+  opacity: 0.5;
+  filter: grayscale(0.4);
+  box-shadow: none;
+}
+
 /* ---------- Shop ---------- */
 #shop {
   margin-top: 26px;

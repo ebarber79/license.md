@@ -71,6 +71,21 @@ test("ND-CORE-05: gem collection increments count", async ({ page }) => {
   expect((await state(page)).coins).toBeGreaterThan(0);
 });
 
+test("ND-ADS-01: rewarded 'double gems' banks the run's gems again", async ({ page }) => {
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start(); t.clearObstacles(); t.addGemAhead(); t.step(3); // collect >=1 gem
+  });
+  const before = await state(page);
+  expect(before.coins).toBeGreaterThan(0);
+  // End the run, then claim the rewarded double-gems (stub auto-grants).
+  await page.evaluate(() => { const t = window.NeonDashTest; t.clearObstacles(); t.spawnSpikeAhead(); t.step(10); });
+  expect((await state(page)).state).toBe("over");
+  const banked = (await state(page)).bank;
+  await page.evaluate(() => window.NeonDashTest.doubleGems());
+  await expect.poll(async () => (await state(page)).bank).toBe(banked + before.coins);
+});
+
 test("ND-NAV-02: pause freezes, resume continues", async ({ page }) => {
   await page.evaluate(() => { window.NeonDashTest.start(); window.NeonDashTest.clearObstacles(); });
   await page.evaluate(() => window.NeonDashTest.pause());
