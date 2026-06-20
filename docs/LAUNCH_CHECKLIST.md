@@ -32,6 +32,7 @@ Status legend: ✅ done in repo · 🔲 your manual step · ⚙️ optional
 - ⚙️ Consider a **native wrapper (TWA/Capacitor) + AdMob/IAP** only after portal metrics justify paid UA.
 
 ## Compliance quick-checks
+- ✅ Privacy blurb ready to link/paste in listings: `docs/PRIVACY.md` (no accounts, local-only storage, analytics off by default).
 - 🔲 No other ad networks / analytics beacon active in the portal build (default has none; `NEONDASH_ANALYTICS_URL` unset).
 - 🔲 Ads only fire on direct user input (Continue / Double Gems taps — already true).
 - 🔲 Loading is fast; no console errors in the portal's QA iframe.

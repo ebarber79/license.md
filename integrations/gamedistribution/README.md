@@ -2,6 +2,17 @@
 
 Drop-in adapter so Neon Dash's `NeonAds` layer uses GameDistribution ads.
 
+## Quick build (recommended)
+
+```bash
+node scripts/build-portal.mjs gamedistribution   # -> dist/gamedistribution.zip
+```
+
+This generates the GameDistribution build with everything below already applied
+(adapter + SDK tags injected, CSP removed, service worker + QR removed). You
+**still** need to set your Game ID (step 1) before building. The manual steps
+below document what the script does, if you prefer to wire it yourself.
+
 ## 1. Set your game id
 
 In `ad-provider.gamedistribution.js`, replace `REPLACE_WITH_YOUR_GAMEDISTRIBUTION_GAME_ID`

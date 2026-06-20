@@ -3,6 +3,16 @@
 Drop-in adapter so Neon Dash's `NeonAds` layer uses CrazyGames ads. No game
 code changes — `ads.js` auto-detects `window.NEONDASH_AD_PROVIDER`.
 
+## Quick build (recommended)
+
+```bash
+node scripts/build-portal.mjs crazygames   # -> dist/crazygames.zip
+```
+
+This generates the CrazyGames build with everything below already applied (SDK +
+adapter tags injected, CSP swapped, service worker + QR removed). The manual
+steps below document what it does, if you prefer to wire it yourself.
+
 ## 1. Add the scripts to `index.html`
 
 Copy `ad-provider.crazygames.js` next to the other JS files, then add these
