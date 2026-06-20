@@ -1,0 +1,113 @@
+//@version=5
+// =====================================================================
+// POStrategicEA-style strategy  -  TradingView / Pine v5 port
+//
+// A reconstruction of the POStrategicEA logic from its .set parameters
+// (time-of-day previous-X-candle breakout, RR-based TP/SL, optional
+// martingale "recovery", optional trailing). Use it as a THIRD engine to
+// cross-check the MT5 tester and the Python sim.
+//
+// HONEST CAVEATS
+//  * No vendor source -> entry logic is INFERRED. Trust the relative
+//    comparison (recovery on/off, RR>1 vs <1), not absolute returns.
+//  * Set the CHART timeframe to your entry timeframe (e.g. H1).
+//  * Recovery/martingale defaults OFF. Turning it on is a blow-up risk
+//    and will fail FTMO. The toggle exists only to demonstrate the danger.
+//  * Position sizing is approximate (risk% of equity / stop distance).
+// =====================================================================
+strategy("POStrategicEA-style (reconstructed)",
+     overlay=true,
+     initial_capital=100000,
+     default_qty_type=strategy.fixed,
+     pyramiding=0,
+     calc_on_order_fills=true,
+     process_orders_on_close=true,
+     commission_type=strategy.commission.cash_per_order,
+     commission_value=0.0)
+
+// ---------------- Inputs (mirror the .set) -------------------------
+grpS = "Strategy"
+pastX     = input.int(2, "PastXCandlesForHighLow", minval=1, group=grpS)
+startHour = input.int(11, "Start hour (chart time)", minval=0, maxval=23, group=grpS)
+startMin  = input.int(10, "Start minute", minval=0, maxval=59, group=grpS)
+sessionLen= input.int(8,  "Hours to allow a breakout entry", minval=1, maxval=24, group=grpS)
+takeDir   = input.string("Both", "Direction", options=["Both","Long only","Short only"], group=grpS)
+
+grpR = "Risk & Targets"
+riskPct   = input.float(0.5, "Risk % per trade", minval=0.01, step=0.05, group=grpR)
+baseRR    = input.float(1.5, "RiskRewardRatio", minval=0.1, step=0.1, group=grpR)
+
+grpRec = "Recovery (MARTINGALE - keep OFF for FTMO)"
+enableRecovery = input.bool(false, "EnableRecoveryTrade", group=grpRec)
+recoveryMult   = input.float(1.0, "RecoveryPositionRiskMultiplier", minval=1, group=grpRec)
+recoveryRR     = input.float(1.5, "RecoveryRiskRewardRatio", minval=0.1, step=0.05, group=grpRec)
+
+grpT = "Trailing"
+useTrail   = input.bool(true, "Enable trailing", group=grpT)
+trailStartP= input.float(0.5, "Start trailing after pips profit", minval=0, group=grpT)
+trailStopP = input.float(15,  "Trailing stop pips", minval=1, group=grpT)
+
+// ---------------- Helpers ------------------------------------------
+pip = syminfo.mintick * (syminfo.digits == 3 or syminfo.digits == 5 ? 10 : 1)
+
+// session arming: true during the entry window, first bar = setup bar
+inWindow = (hour >= startHour and hour < startHour + sessionLen)
+newWindow = inWindow and not inWindow[1]
+
+// reference breakout band from the prior X candles (before the setup bar)
+var float refHigh = na
+var float refLow  = na
+if newWindow
+    refHigh := ta.highest(high, pastX)[1]
+    refLow  := ta.lowest(low,  pastX)[1]
+
+// recovery state: was the last closed trade a loss?
+lastLoss = strategy.closedtrades > 0 and strategy.closedtrades.profit(strategy.closedtrades - 1) < 0
+useRecovery = enableRecovery and lastLoss
+effRisk = useRecovery ? riskPct * recoveryMult : riskPct
+effRR   = useRecovery ? recoveryRR : baseRR
+
+// position sizing: risk% of equity over the stop distance (approx.)
+bandDist = (not na(refHigh) and not na(refLow)) ? (refHigh - refLow) : na
+riskAmt  = strategy.equity * effRisk / 100.0
+qtyCalc  = (not na(bandDist) and bandDist > 0) ? riskAmt / bandDist : na
+
+allowLong  = takeDir == "Both" or takeDir == "Long only"
+allowShort = takeDir == "Both" or takeDir == "Short only"
+
+// ---------------- Orders -------------------------------------------
+// Arm stop-entry breakout orders at the start of the window.
+if newWindow and not na(qtyCalc) and strategy.position_size == 0
+    if allowLong
+        strategy.entry("L", strategy.long, qty=qtyCalc, stop=refHigh)
+    if allowShort
+        strategy.entry("S", strategy.short, qty=qtyCalc, stop=refLow)
+
+// cancel un-triggered breakout orders when the window closes
+if not inWindow and inWindow[1]
+    strategy.cancel("L")
+    strategy.cancel("S")
+
+// exits: SL at opposite band, TP at RR multiple; optional trailing
+longTP  = not na(refHigh) ? refHigh + effRR * bandDist : na
+shortTP = not na(refLow)  ? refLow  - effRR * bandDist : na
+
+if useTrail
+    strategy.exit("xL", from_entry="L", stop=refLow,  limit=longTP,
+         trail_points=trailStartP * 10, trail_offset=trailStopP * 10)
+    strategy.exit("xS", from_entry="S", stop=refHigh, limit=shortTP,
+         trail_points=trailStartP * 10, trail_offset=trailStopP * 10)
+else
+    strategy.exit("xL", from_entry="L", stop=refLow,  limit=longTP)
+    strategy.exit("xS", from_entry="S", stop=refHigh, limit=shortTP)
+
+// ---------------- Visuals ------------------------------------------
+plot(refHigh, "Ref High", color=color.new(color.teal, 0), style=plot.style_linebr, linewidth=2)
+plot(refLow,  "Ref Low",  color=color.new(color.maroon, 0), style=plot.style_linebr, linewidth=2)
+bgcolor(newWindow ? color.new(color.blue, 88) : na, title="Setup bar")
+
+// ---------------- Alerts -------------------------------------------
+alertcondition(allowLong and high >= refHigh and high[1] < refHigh,
+     title="Long breakout", message="POStrategic: LONG breakout above ref high")
+alertcondition(allowShort and low <= refLow and low[1] > refLow,
+     title="Short breakout", message="POStrategic: SHORT breakout below ref low")
