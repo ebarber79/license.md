@@ -5,4 +5,5 @@ blob-report/
 playwright/.cache/
 .lighthouseci/
 _lhci_site/
+dist/
 *.log
