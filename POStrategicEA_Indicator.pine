@@ -1,0 +1,87 @@
+//@version=5
+// =====================================================================
+// POStrategicEA-style INDICATOR  -  TradingView / Pine v5
+//
+// Live-signal version: plots the breakout band and fires alerts. No
+// backtest, no orders. Use this for a clean chart and for driving
+// manual or webhook-based semi-automation.  (For backtesting use the
+// strategy() version: POStrategicEA_TradingView.pine)
+//
+// HONEST CAVEAT: reconstructed from the .set parameters, not the vendor
+// source. Confirm behaviour on bar replay before trusting alerts live.
+// =====================================================================
+indicator("POStrategic Breakout (signals)", overlay=true)
+
+// ---------------- Inputs -------------------------------------------
+grpS = "Setup"
+pastX     = input.int(2, "PastXCandlesForHighLow", minval=1, group=grpS)
+startHour = input.int(11, "Start hour (chart time)", minval=0, maxval=23, group=grpS)
+sessionLen= input.int(8,  "Hours to allow a breakout entry", minval=1, maxval=24, group=grpS)
+takeDir   = input.string("Both", "Direction", options=["Both","Long only","Short only"], group=grpS)
+
+grpR = "Targets (for the alert payload)"
+baseRR    = input.float(1.5, "RiskRewardRatio", minval=0.1, step=0.1, group=grpR)
+riskPct   = input.float(0.5, "Risk % per trade", minval=0.01, step=0.05, group=grpR)
+
+grpV = "Visuals"
+showBand  = input.bool(true, "Show breakout band", group=grpV)
+showLabels= input.bool(true, "Show breakout labels", group=grpV)
+
+// ---------------- Band logic ---------------------------------------
+inWindow  = (hour >= startHour and hour < startHour + sessionLen)
+newWindow = inWindow and not inWindow[1]
+
+var float refHigh = na
+var float refLow  = na
+if newWindow
+    refHigh := ta.highest(high, pastX)[1]
+    refLow  := ta.lowest(low,  pastX)[1]
+
+allowLong  = takeDir == "Both" or takeDir == "Long only"
+allowShort = takeDir == "Both" or takeDir == "Short only"
+
+// one signal per window per side
+var bool firedLong  = false
+var bool firedShort = false
+if newWindow
+    firedLong  := false
+    firedShort := false
+
+longBreak  = allowLong  and not na(refHigh) and high >= refHigh and not firedLong  and inWindow
+shortBreak = allowShort and not na(refLow)  and low  <= refLow  and not firedShort and inWindow
+if longBreak
+    firedLong := true
+if shortBreak
+    firedShort := true
+
+// derived levels for the payload
+bandDist = (not na(refHigh) and not na(refLow)) ? refHigh - refLow : na
+longSL   = refLow
+longTP   = not na(bandDist) ? refHigh + baseRR * bandDist : na
+shortSL  = refHigh
+shortTP  = not na(bandDist) ? refLow  - baseRR * bandDist : na
+
+// ---------------- Visuals ------------------------------------------
+plot(showBand ? refHigh : na, "Ref High", color=color.teal,   style=plot.style_linebr, linewidth=2)
+plot(showBand ? refLow  : na, "Ref Low",  color=color.maroon, style=plot.style_linebr, linewidth=2)
+bgcolor(newWindow ? color.new(color.blue, 90) : na)
+plotshape(showLabels and longBreak,  title="Long",  style=shape.triangleup,   location=location.belowbar, color=color.teal,   size=size.small, text="LONG")
+plotshape(showLabels and shortBreak, title="Short", style=shape.triangledown, location=location.abovebar, color=color.maroon, size=size.small, text="SHORT")
+
+// ---------------- Alerts -------------------------------------------
+// Simple alertcondition (pick when creating an alert)
+alertcondition(longBreak,  title="Long breakout",  message="POStrategic LONG {{ticker}} @ {{close}}")
+alertcondition(shortBreak, title="Short breakout", message="POStrategic SHORT {{ticker}} @ {{close}}")
+
+// Webhook-ready JSON via alert() (fires on the breakout bar).
+// Edit the schema to match your execution bridge. See WEBHOOK_ALERTS.md.
+if longBreak
+    msg = str.format('{{"strategy":"POStrategic","action":"buy","symbol":"{0}","entry":{1},"sl":{2},"tp":{3},"risk_pct":{4},"tf":"{5}","time":"{6}"}}',
+         syminfo.ticker, str.tostring(refHigh), str.tostring(longSL), str.tostring(longTP),
+         str.tostring(riskPct), timeframe.period, str.tostring(time))
+    alert(msg, alert.freq_once_per_bar_close)
+if shortBreak
+    msg2 = str.format('{{"strategy":"POStrategic","action":"sell","symbol":"{0}","entry":{1},"sl":{2},"tp":{3},"risk_pct":{4},"tf":"{5}","time":"{6}"}}',
+         syminfo.ticker, str.tostring(refLow), str.tostring(shortSL), str.tostring(shortTP),
+         str.tostring(riskPct), timeframe.period, str.tostring(time))
+    alert(msg2, alert.freq_once_per_bar_close)
