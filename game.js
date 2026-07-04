@@ -39,6 +39,8 @@
   const streakEl = document.getElementById("streak");
   const dailyRowEl = document.getElementById("daily-row");
   const missionsEl = document.getElementById("missions");
+  const comboItem = document.getElementById("combo-item");
+  const comboMultEl = document.getElementById("combo-mult");
 
   // ---- Retention progress (streak / daily / missions); stub-safe ----
   const progress = window.NeonProgress || {
@@ -144,6 +146,8 @@
   const SLOWMO_DURATION = 5;   // seconds of slow-motion
   const SLOWMO_FACTOR = 0.5;   // world speed multiplier during slow-mo
   const MAGNET_RANGE = 230;    // px radius the magnet attracts gems within
+  const COMBO_STEP = 5;        // gems per consecutive-chain multiplier tier
+  const COMBO_MAX_MULT = 5;    // multiplier cap (x5 at a 20-gem chain)
   const HIGH_SCORE_KEY = "neondash.best";
   const BANK_KEY = "neondash.bank";
   const OWNED_KEY = "neondash.skins";
@@ -196,6 +200,8 @@
   let magnetTime = 0;  // seconds of gem-magnet remaining
   let slowTime = 0;    // seconds of slow-motion remaining
   let gemMultiplier = 1; // 2 after a rewarded "double gems"
+  let combo = 0;         // consecutive gems collected without an obstacle hit
+  let comboMult = 1;     // gem-value multiplier derived from the current combo
   let reviveUsed = false; // a run gets at most one rewarded revive
   let doubleClaimed = false; // double-gems claimed this run (persists across Revive)
   let best = loadBest();
@@ -282,6 +288,9 @@
     score = 0;
     coinCount = 0;
     gemMultiplier = 1;
+    combo = 0;
+    comboMult = 1;
+    updateComboHud();
     reviveUsed = false;
     doubleClaimed = false;
     powerupsUsedRun = 0;
@@ -451,6 +460,17 @@
 
   // ---- Retention UI ----
   let toastTimer = 0;
+  // Show the combo multiplier badge only while a chain is boosting gems (>x1).
+  function updateComboHud() {
+    if (!comboItem || !comboMultEl) return;
+    if (comboMult > 1) {
+      comboMultEl.textContent = "×" + comboMult;
+      comboItem.classList.remove("hidden");
+    } else {
+      comboItem.classList.add("hidden");
+    }
+  }
+
   function showToast(msg) {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -803,7 +823,12 @@
       if (hit) {
         if (shieldTime > 0) {
           // Shield absorbs the hit: shatter it and clear this obstacle.
+          // Touching an obstacle breaks the gem chain (the shield saves the run,
+          // not the combo) — a real cost that keeps the multiplier meaningful.
           shieldTime = 0;
+          combo = 0;
+          comboMult = 1;
+          updateComboHud();
           shake = 10;
           audio.shieldBreak();
           vibrate(60);
@@ -849,8 +874,16 @@
       if (g.x + g.r < -10) { gems.splice(i, 1); continue; }
       if (!g.got && hits(px, py, ps, ps, g.x - g.r, g.y - g.r, g.r * 2, g.r * 2)) {
         g.got = true;
-        coinCount++;
+        combo++;
+        const m = Math.min(COMBO_MAX_MULT, 1 + Math.floor(combo / COMBO_STEP));
+        coinCount += m;                 // each gem in a clean chain is worth `m`
         coinsEl.textContent = coinCount;
+        if (m > comboMult) {            // crossed into a higher tier — celebrate
+          comboMult = m;
+          updateComboHud();
+          showToast("COMBO ×" + m + "!");
+          vibrate(30);
+        }
         spawnGemBurst(g.x, g.y);
         audio.coin();
         gems.splice(i, 1);
@@ -1394,7 +1427,7 @@
         return {
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
-          gemMultiplier, reviveUsed, doubleClaimed,
+          gemMultiplier, combo, comboMult, reviveUsed, doubleClaimed,
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,

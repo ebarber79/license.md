@@ -71,6 +71,30 @@ test("ND-CORE-05: gem collection increments count", async ({ page }) => {
   expect((await state(page)).coins).toBeGreaterThan(0);
 });
 
+test("ND-COMBO-01: chaining 5 gems builds a x2 multiplier; a shielded hit resets it", async ({ page }) => {
+  // Collect a clean chain of 5 gems (clear obstacles each step so nothing breaks it).
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start();
+    for (let i = 0; i < 5; i++) { t.clearObstacles(); t.addGemAhead(); t.step(6); }
+  });
+  let s = await state(page);
+  expect(s.combo).toBe(5);
+  expect(s.comboMult).toBe(2);   // x2 tier reached at the 5th gem
+  expect(s.coins).toBe(6);       // 4 gems x1 + 1 gem x2
+
+  // A shielded hit saves the run but BREAKS the chain (combo cost of contact).
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.clearObstacles(); t.giveShield(); t.spawnSpikeAhead(); t.step(10);
+  });
+  s = await state(page);
+  expect(s.state).toBe("playing"); // shield saved the run
+  expect(s.shieldTime).toBe(0);    // shield consumed
+  expect(s.combo).toBe(0);         // chain broken
+  expect(s.comboMult).toBe(1);
+});
+
 test("ND-ADS-01: rewarded 'double gems' doubles the run's gems when banked", async ({ page }) => {
   await page.evaluate(() => {
     const t = window.NeonDashTest;
