@@ -6,3 +6,6 @@ playwright/.cache/
 .lighthouseci/
 _lhci_site/
 *.log
+
+# Capacitor: www/ is generated from source by scripts/build-www.mjs
+www/
