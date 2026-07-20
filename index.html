@@ -27,6 +27,10 @@
         <span class="hud-label">◆</span>
         <span id="coins">0</span>
       </div>
+      <div class="hud-item hud-combo hidden" id="combo-item" aria-live="polite">
+        <span class="hud-label">COMBO</span>
+        <span id="combo-mult">×1</span>
+      </div>
       <div class="hud-item hud-best">
         <span class="hud-label">BEST</span>
         <span id="best">0</span>
@@ -45,7 +49,7 @@
     <!-- Start screen -->
     <div id="start-screen" class="overlay">
       <h1 class="title">NEON<span>DASH</span></h1>
-      <p class="tagline">Tap to jump. Tap twice to double-jump.<br />Dodge the spikes, grab the gems.</p>
+      <p class="tagline">Tap to jump — up to a triple-jump in mid-air.<br />Dodge the spikes, grab the gems.</p>
       <button id="start-btn" class="btn">PLAY</button>
 
       <div id="progress-panel">
@@ -60,6 +64,13 @@
           <span class="bank">◆ <span id="bank">0</span></span>
         </div>
         <div id="skin-row"></div>
+        <div class="shop-head shop-sub"><span>SHOES</span></div>
+        <div id="shoe-row"></div>
+        <!-- Gem packs (native IAP). Hidden on web / until the store has products. -->
+        <div id="gem-shop" class="hidden">
+          <div class="shop-head"><span>GET GEMS</span></div>
+          <div id="gem-pack-row"></div>
+        </div>
       </div>
 
       <div id="qr-box">
