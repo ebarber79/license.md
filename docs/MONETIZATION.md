@@ -36,6 +36,13 @@ analytics-tracked (`reward_granted`) and covered by tests (`ads.test.mjs`,
 
 ## 3. Plug in the SDK (one small adapter)
 
+> **Ready-made adapters live in [`integrations/`](../integrations/):**
+> [`crazygames/`](../integrations/crazygames/) and
+> [`gamedistribution/`](../integrations/gamedistribution/) — each has a drop-in
+> `ad-provider.*.js` (verified against current SDK docs), exact `index.html`
+> wiring, and the CSP changes. Use those; the snippet below is just the shape.
+> See also [`docs/LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md).
+
 Provide `window.NEONDASH_AD_PROVIDER` **before** `ads.js` loads. Example shape
 for **CrazyGames** (verify against their current SDK docs).
 
