@@ -13,12 +13,12 @@
  * embedded in a portal iframe, AdMob only when native — a native app is never
  * an embedded iframe, so they never fight over the provider slot.
  *
- * ⚠️ TESTING FLAG: the ad unit IDs below are the REAL units from the user's
- * AdMob account (Neon Dash app), and the real app ID is wired in
- * AndroidManifest.xml (com.google.android.gms.ads.APPLICATION_ID). However
- * IS_TESTING is deliberately still `true`: showing REAL ads to yourself during
- * development can get an AdMob account flagged for invalid traffic. Flip
- * IS_TESTING to `false` as the FINAL step, when building the release APK.
+ * LIVE ADS: the ad unit IDs below are the REAL units from the user's AdMob
+ * account (Neon Dash app), the real app ID is wired in AndroidManifest.xml
+ * (com.google.android.gms.ads.APPLICATION_ID), and IS_TESTING is now `false`
+ * — this build serves LIVE, revenue-earning ads. Only ship IS_TESTING=false in
+ * signed RELEASE builds; do NOT run it on your own dev device (self-viewed live
+ * ads can get an AdMob account flagged for invalid traffic).
  * ========================================================================= */
 (function (global) {
   "use strict";
@@ -35,8 +35,8 @@
     interstitial: "ca-app-pub-6072709464334522/3616110679",
     rewarded:     "ca-app-pub-6072709464334522/3241274379",
   };
-  // Keep true during development; flip to false only for the release build.
-  var IS_TESTING = true;
+  // LIVE ads for the release build. Keep false only in signed release APKs.
+  var IS_TESTING = false;
 
   function once(fn) { var done = false; return function () { if (done) return; done = true; return fn.apply(null, arguments); }; }
 
