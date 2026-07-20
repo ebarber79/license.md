@@ -25,7 +25,7 @@
 
   // Score is distance-based (1 point per 10px travelled).
   function scoreFromDistance(distance) {
-    return Math.floor(distance / 10);
+    return Math.floor(distance / 8);
   }
 
   function hexToRgb(h) {

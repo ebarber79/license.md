@@ -72,6 +72,22 @@ html, body {
   text-shadow: 0 0 10px rgba(255, 94, 199, 0.7);
 }
 
+.hud-combo {
+  color: #00f5a0;
+  text-shadow: 0 0 12px rgba(0, 245, 160, 0.85);
+  font-weight: 700;
+}
+/* Pulse to draw the eye — gated for photosensitivity (matches the BUG-01 a11y fix). */
+@media (prefers-reduced-motion: no-preference) {
+  .hud-combo:not(.hidden) {
+    animation: combo-pulse 0.6s ease-in-out infinite alternate;
+  }
+}
+@keyframes combo-pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.12); }
+}
+
 /* ---------- Mute button ---------- */
 .icon-btn {
   position: absolute;
@@ -219,15 +235,27 @@ html, body {
   text-shadow: 0 0 10px rgba(255, 216, 77, 0.6);
 }
 
-#skin-row {
+#skin-row,
+#shoe-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: none;
 }
 
-#skin-row::-webkit-scrollbar { display: none; }
+#skin-row::-webkit-scrollbar,
+#shoe-row::-webkit-scrollbar { display: none; }
+.shop-head.shop-sub { margin-top: 12px; }
+.shoe-hint {
+  flex-basis: 100%;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #9fb0d0;
+  opacity: 0.85;
+}
 
 .skin-chip {
   flex: 0 0 auto;
@@ -268,6 +296,67 @@ html, body {
 .skin-price.owned { color: #00ffb4; }
 .skin-price.afford { color: #ffd84d; }
 .skin-price.cant { color: #ff6b8a; }
+
+/* ---------- Gem packs (native IAP) ---------- */
+#gem-shop { margin-top: 14px; }
+#gem-shop.hidden { display: none; }
+
+#gem-pack-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+
+#gem-pack-row::-webkit-scrollbar { display: none; }
+
+.gem-pack {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 216, 77, 0.35);
+  background: rgba(255, 216, 77, 0.06);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.2s ease;
+}
+
+.gem-pack:active { transform: scale(0.94); }
+.gem-pack:disabled { opacity: 0.5; cursor: default; }
+
+.gem-amt { font-size: 15px; font-weight: 700; color: #ffd84d; white-space: nowrap; }
+
+.gem-price {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #00c46a;
+  color: #04170d;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gem-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ff5ec7;
+  color: #1a0410;
+  white-space: nowrap;
+}
 
 /* ---------- QR ---------- */
 #qr-box {

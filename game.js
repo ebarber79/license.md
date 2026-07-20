@@ -1,6 +1,6 @@
 /* =========================================================================
  * NEON DASH — an HTML5 Canvas endless runner
- * Tap / click / space to jump. A second tap in mid-air = double jump.
+ * Tap / click / space to jump. Up to two more taps in mid-air = triple jump.
  * Dodge spikes, collect gems, survive as long as you can.
  * ========================================================================= */
 
@@ -31,6 +31,9 @@
   const quitBtn = document.getElementById("quit-btn");
   const bankEl = document.getElementById("bank");
   const skinRow = document.getElementById("skin-row");
+  const shoeRow = document.getElementById("shoe-row");
+  const gemShopEl = document.getElementById("gem-shop");
+  const gemPackRow = document.getElementById("gem-pack-row");
   const qrEl = document.getElementById("qr");
   const menuBtn = document.getElementById("menu-btn");
   const doubleGemsBtn = document.getElementById("double-gems-btn");
@@ -39,6 +42,8 @@
   const streakEl = document.getElementById("streak");
   const dailyRowEl = document.getElementById("daily-row");
   const missionsEl = document.getElementById("missions");
+  const comboItem = document.getElementById("combo-item");
+  const comboMultEl = document.getElementById("combo-mult");
 
   // ---- Retention progress (streak / daily / missions); stub-safe ----
   const progress = window.NeonProgress || {
@@ -57,6 +62,16 @@
     available: false,
   };
   ads.init();
+
+  // ---- In-app purchases (gem packs; native-only, stub on web) ----
+  const iap = window.NeonIAP || {
+    init() { return Promise.resolve(); }, packs() { return []; },
+    buy() { return Promise.resolve({ ok: false, gems: 0 }); },
+    restore() { return Promise.resolve(); }, available: false,
+  };
+  // Populate the store, then reveal the gem-pack UI if any packs came back.
+  iap.init().then(() => renderGemPacks());
+
   let runCount = 0;
 
   // ---- Deterministic RNG (seedable for tests; Math.random in production) ----
@@ -132,18 +147,20 @@
 
   // ---- World constants (in CSS pixels) ----
   const GROUND_RATIO = 0.82;   // ground line as fraction of height
-  const GRAVITY = 2600;        // px/s^2
-  const JUMP_VELOCITY = -920;  // px/s
+  const GRAVITY = 3800;        // px/s^2
+  const JUMP_VELOCITY = -1100; // px/s
   const PLAYER_X_RATIO = 0.22; // player horizontal position
   const PLAYER_SIZE = 46;
-  const START_SPEED = 360;     // px/s
-  const MAX_SPEED = 900;
-  const SPEED_RAMP = 11;       // px/s gained per second
+  const START_SPEED = 420;     // px/s
+  const MAX_SPEED = 1100;
+  const SPEED_RAMP = 16;       // px/s gained per second
   const SHIELD_DURATION = 7;   // seconds of protection per shield pickup
   const MAGNET_DURATION = 6;   // seconds gems are pulled toward the player
   const SLOWMO_DURATION = 5;   // seconds of slow-motion
   const SLOWMO_FACTOR = 0.5;   // world speed multiplier during slow-mo
   const MAGNET_RANGE = 230;    // px radius the magnet attracts gems within
+  const COMBO_STEP = 5;        // gems per consecutive-chain multiplier tier
+  const COMBO_MAX_MULT = 5;    // multiplier cap (x5 at a 20-gem chain)
   const HIGH_SCORE_KEY = "neondash.best";
   const BANK_KEY = "neondash.bank";
   const OWNED_KEY = "neondash.skins";
@@ -158,6 +175,22 @@
     { id: "ember",   name: "Ember",   cost: 500, c0: "#ffb37a", c1: "#d83a1f", trail: "#ff6b3a" },
     { id: "rainbow", name: "Rainbow", cost: 900, rainbow: true, trail: "#ffffff" },
   ];
+
+  // Shoe cosmetics — a layer drawn on the running feet, SEPARATE from body
+  // skins. "classic" is the default neon foot. "retro" is a special chunky
+  // sneaker earned (not bought with gems) by ANY of three paths: watching a
+  // rewarded video, a high-scoring run (performance), or a player level.
+  const SHOES_OWNED_KEY = "neondash.shoes";
+  const SHOE_KEY = "neondash.shoe";
+  const LIFETIME_KEY = "neondash.lifetimeGems";
+  const RETRO_SCORE_UNLOCK = 800; // performance path: one run scoring this high
+  const RETRO_LEVEL_UNLOCK = 6;   // level path: reach this player level
+  const SHOES = [
+    { id: "classic", name: "Classic", special: false },
+    { id: "retro",   name: "Retro Kicks", special: true },
+  ];
+  // Retro sneaker palette (iconic red/white/gold, independent of the skin).
+  const RETRO = { sole: "#fdfdff", upper: "#ff3b6b", stripe: "#ffd84d" };
 
   // Background themes the world cycles through as the score climbs.
   // Each: [skyTop, skyBottom, accent (ground/grid), hill color].
@@ -196,6 +229,8 @@
   let magnetTime = 0;  // seconds of gem-magnet remaining
   let slowTime = 0;    // seconds of slow-motion remaining
   let gemMultiplier = 1; // 2 after a rewarded "double gems"
+  let combo = 0;         // consecutive gems collected without an obstacle hit
+  let comboMult = 1;     // gem-value multiplier derived from the current combo
   let reviveUsed = false; // a run gets at most one rewarded revive
   let doubleClaimed = false; // double-gems claimed this run (persists across Revive)
   let best = loadBest();
@@ -208,6 +243,9 @@
   let bank = parseInt(safeGet(BANK_KEY) || "0", 10) || 0;
   let owned = loadOwned();
   let selectedSkin = safeGet(SKIN_KEY) || "cyan";
+  let ownedShoes = loadOwnedShoes();
+  let selectedShoe = safeGet(SHOE_KEY) || "classic";
+  let lifetimeGems = parseInt(safeGet(LIFETIME_KEY) || "0", 10) || 0;
 
   function loadBest() {
     const v = parseInt(safeGet(HIGH_SCORE_KEY) || "0", 10);
@@ -224,15 +262,46 @@
       return set;
     } catch (e) { return new Set(["cyan"]); }
   }
+  function loadOwnedShoes() {
+    try {
+      const arr = JSON.parse(safeGet(SHOES_OWNED_KEY) || "[]");
+      const set = new Set(Array.isArray(arr) ? arr : []);
+      set.add("classic"); // default is always owned
+      return set;
+    } catch (e) { return new Set(["classic"]); }
+  }
   function persistProgress() {
     try {
       localStorage.setItem(BANK_KEY, String(bank));
       localStorage.setItem(OWNED_KEY, JSON.stringify([...owned]));
       localStorage.setItem(SKIN_KEY, selectedSkin);
+      localStorage.setItem(SHOES_OWNED_KEY, JSON.stringify([...ownedShoes]));
+      localStorage.setItem(SHOE_KEY, selectedShoe);
+      localStorage.setItem(LIFETIME_KEY, String(lifetimeGems));
     } catch (e) { /* ignore */ }
   }
   function activeSkin() {
     return SKINS.find((s) => s.id === selectedSkin) || SKINS[0];
+  }
+  function activeShoe() {
+    return SHOES.find((s) => s.id === selectedShoe) || SHOES[0];
+  }
+  // Player level from lifetime gems earned — a slow progression curve, distinct
+  // from a single good run. Lv.6 ≈ 1000 lifetime gems.
+  function playerLevel() {
+    return Math.floor(Math.sqrt(Math.max(0, lifetimeGems) / 40)) + 1;
+  }
+  // Retro is EARNED (never bought): true once a high-scoring run or a level
+  // milestone has been reached. The rewarded-ad path unlocks it directly.
+  function retroEarnedByPlay() {
+    return best >= RETRO_SCORE_UNLOCK || playerLevel() >= RETRO_LEVEL_UNLOCK;
+  }
+  function unlockShoe(id, how) {
+    if (ownedShoes.has(id)) return false;
+    ownedShoes.add(id);
+    persistProgress();
+    track("shoe_unlocked", { shoe_id: id, via: how });
+    return true;
   }
   function vibrate(ms) {
     if (navigator.vibrate && !audio.muted) {
@@ -282,6 +351,9 @@
     score = 0;
     coinCount = 0;
     gemMultiplier = 1;
+    combo = 0;
+    comboMult = 1;
+    updateComboHud();
     reviveUsed = false;
     doubleClaimed = false;
     powerupsUsedRun = 0;
@@ -304,9 +376,10 @@
       player.jumps = 1;
       spawnJumpDust();
       audio.jump();
-    } else if (player.jumps < 2) {
-      player.vy = JUMP_VELOCITY * 0.86;
-      player.jumps = 2;
+    } else if (player.jumps < 3) {
+      // 2nd and 3rd mid-air jumps, each a bit weaker (86% then 72%).
+      player.vy = JUMP_VELOCITY * (player.jumps === 1 ? 0.86 : 0.72);
+      player.jumps += 1;
       spawnJumpDust();
       audio.doubleJump();
     }
@@ -443,7 +516,13 @@
       if (res && res.completed && res.completed.length) showRewardToast(res.completed);
     }
     const gain = (coinCount || 0) * (gemMultiplier || 1);
-    if (gain > 0) bank += gain;
+    if (gain > 0) { bank += gain; lifetimeGems += gain; }
+    // Level path: reaching the level milestone earns the Retro shoes.
+    if (!ownedShoes.has("retro") && playerLevel() >= RETRO_LEVEL_UNLOCK) {
+      if (unlockShoe("retro", "level")) {
+        showToast("👟 Retro Kicks unlocked!\nReached level " + playerLevel());
+      }
+    }
     persistProgress();
     coinCount = 0;
     gemMultiplier = 1;
@@ -451,6 +530,17 @@
 
   // ---- Retention UI ----
   let toastTimer = 0;
+  // Show the combo multiplier badge only while a chain is boosting gems (>x1).
+  function updateComboHud() {
+    if (!comboItem || !comboMultEl) return;
+    if (comboMult > 1) {
+      comboMultEl.textContent = "×" + comboMult;
+      comboItem.classList.remove("hidden");
+    } else {
+      comboItem.classList.add("hidden");
+    }
+  }
+
   function showToast(msg) {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -509,6 +599,12 @@
     vibrate([40, 30, 80]);
     const newRecord = score > best;
     if (newRecord) { best = score; saveBest(best); }
+    // Performance path: a single run scoring high enough earns the Retro shoes.
+    if (!ownedShoes.has("retro") && score >= RETRO_SCORE_UNLOCK) {
+      if (unlockShoe("retro", "performance")) {
+        showToast("👟 Retro Kicks unlocked!\nScored " + score + "!");
+      }
+    }
     // NOTE: gems are NOT banked here — bankRun() does that when the run is
     // truly left, so a rewarded Revive can continue the same run cleanly.
     persistProgress();
@@ -766,8 +862,8 @@
     if (spawnTimer <= 0) {
       spawnObstacle();
       // Spacing shrinks as speed rises, but never unfair.
-      const base = Math.max(0.7, 1.6 - (speed - START_SPEED) / 900);
-      spawnTimer = base + rnd() * 0.6;
+      const base = Math.max(0.5, 1.4 - (speed - START_SPEED) / 700);
+      spawnTimer = base + rnd() * 0.45;
     }
     // Spawn gems
     gemTimer -= dt;
@@ -803,7 +899,12 @@
       if (hit) {
         if (shieldTime > 0) {
           // Shield absorbs the hit: shatter it and clear this obstacle.
+          // Touching an obstacle breaks the gem chain (the shield saves the run,
+          // not the combo) — a real cost that keeps the multiplier meaningful.
           shieldTime = 0;
+          combo = 0;
+          comboMult = 1;
+          updateComboHud();
           shake = 10;
           audio.shieldBreak();
           vibrate(60);
@@ -849,8 +950,16 @@
       if (g.x + g.r < -10) { gems.splice(i, 1); continue; }
       if (!g.got && hits(px, py, ps, ps, g.x - g.r, g.y - g.r, g.r * 2, g.r * 2)) {
         g.got = true;
-        coinCount++;
+        combo++;
+        const m = Math.min(COMBO_MAX_MULT, 1 + Math.floor(combo / COMBO_STEP));
+        coinCount += m;                 // each gem in a clean chain is worth `m`
         coinsEl.textContent = coinCount;
+        if (m > comboMult) {            // crossed into a higher tier — celebrate
+          comboMult = m;
+          updateComboHud();
+          showToast("COMBO ×" + m + "!");
+          vibrate(30);
+        }
         spawnGemBurst(g.x, g.y);
         audio.coin();
         gems.splice(i, 1);
@@ -1003,13 +1112,69 @@
       ctx.globalAlpha = 1;
     }
 
+    const s = player.size;
+
+    // Running feet — two neon legs that pump in an alternating gait while the
+    // runner is grounded, tuck up during a jump, and stride faster as the world
+    // speeds up (phase tied to distance travelled). Drawn BEFORE the body so the
+    // feet poke out the bottom. Frozen to a neutral stance under reduce-motion.
+    {
+      const bottomY = player.y + s;
+      const hipY = bottomY - s * 0.06;
+      const reach = s * 0.24;
+      const animate = player.onGround && !reduceMotion;
+      const retro = activeShoe().special;
+      ctx.save();
+      ctx.strokeStyle = c1;
+      ctx.fillStyle = c1;
+      ctx.lineCap = "round";
+      ctx.lineWidth = Math.max(3, s * 0.09);
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 8;
+      const phase = distance * 0.06;
+      for (let i = 0; i < 2; i++) {
+        const p = phase + i * Math.PI; // legs a half-cycle apart
+        let swing, lift;
+        if (animate) {
+          swing = Math.sin(p);              // -1 back .. +1 forward
+          lift = Math.max(0, Math.sin(p));  // foot rises as it swings forward
+        } else if (player.onGround) {
+          swing = i === 0 ? -0.35 : 0.35;   // static stance (reduce-motion)
+          lift = 0;
+        } else {
+          swing = i === 0 ? -0.25 : -0.05;  // airborne: legs tucked back/up
+          lift = 0.7;
+        }
+        const footX = cx + swing * reach;
+        const footY = bottomY + s * 0.16 - lift * s * 0.20;
+        // Leg (neon shin) from hip to foot.
+        ctx.strokeStyle = c1;
+        ctx.lineWidth = Math.max(3, s * 0.09);
+        ctx.shadowColor = glow;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(cx, hipY);
+        ctx.lineTo(footX, footY);
+        ctx.stroke();
+        if (retro) {
+          drawRetroShoe(footX, footY, s);
+        } else {
+          ctx.fillStyle = c1;
+          ctx.beginPath();
+          ctx.arc(footX, footY, Math.max(2.5, s * 0.07), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(player.rot);
     ctx.shadowColor = glow;
     ctx.shadowBlur = 18;
     // Body
-    const s = player.size;
     const grad = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
     grad.addColorStop(0, c0);
     grad.addColorStop(1, c1);
@@ -1020,6 +1185,35 @@
     // Eye
     ctx.fillStyle = "#0d0d1a";
     ctx.fillRect(s * 0.08, -s * 0.18, s * 0.22, s * 0.22);
+    ctx.restore();
+  }
+
+  // A chunky retro sneaker drawn at a foot position (toe points forward, +x):
+  // white sole, colored upper, gold side-stripe. Self-contained save/restore so
+  // it never leaks state into the neon-leg strokes.
+  function drawRetroShoe(x, y, s) {
+    const w = s * 0.42, h = s * 0.24;
+    ctx.save();
+    ctx.shadowBlur = 5;
+    // White sole, rounded, extending forward to a toe.
+    ctx.shadowColor = "#ffffff";
+    ctx.fillStyle = RETRO.sole;
+    roundRect(ctx, x - w * 0.45, y + h * 0.30, w, h * 0.40, h * 0.2);
+    ctx.fill();
+    // Colored upper (heel + instep) sitting on the sole.
+    ctx.shadowColor = RETRO.upper;
+    ctx.fillStyle = RETRO.upper;
+    roundRect(ctx, x - w * 0.45, y - h * 0.12, w * 0.70, h * 0.50, 3);
+    ctx.fill();
+    // Gold side stripe.
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = RETRO.stripe;
+    ctx.lineWidth = Math.max(2, s * 0.05);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x - w * 0.30, y + h * 0.26);
+    ctx.lineTo(x + w * 0.03, y - h * 0.02);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -1276,6 +1470,159 @@
       chip.addEventListener("click", (e) => { e.stopPropagation(); onSkinClick(s); });
       skinRow.appendChild(chip);
     }
+    renderShoes();
+    renderGemPacks();
+  }
+
+  // Shoe cosmetics row. Owned shoes select on tap; the locked Retro tier shows
+  // how to earn it — instantly via a rewarded video, or it auto-unlocks once a
+  // performance / level milestone is hit (with a progress hint underneath).
+  function renderShoes() {
+    if (!shoeRow) return;
+    shoeRow.innerHTML = "";
+    for (const sh of SHOES) {
+      const isOwned = ownedShoes.has(sh.id);
+      const isSel = sh.id === selectedShoe;
+      const chip = document.createElement("button");
+      chip.className = "skin-chip" + (isSel ? " selected" : "") + (isOwned ? "" : " locked");
+      chip.type = "button";
+      chip.setAttribute("aria-label", sh.name + " shoes" +
+        (isOwned ? (isSel ? ", active" : ", owned")
+                 : ", watch a video to unlock, or reach " + RETRO_SCORE_UNLOCK +
+                   " score or level " + RETRO_LEVEL_UNLOCK));
+
+      const sw = document.createElement("div");
+      sw.className = "swatch";
+      sw.setAttribute("style", sh.special
+        ? "background: linear-gradient(135deg, " + RETRO.upper + ", " + RETRO.sole + " 55%, " + RETRO.stripe + ");"
+        : "background: linear-gradient(135deg, #7afcff, #0091ff);");
+
+      const label = document.createElement("span");
+      label.className = "skin-price";
+      if (isOwned) {
+        label.textContent = isSel ? "ACTIVE" : "OWNED";
+        label.classList.add("owned");
+      } else if (retroEarnedByPlay()) {
+        label.textContent = "CLAIM";      // already earned by play — free claim
+        label.classList.add("afford");
+      } else {
+        label.textContent = "🎬 WATCH";   // rewarded-video path
+        label.classList.add("afford");
+      }
+
+      chip.appendChild(sw);
+      chip.appendChild(label);
+      chip.addEventListener("click", (e) => { e.stopPropagation(); onShoeClick(sh); });
+      shoeRow.appendChild(chip);
+    }
+
+    // Progress hint for a still-locked Retro tier.
+    if (!ownedShoes.has("retro")) {
+      const hint = document.createElement("div");
+      hint.className = "shoe-hint";
+      hint.textContent = "👟 Retro Kicks — watch a video, score " +
+        RETRO_SCORE_UNLOCK + " (best " + best + "), or hit level " +
+        RETRO_LEVEL_UNLOCK + " (now " + playerLevel() + ")";
+      shoeRow.appendChild(hint);
+    }
+  }
+
+  function onShoeClick(sh) {
+    // Owned: just equip it.
+    if (ownedShoes.has(sh.id)) {
+      selectedShoe = sh.id;
+      audio.coin();
+      track("shoe_selected", { shoe_id: sh.id });
+      persistProgress();
+      renderShoes();
+      return;
+    }
+    // Already earned by play → free claim, no ad.
+    if (retroEarnedByPlay()) {
+      unlockShoe(sh.id, best >= RETRO_SCORE_UNLOCK ? "performance" : "level");
+      selectedShoe = sh.id;
+      audio.power();
+      vibrate(30);
+      showToast("👟 " + sh.name + " unlocked!");
+      persistProgress();
+      renderShoes();
+      return;
+    }
+    // Otherwise: watch a rewarded video. (Stub auto-grants on web; real ad on
+    // native/portal.) Unlock + equip only if the video actually completed.
+    audio.coin();
+    ads.rewarded("retro_shoes").then((ok) => {
+      if (ok) {
+        unlockShoe(sh.id, "ad");
+        selectedShoe = sh.id;
+        audio.power();
+        vibrate(30);
+        showToast("👟 " + sh.name + " unlocked!");
+        track("reward_granted", { type: "retro_shoes" });
+      } else {
+        audio.shieldBreak();
+        showToast("Video didn't finish — try again");
+      }
+      persistProgress();
+      renderShoes();
+    });
+  }
+
+  // Render buyable gem packs (native IAP). Stays hidden on web / until the store
+  // returns products, so the section is invisible in the browser build + CI.
+  function renderGemPacks() {
+    if (!gemShopEl || !gemPackRow) return;
+    const packs = iap.available ? iap.packs() : [];
+    if (!packs.length) { gemShopEl.classList.add("hidden"); return; }
+    gemShopEl.classList.remove("hidden");
+    gemPackRow.innerHTML = "";
+    for (const p of packs) {
+      const chip = document.createElement("button");
+      chip.className = "gem-pack";
+      chip.type = "button";
+      chip.setAttribute("aria-label", p.title + ", " + p.gems + " gems, " + (p.priceString || "buy"));
+      if (p.badge) {
+        const badge = document.createElement("span");
+        badge.className = "gem-badge";
+        badge.textContent = p.badge;
+        chip.appendChild(badge);
+      }
+      const amt = document.createElement("span");
+      amt.className = "gem-amt";
+      amt.textContent = "◆ " + p.gems;
+      const price = document.createElement("span");
+      price.className = "gem-price";
+      price.textContent = p.priceString || "BUY";
+      chip.appendChild(amt);
+      chip.appendChild(price);
+      chip.addEventListener("click", (e) => { e.stopPropagation(); onGemPackClick(p, chip); });
+      gemPackRow.appendChild(chip);
+    }
+  }
+
+  // Buy a gem pack; on a completed purchase, credit the wallet and persist.
+  function onGemPackClick(p, chip) {
+    if (chip.disabled) return;
+    chip.disabled = true;
+    track("gem_pack_buy_start", { pack_id: p.id, gems: p.gems });
+    iap.buy(p.id).then((res) => {
+      chip.disabled = false;
+      if (res && res.ok) {
+        bank += res.gems || p.gems;
+        persistProgress();
+        audio.power();
+        vibrate(30);
+        showToast("✓ Purchase complete\n+" + (res.gems || p.gems) + " ◆");
+        track("gem_pack_purchased", { pack_id: p.id, gems: res.gems || p.gems, bank_after: bank });
+        renderShop();
+      } else if (res && res.cancelled) {
+        track("gem_pack_cancelled", { pack_id: p.id });
+      } else {
+        audio.shieldBreak();
+        showToast("Purchase didn't complete");
+        track("gem_pack_failed", { pack_id: p.id });
+      }
+    });
   }
 
   function onSkinClick(s) {
@@ -1394,7 +1741,7 @@
         return {
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
-          gemMultiplier, reviveUsed, doubleClaimed,
+          gemMultiplier, combo, comboMult, reviveUsed, doubleClaimed,
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,
