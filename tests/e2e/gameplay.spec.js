@@ -28,7 +28,7 @@ test("ND-NAV-01: Start -> Play enters playing state", async ({ page }) => {
   await expect(page.locator("#hud")).toBeVisible();
 });
 
-test("ND-CORE-01/02: single + double jump, capped at two", async ({ page }) => {
+test("ND-CORE-01/02: single + double + triple jump, capped at three", async ({ page }) => {
   await page.evaluate(() => { const t = window.NeonDashTest; t.start(); t.clearObstacles(); });
   // First jump leaves the ground.
   await page.evaluate(() => window.NeonDashTest.jump());
@@ -37,9 +37,12 @@ test("ND-CORE-01/02: single + double jump, capped at two", async ({ page }) => {
   // Second jump = double jump.
   await page.evaluate(() => window.NeonDashTest.jump());
   expect((await state(page)).player.jumps).toBe(2);
-  // Third tap ignored.
+  // Third jump = triple jump.
   await page.evaluate(() => window.NeonDashTest.jump());
-  expect((await state(page)).player.jumps).toBe(2);
+  expect((await state(page)).player.jumps).toBe(3);
+  // Fourth tap ignored.
+  await page.evaluate(() => window.NeonDashTest.jump());
+  expect((await state(page)).player.jumps).toBe(3);
 });
 
 test("ND-CORE-03: spike collision ends the run", async ({ page }) => {

@@ -98,7 +98,7 @@ Full 10-column matrix (Test Case ID, Description, Preconditions, Steps, Expected
 | ND-NAV-04 | Navigation | Game over → Play Again | **P0** | score=0, obstacles cleared, loop runs | Yes |
 | ND-NAV-05 | Navigation | Game over → Menu & Skins | P1 | Bank shown == post-run total | Yes |
 | ND-CORE-01 | Core | Single jump | **P0** | vy set, gravity arc, lands | Yes |
-| ND-CORE-02 | Core | Double jump cap | **P0** | jumps capped at 2 | Yes |
+| ND-CORE-02 | Core | Triple jump cap | **P0** | jumps capped at 3 | Yes |
 | ND-CORE-03 | Core | Spike collision → game over | **P0** | state=over, crash fx | Yes |
 | ND-CORE-04 | Core | Bar collision → game over | **P0** | state=over on overlap | Yes |
 | ND-CORE-05 | Core | Gem collection | P1 | coins+1, gem removed | Yes |
@@ -182,7 +182,7 @@ Roll back (flip flag to previous build) if ANY within a rollout step:
 Rollback = set flag to last-good build (instant for flag-gated clients) and, if needed, `git revert` + redeploy.
 
 ### 6.4 Post-release verification — first 72 hours
-- [ ] 5 **key-flow smoke tests** pass on prod: (1) load→PLAY→jump→crash→game over, (2) double-jump, (3) collect gem & power-up, (4) buy+equip skin & reload persists, (5) install PWA → offline play.
+- [ ] 5 **key-flow smoke tests** pass on prod: (1) load→PLAY→jump→crash→game over, (2) double + triple jump, (3) collect gem & power-up, (4) buy+equip skin & reload persists, (5) install PWA → offline play.
 - [ ] Crash-free rate ≥ target at 24h / 48h / 72h checkpoints.
 - [ ] No P0/P1 in triage queue.
 - [ ] Frame-time p95 within budget on RUM.

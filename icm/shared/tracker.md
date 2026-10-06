@@ -17,7 +17,7 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 | ND-005 | Gem shop live: 4 consumables in Play + RevenueCat, paste `goog_` key, rebuild | P1 | 06 | blocked | human→claude | ND-003 | Code is complete; inert only on the key and products. Runbook: `~/Desktop/IAP-Setup-Instructions-NeonDash.md`. |
 | ND-006 | AdMob payout setup: W-9/tax + bank | P1 | 06 | todo | human | — | No payout until done. Ads are already live. |
 | ND-007 | Publish `app-ads.txt` on the declared developer site | P1 | 05 | blocked | claude | ND-003 | Likely `ebarber79.github.io` root. Line is in `_config/product.md`. |
-| ND-008 | QA docs say double jump; game ships triple jump | P2 | 01 | todo | claude | — | `docs/QA_RELAUNCH_PLAN.md` ND-CORE-02 + matrix CSV. Docs-only, skip 02. |
+| ND-008 | QA docs say double jump; game ships triple jump | P2 | ✓ | done | claude | — | 2026-10-06. e2e 34/34. Report: `stages/04-verify/output/ND-008-verify.md`. Also added `PW_CHROMIUM` (Playwright cache was wiped). |
 | ND-009 | Rename `TEST` → `AD_UNITS` in `admob-provider.js` | P3 | 01 | todo | claude | ND-001 | Cosmetic, but the name lies (they're live units). Needs its own verify (guardrails §3). |
 | ND-010 | Decide: point Pages at `master` instead of `claude/mobile-app-game-tjpjlk`? | P3 | 01 | todo | human | — | The current split forces a cherry-pick on every web deploy. |
 | ND-011 | Prune stale remote `claude/*` branches | P3 | 01 | todo | claude | ND-010 | 4 leftovers besides the Pages branch. |
@@ -26,6 +26,7 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 
 | ID | Title | Done | Ref |
 |---|---|---|---|
+| ND-008 | QA docs/e2e/README → triple jump; e2e runnable again on Pi | 2026-10-06 | `mobile-capacitor` |
 | ND-001 | Gem-shop WIP + July gameplay + icm/ committed | 2026-10-06 | `mobile-capacitor` |
 | — | Capacitor Android scaffold | 2026-07-05 | `73316f1` |
 | — | Real AdMob IDs, live ads, release signing | 2026-07-20 | `af6d974`, `a88453c` |

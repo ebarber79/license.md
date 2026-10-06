@@ -13,7 +13,7 @@ Prove the build meets the spec's acceptance criteria. Reports only. Fixes go bac
 
 ## Process
 
-1. `npm run test:unit` and `npm run test:e2e`. Record the pass/total counts.
+1. `npm run test:unit` and `PW_CHROMIUM=/usr/bin/chromium npm run test:e2e`. Record the pass/total counts.
 2. Walk each acceptance criterion: PASS / FAIL with evidence (test name, screenshot, log).
 3. Web scope: serve locally, check the console has no CSP errors and no native script tags.
 4. Android scope: verify on the **debug** APK only (test creatives). Never tap live ads.
@@ -22,7 +22,7 @@ Prove the build meets the spec's acceptance criteria. Reports only. Fixes go bac
 ## Audit
 
 - [ ] Every criterion has a verdict + evidence.
-- [ ] e2e counts are no lower than the last recorded run (32/32 baseline).
+- [ ] e2e counts are no lower than the last recorded run (baseline in `_config/systems.md`).
 - [ ] QA docs match the shipped behavior.
 
 ## Outputs
