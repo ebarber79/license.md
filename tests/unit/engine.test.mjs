@@ -5,11 +5,11 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const E = require("../../engine.js");
 
-test("scoreFromDistance: 1 point per 10px, floored", () => {
+test("scoreFromDistance: 1 point per 8px, floored", () => {
   assert.equal(E.scoreFromDistance(0), 0);
-  assert.equal(E.scoreFromDistance(95), 9);
-  assert.equal(E.scoreFromDistance(100), 10);
-  assert.equal(E.scoreFromDistance(109), 10);
+  assert.equal(E.scoreFromDistance(79), 9);
+  assert.equal(E.scoreFromDistance(80), 10);
+  assert.equal(E.scoreFromDistance(87), 10);
 });
 
 test("hits: AABB overlap detection", () => {

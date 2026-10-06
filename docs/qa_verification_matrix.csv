@@ -9,7 +9,7 @@ ND-NAV-03,Navigation,Pause then Quit to menu,In active game,Tap pause; tap QUIT,
 ND-NAV-04,Navigation,Game over to Play Again,After a crash,Tap PLAY AGAIN,New run starts fresh; score/gems reset,P0,Score=0; obstacles cleared; loop runs,Yes,Playwright
 ND-NAV-05,Navigation,Game over to Menu and Skins,After a crash,Tap MENU & SKINS,Returns to menu; shop reflects banked gems,P1,Bank shown matches post-run total,Yes,Playwright
 ND-CORE-01,Core Gameplay,Single jump from ground,In active game; player grounded,Tap once,Player jumps with gravity arc; lands,P0,vy set to jump velocity; returns to ground,Yes,Unit (physics) + Playwright
-ND-CORE-02,Core Gameplay,Double jump in mid-air,In active game; airborne after 1 jump,Tap again before landing,Second smaller jump applied; no third,P0,jumps capped at 2; third tap ignored,Yes,Unit (physics)
+ND-CORE-02,Core Gameplay,Double + triple jump in mid-air,In active game; airborne after 1 jump,Tap twice more before landing,Second (86%) then third (72%) jump applied; no fourth,P0,jumps capped at 3; fourth tap ignored,Yes,Unit (physics)
 ND-CORE-03,Core Gameplay,Spike collision ends run,In active game; no shield,Run into ground spikes,Crash; game over screen,P0,State=over; crash particles + sound,Yes,Playwright deterministic seed
 ND-CORE-04,Core Gameplay,Bar collision ends run,In active game; no shield,Collide with floating bar,Crash; game over screen,P0,State=over on overlap,Yes,Unit (collision)
 ND-CORE-05,Core Gameplay,Gem collection,In active game; gem on screen,Touch a gem,Gem count +1; burst + coin sound,P1,coins increments; gem removed,Yes,Unit + Playwright

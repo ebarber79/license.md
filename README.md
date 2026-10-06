@@ -10,7 +10,7 @@ No frameworks, no build step, no install — just open it in any mobile or deskt
   python3 -m http.server 8000
   # then visit http://localhost:8000 on your phone or desktop
   ```
-- **Mobile:** tap anywhere to jump. Tap again in mid-air for a **double jump**.
+- **Mobile:** tap anywhere to jump. Tap again in mid-air for a **double jump**, and once more for a **triple jump**.
 - **Desktop:** click, or press `Space` / `↑` / `W`.
 
 ## Goal
@@ -23,7 +23,7 @@ shifts through new color themes. Your best score is saved locally on your device
 
 ## Features
 
-- Smooth, frame-rate-independent physics with gravity + double jump
+- Smooth, frame-rate-independent physics with gravity + triple jump
 - Procedurally spawned obstacles and collectible gem arcs
 - **Three power-ups**, each with its own aura, icon, and expiry warning:
   - 🛡️ **Shield** (green) — absorbs one hit

@@ -23,7 +23,7 @@
     return px < ox + ow && px + pw > ox && py < oy + oh && py + ph > oy;
   }
 
-  // Score is distance-based (1 point per 10px travelled).
+  // Score is distance-based (1 point per 8px travelled).
   function scoreFromDistance(distance) {
     return Math.floor(distance / 8);
   }

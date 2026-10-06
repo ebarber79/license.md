@@ -14,6 +14,9 @@ module.exports = defineConfig({
   use: {
     baseURL: "http://localhost:8000",
     trace: "on-first-retry",
+    // Opt-in: run against a system browser (e.g. PW_CHROMIUM=/usr/bin/chromium on the
+    // arm64 Pi, where Playwright's bundled browsers aren't kept). Unset in CI.
+    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
   projects: [
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
