@@ -19,16 +19,18 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 | ND-007 | Publish `app-ads.txt` on the declared developer site | P1 | 05 | blocked | claude | ND-003 | Likely `ebarber79.github.io` root. Line is in `_config/product.md`. |
 | ND-008 | QA docs say double jump; game ships triple jump | P2 | ✓ | done | claude | — | 2026-10-06. e2e 34/34. Report: `stages/04-verify/output/ND-008-verify.md`. Also added `PW_CHROMIUM` (Playwright cache was wiped). |
 | ND-009 | Rename `TEST` → `AD_UNITS` in `admob-provider.js` | P3 | ✓ | done | claude | — | 2026-10-06. Added `tests/unit/admob-provider.test.mjs` (mutation-checked guard on live IDs + IS_TESTING). Unit 22/22. Ships with next Android build. |
-| ND-010 | Make `master` the single web branch (Pages publishes from it) | P3 | 05 | review | human | — | Decided 2026-10-06. Step 1 DONE: Pages branch merged into master (`95a91f7`), tree identical to live (`78b3d5e`). **Waiting on human: Settings → Pages → Source → `master`.** Then Claude verifies the live URL + merges master → mobile-capacitor. |
-| ND-011 | Prune stale remote `claude/*` branches | P3 | 01 | todo | claude | ND-010 | 4 stale `claude/*` + the old Pages branch once ND-010 is live; also local `pages-deploy`. Show list before deleting. |
+| ND-010 | Make `master` the single web branch (Pages publishes from it) | P3 | ✓ | done | claude+human | — | 2026-10-06. Pages→master merged (`95a91f7`, tree = live), human flipped Pages source, deploy verified byte-identical live, master merged into mobile-capacitor. CI on master still red from 2 stale tests (→ ND-012). |
+| ND-011 | Prune stale remote `claude/*` branches | P3 | 01 | todo | claude | — | 4 stale `claude/*` + the old Pages branch once ND-010 is live; also local `pages-deploy`. Show list before deleting. |
 
 ## Done log
 
 | ID | Title | Done | Ref |
 |---|---|---|---|
+| ND-010 | master = single web branch, Pages flipped + verified live | 2026-10-06 | master `95a91f7` |
 | ND-009 | AD_UNITS rename + first test of the native ad path | 2026-10-06 | `mobile-capacitor` |
 | ND-008 | QA docs/e2e/README → triple jump; e2e runnable again on Pi | 2026-10-06 | `mobile-capacitor` |
 | ND-001 | Gem-shop WIP + July gameplay + icm/ committed | 2026-10-06 | `mobile-capacitor` |
+| ND-012 | Fix red CI on `master`: port ND-001 score-test + ND-008 triple-jump test/doc fixes | P2 | 01 | todo | claude | — | Both stale tests already fixed on mobile-capacitor. Push to master = public deploy (docs/README/tests only, no game code), so it needs a go. |
 | — | Capacitor Android scaffold | 2026-07-05 | `73316f1` |
 | — | Real AdMob IDs, live ads, release signing | 2026-07-20 | `af6d974`, `a88453c` |
 | — | Rebalance + running legs + Retro Kicks, web deploy verified live | 2026-07-20 | Pages `d3e43ea`, master `71ee72d` |

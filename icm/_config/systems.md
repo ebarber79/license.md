@@ -4,9 +4,13 @@
 
 | Branch | Role |
 |---|---|
-| `claude/mobile-app-game-tjpjlk` | **What GitHub Pages publishes.** The live web game. |
-| `master` | Default branch. **Not published.** Changes reach the web only by cherry-pick onto the Pages branch. |
-| `mobile-capacitor` | Android/Capacitor work + current dev branch on the Pi. |
+| `master` | **What GitHub Pages publishes** (since 2026-10-06, ND-010). The live web game. Push here = deploy. |
+| `mobile-capacitor` | Android/Capacitor work + current dev branch on the Pi. **Never publish this to Pages.** Its `index.html` loads native-only scripts. |
+| `claude/mobile-app-game-tjpjlk` | Old Pages branch, fully merged into master. Pending deletion (ND-011). |
+
+Web change flow: build on `mobile-capacitor` → cherry-pick the web-safe commit(s) onto `master`
+(keep the CSP, no native script tags) → push → verify live. Merge `master` → `mobile-capacitor` after.
+Pages settings: https://github.com/ebarber79/license.md/settings/pages
 
 Live URL: https://ebarber79.github.io/license.md/index.html
 Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attempt `gh auth`.

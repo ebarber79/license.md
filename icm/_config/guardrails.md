@@ -13,7 +13,7 @@ These override every stage contract. If a stage would break one, it stops and re
 
 ## 2. Nothing goes public without the human
 
-- Pushing to `claude/mobile-app-game-tjpjlk` (= live site), uploading to Play Console, and
+- Pushing to `master` (= live site), uploading to Play Console, and
   publishing a store listing are each **proposed** in a 05/06 output, then approved.
 - Committing locally and pushing feature branches is fine once the human has approved the stage.
 
@@ -28,8 +28,7 @@ These override every stage contract. If a stage would break one, it stops and re
 
 - The Pages build keeps the strict CSP and carries **no** native-only script tags
   (`admob-provider.js`, `iap*.js`, CrazyGames). Those load only in the Capacitor build.
-- `master` isn't published. A web change isn't live until it's cherry-picked onto the Pages
-  branch **and** the live URL is checked.
+- `master` IS the live site (ND-010). Pushing to it is a public deploy: propose first, verify live after.
 
 ## 5. Android releases
 

@@ -15,8 +15,8 @@ Anything public is **proposed, then executed only on the human's go**.
 ## Process
 
 **Web**
-1. Cherry-pick the commit(s) onto `claude/mobile-app-game-tjpjlk`. Check that no native tags
-   came along.
+1. Cherry-pick the web-safe commit(s) onto `master` (it's the live branch since ND-010). Check
+   that no native tags came along.
 2. Write the proposal (commits, files, preview). Wait for the go.
 3. Push, wait for the Pages build, then confirm specific markers are present on the live URL.
 
