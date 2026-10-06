@@ -5,6 +5,7 @@ blob-report/
 playwright/.cache/
 .lighthouseci/
 _lhci_site/
+dist/
 *.log
 
 # Capacitor: www/ is generated from source by scripts/build-www.mjs
