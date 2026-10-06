@@ -31,7 +31,7 @@
   if (!AdMob) return;                                     // plugin not linked -> stay stubbed
 
   // Real AdMob ad units (Android) for the Neon Dash app. ----------------------
-  var TEST = {
+  var AD_UNITS = {
     interstitial: "ca-app-pub-6072709464334522/3616110679",
     rewarded:     "ca-app-pub-6072709464334522/3241274379",
   };
@@ -62,7 +62,7 @@
     // Interstitial / commercial break — always resolves (ad optional).
     commercialBreak: function () {
       return Promise.resolve()
-        .then(function () { return AdMob.prepareInterstitial({ adId: TEST.interstitial, isTesting: IS_TESTING }); })
+        .then(function () { return AdMob.prepareInterstitial({ adId: AD_UNITS.interstitial, isTesting: IS_TESTING }); })
         .then(function () { return AdMob.showInterstitial(); })
         .then(function () {}, function () {});   // swallow load/show failure
     },
@@ -89,7 +89,7 @@
         listen("onRewardedVideoAdFailedToLoad", function () { settle(false); });
         listen("onRewardedVideoAdFailedToShow", function () { settle(false); });
 
-        Promise.resolve(AdMob.prepareRewardVideoAd({ adId: TEST.rewarded, isTesting: IS_TESTING }))
+        Promise.resolve(AdMob.prepareRewardVideoAd({ adId: AD_UNITS.rewarded, isTesting: IS_TESTING }))
           .then(function () { return AdMob.showRewardVideoAd(); })
           .catch(function () { settle(false); });   // prepare/show threw synchronously
 
