@@ -19,8 +19,8 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 | ND-007 | Publish `app-ads.txt` on the declared developer site | P1 | 05 | blocked | claude | ND-003 | Likely `ebarber79.github.io` root. Line is in `_config/product.md`. |
 | ND-008 | QA docs say double jump; game ships triple jump | P2 | ✓ | done | claude | — | 2026-10-06. e2e 34/34. Report: `stages/04-verify/output/ND-008-verify.md`. Also added `PW_CHROMIUM` (Playwright cache was wiped). |
 | ND-009 | Rename `TEST` → `AD_UNITS` in `admob-provider.js` | P3 | ✓ | done | claude | — | 2026-10-06. Added `tests/unit/admob-provider.test.mjs` (mutation-checked guard on live IDs + IS_TESTING). Unit 22/22. Ships with next Android build. |
-| ND-010 | Decide: point Pages at `master` instead of `claude/mobile-app-game-tjpjlk`? | P3 | 01 | todo | human | — | The current split forces a cherry-pick on every web deploy. |
-| ND-011 | Prune stale remote `claude/*` branches | P3 | 01 | todo | claude | ND-010 | 4 leftovers besides the Pages branch. |
+| ND-010 | Make `master` the single web branch (Pages publishes from it) | P3 | 05 | review | human | — | Decided 2026-10-06. Step 1 DONE: Pages branch merged into master (`95a91f7`), tree identical to live (`78b3d5e`). **Waiting on human: Settings → Pages → Source → `master`.** Then Claude verifies the live URL + merges master → mobile-capacitor. |
+| ND-011 | Prune stale remote `claude/*` branches | P3 | 01 | todo | claude | ND-010 | 4 stale `claude/*` + the old Pages branch once ND-010 is live; also local `pages-deploy`. Show list before deleting. |
 
 ## Done log
 
