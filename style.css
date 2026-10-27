@@ -528,3 +528,8 @@ html, body {
     animation: none;
   }
 }
+
+/* "Privacy choices" (ad consent, ND-014): small text button, native app only. */
+.link-btn { background: none; border: 0; color: #9aa0c8; font: inherit; font-size: 12px;
+  text-decoration: underline; margin-top: 8px; padding: 6px 10px; cursor: pointer; }
+.link-btn.hidden { display: none; }

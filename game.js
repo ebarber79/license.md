@@ -61,7 +61,16 @@
     rewarded() { return Promise.resolve(false); },
     available: false,
   };
-  ads.init();
+  // Consent "Privacy choices" button (native AdMob, ND-014): shown only when
+  // Google's consent SDK says this user needs a way to change their choice.
+  const privacyBtn = document.getElementById("privacy-btn");
+  Promise.resolve(ads.init()).then(() => {
+    if (privacyBtn && ads.privacyOptionsRequired) privacyBtn.classList.remove("hidden");
+  });
+  if (privacyBtn) privacyBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (ads.showPrivacyOptions) ads.showPrivacyOptions();
+  });
 
   // ---- In-app purchases (gem packs; native-only, stub on web) ----
   const iap = window.NeonIAP || {
@@ -625,12 +634,12 @@
     // so it stays claimed across a Revive (no second ad for no extra reward).
     reviveBtn.disabled = false;
     reviveBtn.textContent = "▶ CONTINUE · watch ad";
-    reviveBtn.classList.toggle("hidden", reviveUsed);
+    reviveBtn.classList.toggle("hidden", reviveUsed || !!ads.adsBlocked);
     if (!doubleClaimed) {
       doubleGemsBtn.disabled = false;
       doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
     }
-    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed);
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed || !!ads.adsBlocked);
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");

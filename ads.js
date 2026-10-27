@@ -84,5 +84,11 @@
     commercialBreak: function () { return call("commercialBreak"); },
     rewarded: function (name) { return call("rewarded", name); },
     get available() { return !!(provider && provider.available); },
+    // Consent "Privacy choices" entry point (native AdMob only; ND-014).
+    get adsBlocked() { return !!(provider && provider.adsBlocked); },
+    get privacyOptionsRequired() { return !!(provider && provider.privacyOptionsRequired); },
+    showPrivacyOptions: function () {
+      return (provider && provider.showPrivacyOptions) ? invoke("showPrivacyOptions") : Promise.resolve();
+    },
   };
 })(window);
