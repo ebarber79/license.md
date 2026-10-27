@@ -29,7 +29,7 @@ Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attemp
 
 | Item | Value |
 |---|---|
-| Host | `root@100.93.253.90` (Tailscale; more reliable than the public IP) |
+| Host | `root@50.21.191.200` (since ~2026-10-14 the Tailscale address hangs on a browser check) |
 | Source | `/root/neon-dash` (needs `node_modules/@capacitor*` + `@revenuecat/*` beside `android/`) |
 | Toolchain | JDK 21 `/root/jdk-21`, SDK `/root/android-sdk`, Gradle wrapper 8.14.3 |
 | Debug APK | `/root/neon-dash/build-once.sh` (flock-guarded) |
@@ -44,7 +44,7 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 
 | Artifact | Location |
 |---|---|
-| Release APK / AAB | `~/Desktop/NeonDash-release-admob.apk` · `~/Desktop/NeonDash-release.aab` |
+| Release AAB (Play) | `~/Desktop/NeonDash-release-v2.aab` (versionCode 2, 2026-10-27). Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
 | Debug APK (test creatives, safe to tap) | `~/Desktop/NeonDash-debug-admob.apk` |
 | Keystore copy | `~/Desktop/neondash-release.jks` (mode 600) |
 | Off-site | `gdrive:NeonDash/` |

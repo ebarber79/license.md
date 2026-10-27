@@ -33,7 +33,7 @@ These override every stage contract. If a stage would break one, it stops and re
 ## 5. Android releases
 
 - Bump `versionCode` in `android/app/build.gradle` before every Play upload. Play rejects
-  a reused code. (Currently `1` / `"1.0"`.)
+  a reused code. (Currently `2` / `"1.1"`, 2026-10-27.)
 - Play takes **AAB**, not APK.
 
 ## 6. Repo hygiene
