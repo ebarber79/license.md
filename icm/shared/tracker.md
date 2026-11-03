@@ -19,7 +19,7 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 | ND-007 | Publish `app-ads.txt` on the declared developer site | P1 | 05 | blocked | claude | ND-003 | Likely `ebarber79.github.io` root. Line is in `_config/product.md`. |
 | ND-008 | QA docs say double jump; game ships triple jump | P2 | ✓ | done | claude | — | 2026-10-06. e2e 34/34. Report: `stages/04-verify/output/ND-008-verify.md`. Also added `PW_CHROMIUM` (Playwright cache was wiped). |
 | ND-009 | Rename `TEST` → `AD_UNITS` in `admob-provider.js` | P3 | ✓ | done | claude | — | 2026-10-06. Added `tests/unit/admob-provider.test.mjs` (mutation-checked guard on live IDs + IS_TESTING). Unit 22/22. Ships with next Android build. |
-| ND-010 | Make `master` the single web branch (Pages publishes from it) | P3 | ✓ | done | claude+human | — | 2026-10-06. Pages→master merged (`95a91f7`, tree = live), human flipped Pages source, deploy verified byte-identical live, master merged into mobile-capacitor. CI on master still red from 2 stale tests (→ ND-012). |
+| ND-010 | Make `master` the single web branch (Pages publishes from it) | P3 | ✓ | done | claude+human | — | 2026-10-06. Pages→master merged (`95a91f7`, tree = live), human flipped Pages source, deploy verified byte-identical live, master merged into mobile-capacitor. CI on master fixed 2026-11-03 by ND-012. |
 | ND-011 | Branch cleanup | P3 | 05 | review | human | — | 2026-10-07: local `pages-deploy` deleted. 4 non-game branches tagged `archive/<branch>` locally + backed up to TB `/mnt/storage/archive/neon-dash-branches/` (verified git bundle + plain FTMO folder; ~/eurusd-bot no longer on Pi, real copy is VPS /home/eurusd/eurusd-bot). Remote push of tags + branch deletes blocked by Claude Code guard → **human runs** the push-tags then delete-branches commands. |
 | ND-013 | Replace default Capacitor app icon + splash with Neon Dash art (from `icon.svg`) | P1 | 04 | review | claude | — | 2026-10-27: built on branch `nd-013` (now part of `nd-014`). `scripts/gen-android-icons.py` (chromium + Pillow) regenerates all 15 launcher PNGs (legacy, round, adaptive foreground in the 66dp safe zone), bg colour #2b1d4e, 11 splash PNGs and `docs/store/play-icon-512.png`. Preview: `docs/store/icon-preview-sheet.png`. On-device check happens with the ND-017 build. |
 | ND-014 | GDPR/UK ad consent: Google UMP form before AdMob loads | P1 | 04 | review | claude+human | — | 2026-10-27: code on branch `nd-014` (off `nd-013`). `admob-provider.js` asks UMP first, shows the form when REQUIRED, inits AdMob only if `canRequestAds`; fails closed on UMP errors; `adsBlocked` hides revive/double-gems; start screen gets a "Privacy choices" button when UMP requires it. Unit 26/26, e2e 34/34. **Human:** AdMob → Privacy & messaging → create + publish a GDPR message for the Neon Dash app (without it UMP shows nothing in the EEA/UK). |
@@ -31,11 +31,11 @@ duplicates it. Seeded 2026-10-06 from the repo state and the project history.
 
 | ID | Title | Done | Ref |
 |---|---|---|---|
+| ND-012 | Red CI on master fixed (stale score + triple-jump tests); rebased onto 59e4fe0, CI + Pages green | 2026-11-03 | master `3f93be8` |
 | ND-010 | master = single web branch, Pages flipped + verified live | 2026-10-06 | master `95a91f7` |
 | ND-009 | AD_UNITS rename + first test of the native ad path | 2026-10-06 | `mobile-capacitor` |
 | ND-008 | QA docs/e2e/README → triple jump; e2e runnable again on Pi | 2026-10-06 | `mobile-capacitor` |
 | ND-001 | Gem-shop WIP + July gameplay + icm/ committed | 2026-10-06 | `mobile-capacitor` |
-| ND-012 | Fix red CI on `master`: port ND-001 score-test + ND-008 triple-jump test/doc fixes | P2 | 05 | review | human | — | 2026-10-06: commit `2dd51a6` ready on local branch `nd-012` (fast-forward of master). Unit 18/18, targeted e2e 3/3 (full local run impossible: Pi swap full, load ~20). Push to master blocked by Claude Code permission guard (production deploy). **Human runs:** `git -C ~/neon-dash-src push origin nd-012:master`, then GitHub CI = full-suite check. |
 | — | Capacitor Android scaffold | 2026-07-05 | `73316f1` |
 | — | Real AdMob IDs, live ads, release signing | 2026-07-20 | `af6d974`, `a88453c` |
 | — | Rebalance + running legs + Retro Kicks, web deploy verified live | 2026-07-20 | Pages `d3e43ea`, master `71ee72d` |
