@@ -113,6 +113,10 @@ html, body {
   transform: scale(0.9);
 }
 
+/* ND-025: music toggle sits left of the sound button. */
+.icon-btn-music { right: 76px; }
+.icon-btn-music.off { opacity: 0.4; text-decoration: line-through; }
+
 .icon-btn-left {
   right: auto;
   left: 16px;

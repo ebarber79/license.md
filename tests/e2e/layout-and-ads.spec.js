@@ -21,7 +21,8 @@ test.describe("ND-020 small-phone layout", () => {
       s.scrollTop = 1e6;
       const h = document.querySelector("#start-screen .hint").getBoundingClientRect();
       const m = document.getElementById("mute-btn").getBoundingClientRect();
-      return { hintBottom: h.bottom, muteTop: m.top };
+      const mu = document.getElementById("music-btn").getBoundingClientRect();
+      return { hintBottom: h.bottom, muteTop: Math.min(m.top, mu.top) };
     });
     expect(bottom.hintBottom).toBeLessThanOrEqual(bottom.muteTop);
   });
@@ -40,7 +41,8 @@ test.describe("ND-020 small-phone layout", () => {
       const titleTop = s.querySelector(".gameover-title").getBoundingClientRect().top;
       s.scrollTop = 1e6;
       const menuBottom = document.getElementById("menu-btn").getBoundingClientRect().bottom;
-      const muteTop = document.getElementById("mute-btn").getBoundingClientRect().top;
+      const muteTop = Math.min(document.getElementById("mute-btn").getBoundingClientRect().top,
+        document.getElementById("music-btn").getBoundingClientRect().top);
       return { titleTop, menuBottom, muteTop };
     });
     expect(r.titleTop).toBeGreaterThanOrEqual(0);

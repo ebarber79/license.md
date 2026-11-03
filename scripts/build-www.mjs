@@ -26,6 +26,7 @@ const ASSETS = [
   'iap.js',
   'progress.js',
   'engine.js',
+  'music.js',
   'game.js',
   'qrcode.js',
 ];

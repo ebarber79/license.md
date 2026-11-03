@@ -10,6 +10,7 @@ with gems. Score = `distance / 8`. Combo scoring.
 |---|---|
 | `game.js` | Loop, physics, spawns, collision, render, shop, skins/shoes, QR |
 | `engine.js` | Core engine helpers |
+| `music.js` | Reactive synthwave music, generated with WebAudio (ND-025) |
 | `progress.js` | Missions, streak, daily |
 | `ads.js` · `ad-provider.js` · `admob-provider.js` | Ad facade · provider interface · native AdMob (Android only) |
 | `iap.js` · `iap-provider.js` | Gem shop · RevenueCat → Play Billing (Android only) |
