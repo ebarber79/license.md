@@ -127,13 +127,30 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* ND-020: scroll when the content is taller than the phone. The ::before /
+     ::after spacers centre the content when it fits and collapse when it
+     doesn't, so the top (title) is never pushed off-screen. */
+  justify-content: flex-start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   text-align: center;
-  padding: 24px;
+  /* Bottom padding keeps the last button scrollable clear of the sound button. */
+  padding: max(24px, env(safe-area-inset-top)) 24px
+    calc(max(16px, env(safe-area-inset-bottom)) + 66px);
   color: #fff;
   background: radial-gradient(circle at center, rgba(20, 10, 40, 0.55), rgba(8, 8, 20, 0.92));
   backdrop-filter: blur(2px);
   z-index: 10;
+}
+
+.overlay::before,
+.overlay::after {
+  content: "";
+  flex: 1 0 0;
+}
+
+.overlay > * {
+  flex-shrink: 0;
 }
 
 .title {
