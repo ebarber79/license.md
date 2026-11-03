@@ -35,6 +35,8 @@ Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attemp
 | Debug APK | `/root/neon-dash/build-once.sh` (flock-guarded) |
 | Release APK | `/root/neon-dash/build-release.sh` |
 | Release AAB (Play) | `/root/neon-dash/build-bundle.sh` |
+| Test APK (Google test ads, play-testing) | `/root/neon-dash/build-test-apk.sh` (patches IS_TESTING=true into the bundled asset for that build only, restores on exit) |
+| Sync from Pi | `npm run cap:sync`, then `rsync -a --exclude build/ --exclude .gradle/ --exclude local.properties --exclude app/src/main/assets/public/ android/ root@50.21.191.200:/root/neon-dash/android/` + `rsync -a --delete android/app/src/main/assets/public/ …/assets/public/` |
 | Signing | keystore `/root/neon-dash/neondash-release.jks`, password in `/root/.gradle/gradle.properties` |
 
 Ops rules learned the hard way: launch builds **only** through the flock scripts (a retry loop
@@ -44,7 +46,7 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 
 | Artifact | Location |
 |---|---|
-| Release AAB (Play) | `~/Desktop/NeonDash-release-v2.aab` (versionCode 2, 2026-10-27). Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
+| Release AAB (Play) | `~/Desktop/NeonDash-release-v3.aab` (versionCode 3, 2026-11-03). Previous: `NeonDash-release-v2.aab`. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
 | Debug APK (test creatives, safe to tap) | `~/Desktop/NeonDash-debug-admob.apk` |
 | Keystore copy | `~/Desktop/neondash-release.jks` (mode 600) |
 | Off-site | `gdrive:NeonDash/` |
