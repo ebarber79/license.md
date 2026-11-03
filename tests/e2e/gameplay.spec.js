@@ -141,3 +141,30 @@ test("ND-NAV-02: pause freezes, resume continues", async ({ page }) => {
   await page.evaluate(() => window.NeonDashTest.resume());
   expect((await state(page)).paused).toBe(false);
 });
+
+// ND-021: power-ups light up the shoes.
+test("ND-021: shield lights the shoes, and they go back to normal when it ends", async ({ page }) => {
+  await page.evaluate(() => { const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.giveShield(7); t.step(5); });
+  expect((await state(page)).shoeMode).toBe("shield");
+  await page.evaluate(() => { const t = window.NeonDashTest; t.giveShield(0); t.step(1); });
+  expect((await state(page)).shoeMode).toBe("none");
+});
+
+test("ND-021: Retro Kicks + shield draw for 120 frames with no errors", async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem("neondash.shoes", JSON.stringify(["classic", "retro"]));
+    localStorage.setItem("neondash.shoe", "retro");
+  });
+  await page.reload();
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.seed(1); t.start();
+    for (let i = 0; i < 120; i++) { t.clearObstacles(); t.giveShield(7); t.step(1); }
+  });
+  await page.waitForTimeout(300); // let a few real frames draw too
+  expect((await state(page)).shoeMode).toBe("shield");
+  expect(errors).toEqual([]);
+});

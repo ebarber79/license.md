@@ -105,6 +105,7 @@ Full 10-column matrix (Test Case ID, Description, Preconditions, Steps, Expected
 | ND-CORE-06 | Core | Shield absorbs one hit | P1 | shieldTime→0, survive, one hit only | Yes |
 | ND-CORE-07 | Core | Magnet attracts gems | P2 | Gems in range move to player | Yes |
 | ND-CORE-08 | Core | Slow-mo scales world speed | P2 | worldSpeed=speed×factor | Yes |
+| ND-CORE-21 | Core | Power-up shoes: shoes take the power colour (shield teal, magnet gold, slow-mo blue, 2+ rainbow), flash on pickup, blink in the last 1.5 s | P2 | shoeMode matches; normal when power ends; no errors on Classic or Retro; visual playtest per spec ND-021 | Yes (+ manual look) |
 | ND-CORE-09 | Core | Difficulty ramp fair | P1 | speed↑ to cap, no impossible gaps | Yes |
 | ND-CORE-10 | Core | Score = distance/10 | P1 | matches formula | Yes |
 | ND-CORE-11 | Core | Theme shifts | P3 | palette interpolates, no flicker | Partial |

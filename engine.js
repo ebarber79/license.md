@@ -41,12 +41,65 @@
     return "rgb(" + r + "," + g + "," + bl + ")";
   }
 
+  // ND-021: how the shoes look while power-ups are active. Pure, so it's
+  // unit-testable; game.js does the drawing.
+  //   o = { shield, magnet, slow, reduceMotion, t }  (seconds left per power, clock in s)
+  // Returns { active, mode, rgb, color, blinkOff, dim }:
+  //   mode     none | shield | magnet | slowmo | rainbow (2+ powers at once)
+  //   rgb      [r,g,b] of the current shoe colour (null when mode is none)
+  //   color    "rgb(r,g,b)" string, or null when none or blinked off
+  //   blinkOff true on the "off" half of the end-of-power blink (draw normal shoes)
+  //   dim      true when ending under reduce-motion (steady, dimmer, no blink)
+  var SHOE_POWER_RGB = { shield: [0, 255, 180], magnet: [255, 216, 77], slowmo: [120, 180, 255] };
+  var SHOE_RAINBOW_STILL = [255, 120, 255]; // reduce-motion: no hue cycling
+  var SHOE_ENDING_SECS = 1.5;
+  var SHOE_BLINKS_PER_SEC = 4;
+
+  function hslToRgb(h, s, l) {
+    h = ((h % 360) + 360) % 360 / 360;
+    function f(n) {
+      var k = (n + h * 12) % 12;
+      var a = s * Math.min(l, 1 - l);
+      return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+    }
+    return [f(0), f(8), f(4)];
+  }
+
+  function shoePowerStyle(o) {
+    var t = o.t || 0;
+    var on = [];
+    if (o.shield > 0) on.push(["shield", o.shield]);
+    if (o.magnet > 0) on.push(["magnet", o.magnet]);
+    if (o.slow > 0) on.push(["slowmo", o.slow]);
+    if (!on.length) return { active: false, mode: "none", rgb: null, color: null, blinkOff: false, dim: false };
+    var rgb, mode, left = Infinity;
+    if (on.length > 1) {
+      mode = "rainbow";
+      rgb = o.reduceMotion ? SHOE_RAINBOW_STILL : hslToRgb(t * 220, 1, 0.62);
+    } else {
+      mode = on[0][0];
+      rgb = SHOE_POWER_RGB[mode];
+      left = on[0][1];
+    }
+    var ending = left <= SHOE_ENDING_SECS;
+    var blinkOff = ending && !o.reduceMotion && Math.floor(t * SHOE_BLINKS_PER_SEC * 2) % 2 === 1;
+    return {
+      active: true,
+      mode: mode,
+      rgb: rgb,
+      color: blinkOff ? null : "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")",
+      blinkOff: blinkOff,
+      dim: ending && !!o.reduceMotion,
+    };
+  }
+
   var NeonEngine = {
     mulberry32: mulberry32,
     hits: hits,
     scoreFromDistance: scoreFromDistance,
     hexToRgb: hexToRgb,
     lerpColor: lerpColor,
+    shoePowerStyle: shoePowerStyle,
   };
 
   if (typeof module === "object" && module.exports) module.exports = NeonEngine;
