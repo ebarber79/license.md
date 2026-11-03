@@ -34,12 +34,12 @@ joins the group is a tester. No typing emails into Play one by one.
 -------------------------------------------------------------------------------
 STEP B. Invite people now (text / WhatsApp, short)
 -------------------------------------------------------------------------------
-Paste this, replacing <JOIN LINK>:
+Paste this, replacing https://groups.google.com/g/neondash-testers:
 
 Hey! I made an Android game, Neon Dash (a neon runner, tap to jump). Before Google lets it
 on the Play Store, 12 people have to test it for 2 weeks. Would you be one? It's free and
 takes 2 minutes. You just keep it installed for 14 days (playing is up to you).
-If you're in, join here with the Google account on your phone: <JOIN LINK>
+If you're in, join here with the Google account on your phone: https://groups.google.com/g/neondash-testers
 I'll send the install link in a few days.
 
 -------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ they can go public on the Play Store, and I'd love your help.
 
 It's free and quick:
 1. Join the tester group with the Google account you use on your Android phone:
-   <JOIN LINK>
+   https://groups.google.com/g/neondash-testers
 2. In a few days I'll send you a link to install it from Google Play.
 3. Keep it installed for 14 days. Playing is optional, but feedback is welcome.
 
