@@ -247,6 +247,11 @@
   let shieldTime = 0;  // seconds of shield remaining
   let magnetTime = 0;  // seconds of gem-magnet remaining
   let slowTime = 0;    // seconds of slow-motion remaining
+  // ND-021: power-up shoes. Visual only; sparks use Math.random so the seeded
+  // gameplay RNG (obstacle/gem spawns) is unaffected.
+  let shoeClock = 0;     // seconds of play, drives pulses/shimmer/blinks
+  let shoeFlash = 0;     // seconds of white pickup flash left
+  let shoeSparkAcc = 0;  // px run since the last footfall spark
   let gemMultiplier = 1; // 2 after a rewarded "double gems"
   let combo = 0;         // consecutive gems collected without an obstacle hit
   let comboMult = 1;     // gem-value multiplier derived from the current combo
@@ -382,6 +387,8 @@
     shieldTime = 0;
     magnetTime = 0;
     slowTime = 0;
+    shoeFlash = 0;
+    shoeSparkAcc = 0;
     shake = 0;
     bgScroll = 0;
   }
@@ -772,6 +779,9 @@
   const POWER_COLORS = { shield: "0,255,180", magnet: "255,216,77", slowmo: "120,180,255" };
 
   function applyPowerup(type) {
+    // ND-021: shoes flash white and throw a spark burst in the power colour.
+    shoeFlash = SHOE_FLASH_SECS;
+    if (!reduceMotion) spawnShoeSparks(POWER_COLORS[type].split(",").map(Number), 10, 220);
     if (type === "shield") shieldTime = SHIELD_DURATION;
     else if (type === "magnet") magnetTime = MAGNET_DURATION;
     else if (type === "slowmo") slowTime = SLOWMO_DURATION;
@@ -846,6 +856,36 @@
     }
   }
 
+  // ---- Power-up shoes (ND-021) ----
+  const SHOE_FLASH_SECS = 0.22;
+  const SHOE_SPARK_EVERY_PX = 34; // roughly one footfall at running pace
+  function shoeLook() {
+    return NeonEngine.shoePowerStyle({
+      shield: shieldTime, magnet: magnetTime, slow: slowTime,
+      reduceMotion: reduceMotion, t: shoeClock,
+    });
+  }
+  // Small sparks kicked up from the feet. Math.random, not rnd(): purely cosmetic.
+  function spawnShoeSparks(rgb, n, power) {
+    const fx = player.x + player.size / 2;
+    const fy = player.y + player.size * 1.12;
+    const col = rgb[0] + "," + rgb[1] + "," + rgb[2];
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI + Math.random() * Math.PI; // upward half
+      const sp = Math.random() * power + 40;
+      particles.push({
+        x: fx + (Math.random() - 0.5) * player.size * 0.5,
+        y: fy,
+        vx: Math.cos(a) * sp - 60,
+        vy: Math.sin(a) * sp,
+        life: 0.4,
+        max: 0.4,
+        color: col,
+        r: Math.random() * 2.5 + 1.5,
+      });
+    }
+  }
+
   // ---- Collision (AABB) ----
   const hits = NeonEngine.hits;
 
@@ -900,6 +940,19 @@
     if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
     if (magnetTime > 0) magnetTime = Math.max(0, magnetTime - dt);
     if (slowTime > 0) slowTime = Math.max(0, slowTime - dt);
+    // Power-up shoes: clock, pickup flash, footfall sparks (ND-021).
+    shoeClock += dt;
+    if (shoeFlash > 0) shoeFlash = Math.max(0, shoeFlash - dt);
+    if (player.onGround && !reduceMotion) {
+      const look = shoeLook();
+      if (look.color) {
+        shoeSparkAcc += worldSpeed * dt;
+        if (shoeSparkAcc >= SHOE_SPARK_EVERY_PX) {
+          shoeSparkAcc = 0;
+          spawnShoeSparks(look.rgb, 4, 110);
+        }
+      }
+    }
 
     // Move + test obstacles
     const px = player.x, py = player.y, ps = player.size;
@@ -1143,6 +1196,24 @@
       const reach = s * 0.24;
       const animate = player.onGround && !reduceMotion;
       const retro = activeShoe().special;
+      // ND-021: power-up colour for the shoes (null = normal shoes).
+      const look = shoeLook();
+      const flash = shoeFlash > 0;
+      const powerCol = flash ? "#ffffff" : look.color;
+      // Coloured light pool on the ground under the feet while powered up.
+      if (powerCol && player.onGround) {
+        const gx = cx, gy = bottomY + s * 0.22, gr = s * 0.75;
+        const rgb = flash ? [255, 255, 255] : look.rgb;
+        const pool = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+        pool.addColorStop(0, "rgba(" + rgb + "," + (look.dim ? 0.25 : 0.45) + ")");
+        pool.addColorStop(1, "rgba(" + rgb + ",0)");
+        ctx.save();
+        ctx.fillStyle = pool;
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, gr, gr * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.save();
       ctx.strokeStyle = c1;
       ctx.fillStyle = c1;
@@ -1175,7 +1246,9 @@
         ctx.moveTo(cx, hipY);
         ctx.lineTo(footX, footY);
         ctx.stroke();
-        if (retro) {
+        if (powerCol) {
+          drawPowerShoe(footX, footY, s, retro, powerCol, look, i);
+        } else if (retro) {
           drawRetroShoe(footX, footY, s);
         } else {
           ctx.fillStyle = c1;
@@ -1205,6 +1278,96 @@
     ctx.fillStyle = "#0d0d1a";
     ctx.fillRect(s * 0.08, -s * 0.18, s * 0.22, s * 0.22);
     ctx.restore();
+  }
+
+  // ND-021: a shoe lit by the active power-up. Classic = glowing orb (1.6x),
+  // Retro = power-coloured upper, white sparkling stripe, white sole.
+  //   shield: slow pulse · magnet: shimmer sweeping heel→toe · slow-mo: fading
+  //   after-images behind the foot · rainbow: colour from look (cycles).
+  function drawPowerShoe(x, y, s, retro, col, look, foot) {
+    const t = shoeClock;
+    const still = reduceMotion;
+    ctx.save();
+    if (look.dim) ctx.globalAlpha = 0.6;
+    // Slow-mo after-images: the world streams left, so ghosts trail to the left.
+    if (look.mode === "slowmo" && !still) {
+      for (let k = 3; k >= 1; k--) {
+        ctx.save();
+        ctx.globalAlpha = (look.dim ? 0.6 : 1) * (0.32 - k * 0.08);
+        drawShoeShape(x - k * s * 0.16, y, s, retro, col, 0, false);
+        ctx.restore();
+      }
+    }
+    const pulse = look.mode === "shield" && !still ? 0.5 + 0.5 * Math.sin(t * 6) : 0.5;
+    // Retro keeps a tighter glow so the upper's colour still reads.
+    drawShoeShape(x, y, s, retro, col, retro ? 5 + pulse * 7 : 12 + pulse * 12, true);
+    // Magnet shimmer: a bright band sweeping heel→toe.
+    if (look.mode === "magnet" && !still) {
+      const w = retro ? s * 0.42 : s * 0.22;
+      const f = (t * 1.6 + foot * 0.5) % 1;
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.arc(x - w * 0.45 + f * w, y, s * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
+    ctx.restore();
+  }
+
+  // The shoe body in one colour. Used for the lit shoe and its after-images.
+  function drawShoeShape(x, y, s, retro, col, blur, detail) {
+    ctx.shadowColor = col;
+    ctx.shadowBlur = blur;
+    if (!retro) {
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(4, s * 0.07 * 1.6), 0, Math.PI * 2);
+      ctx.fill();
+      if (detail) { // hot white core
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.beginPath();
+        ctx.arc(x - s * 0.02, y - s * 0.02, Math.max(1.5, s * 0.035), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+    const w = s * 0.42, h = s * 0.24;
+    // Sole stays white.
+    ctx.fillStyle = RETRO.sole;
+    roundRect(ctx, x - w * 0.45, y + h * 0.30, w, h * 0.40, h * 0.2);
+    ctx.fill();
+    // Upper takes the power colour.
+    ctx.fillStyle = col;
+    roundRect(ctx, x - w * 0.45, y - h * 0.12, w * 0.70, h * 0.50, 3);
+    ctx.fill();
+    if (!detail) return;
+    // White stripe with a sparkle running along it.
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(2, s * 0.05);
+    ctx.lineCap = "round";
+    const x0 = x - w * 0.30, y0 = y + h * 0.26, x1 = x + w * 0.03, y1 = y - h * 0.02;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    if (!reduceMotion) {
+      const f = (shoeClock * 2.2) % 1;
+      const sx = x0 + (x1 - x0) * f, sy = y0 + (y1 - y0) * f;
+      const r = Math.max(2, s * 0.06);
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = 8;
+      ctx.beginPath(); // 4-point star
+      ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r * 0.3, sy - r * 0.3);
+      ctx.lineTo(sx + r, sy); ctx.lineTo(sx + r * 0.3, sy + r * 0.3);
+      ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r * 0.3, sy + r * 0.3);
+      ctx.lineTo(sx - r, sy); ctx.lineTo(sx - r * 0.3, sy - r * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   // A chunky retro sneaker drawn at a foot position (toe points forward, +x):
@@ -1770,6 +1933,7 @@
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,
+          shoeMode: shoeLook().mode,
           player: player ? { x: player.x, y: player.y, vy: player.vy, onGround: player.onGround, jumps: player.jumps, size: player.size } : null,
           groundY,
         };
