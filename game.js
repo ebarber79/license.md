@@ -1988,6 +1988,13 @@
   }
   function renderQR() {
     if (!qrEl) return;
+    // ND-019: inside the Android app the page address is the app's own local
+    // address, so "scan to play on your phone" is useless there. Web only.
+    const cap = window.Capacitor;
+    if (cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform()) {
+      if (qrEl.parentElement) qrEl.parentElement.classList.add("hidden");
+      return;
+    }
     loadQrLib().then((qrcode) => {
       try {
         const qr = qrcode(0, "M"); // type 0 = auto-fit, error-correction M

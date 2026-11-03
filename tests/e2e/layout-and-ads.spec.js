@@ -61,3 +61,16 @@ test("ND-022: web build without ads offers no ad rewards", async ({ page }) => {
   await expect(page.locator("#revive-btn")).toBeHidden();
   await expect(page.locator("#double-gems-btn")).toBeHidden();
 });
+
+// ND-019: the "Scan to play on your phone" QR is web-only.
+test("ND-019: QR hidden inside the Android app, shown on the web", async ({ page }) => {
+  await page.addInitScript(() => { window.Capacitor = { isNativePlatform: () => true }; });
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  await expect(page.locator("#qr-box")).toBeHidden();
+});
+test("ND-019: QR still shown on the web", async ({ page }) => {
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  await expect(page.locator("#qr-box")).toBeVisible();
+});
