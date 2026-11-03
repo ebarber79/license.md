@@ -72,6 +72,7 @@
   }
   Promise.resolve(ads.init()).then(() => {
     renderShoes(); // ND-022: the Retro "WATCH" option depends on ads being ready
+    renderBoost(); // ND-023: same for the Boost ad button
   });
 
   // ---- In-app purchases (gem packs; native-only, stub on web) ----
@@ -168,6 +169,14 @@
   const SHIELD_DURATION = 7;   // seconds of protection per shield pickup
   const MAGNET_DURATION = 6;   // seconds gems are pulled toward the player
   const SLOWMO_DURATION = 5;   // seconds of slow-motion
+  // ND-023: Boost = start the next run with a power-up (watch an ad, or pay gems).
+  const BOOST_GEM_COST = 40;
+  const BOOST_KEY = "neondash.boost";
+  const BOOST_TYPES = [
+    { id: "shield", name: "Shield",  icon: "🛡" },
+    { id: "magnet", name: "Magnet",  icon: "🧲" },
+    { id: "slowmo", name: "Slow-mo", icon: "⏱" },
+  ];
   const SLOWMO_FACTOR = 0.5;   // world speed multiplier during slow-mo
   const MAGNET_RANGE = 230;    // px radius the magnet attracts gems within
   const COMBO_STEP = 5;        // gems per consecutive-chain multiplier tier
@@ -244,6 +253,11 @@
   let shoeClock = 0;     // seconds of play, drives pulses/shimmer/blinks
   let shoeFlash = 0;     // seconds of white pickup flash left
   let shoeSparkAcc = 0;  // px run since the last footfall spark
+  // ND-023 Boost state. boostArmed is saved so a paid boost survives an app close.
+  let boostArmed = null;      // "shield" | "magnet" | "slowmo" | null
+  let boostPick = "shield";   // highlighted choice before paying
+  let boostBusy = false;      // an ad is in flight
+  let boostAdWatched = false; // skip the next replay interstitial after a boost ad
   let gemMultiplier = 1; // 2 after a rewarded "double gems"
   let combo = 0;         // consecutive gems collected without an obstacle hit
   let comboMult = 1;     // gem-value multiplier derived from the current combo
@@ -422,7 +436,9 @@
   startBtn.addEventListener("click", () => startGame());
   // Portal interstitial at a natural break — every 3rd replay, not every run.
   restartBtn.addEventListener("click", () => {
-    if (runCount > 0 && runCount % 3 === 0) {
+    const skipBreak = boostAdWatched; // ND-023: no interstitial right after a boost ad
+    boostAdWatched = false;
+    if (runCount > 0 && runCount % 3 === 0 && !skipBreak) {
       ads.commercialBreak().catch(() => {}).then(() => startGame());
     } else {
       startGame();
@@ -470,6 +486,7 @@
     buildBackground();
     resize();
     reset();
+    useBoost(); // ND-023: armed power-up starts active
     scoreEl.textContent = "0";
     coinsEl.textContent = "0";
     audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
@@ -649,6 +666,7 @@
       doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
     }
     doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed || !rewardAdsOn());
+    renderBoost();
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
@@ -845,6 +863,119 @@
         color,
         r: rnd() * 3 + 1.5,
       });
+    }
+  }
+
+  // ---- Boost (ND-023) ----
+  const boostPanels = [document.getElementById("boost-start"), document.getElementById("boost-over")];
+  (function loadBoost() {
+    const v = safeGet(BOOST_KEY);
+    boostArmed = BOOST_TYPES.some((b) => b.id === v) ? v : null;
+  })();
+  function saveBoost() {
+    try {
+      if (boostArmed) localStorage.setItem(BOOST_KEY, boostArmed);
+      else localStorage.removeItem(BOOST_KEY);
+    } catch (e) { /* storage may be unavailable */ }
+  }
+  function armBoost(type, via) {
+    boostArmed = type;
+    saveBoost();
+    track("boost_armed", { type: type, via: via });
+    audio.power();
+    vibrate(30);
+    showToast("✓ " + BOOST_TYPES.find((b) => b.id === type).name + " ready for your next run");
+    renderShop(); // bank display + boost panels
+  }
+  // Returns a Promise<boolean>: true when the boost got armed.
+  function buyBoost(type, via) {
+    if (boostArmed || boostBusy || !BOOST_TYPES.some((b) => b.id === type)) return Promise.resolve(false);
+    if (via === "gems") {
+      if (bank < BOOST_GEM_COST) return Promise.resolve(false);
+      bank -= BOOST_GEM_COST;
+      persistProgress();
+      armBoost(type, "gems");
+      return Promise.resolve(true);
+    }
+    if (via !== "ad" || !rewardAdsOn()) return Promise.resolve(false);
+    boostBusy = true;
+    renderBoost();
+    return ads.rewarded("boost_" + type).then((ok) => {
+      boostBusy = false;
+      if (ok && !boostArmed) {
+        boostAdWatched = true;
+        armBoost(type, "ad");
+        return true;
+      }
+      if (!ok) { audio.shieldBreak(); showToast("Video didn't finish — try again"); }
+      renderBoost();
+      return false;
+    });
+  }
+  // Called at run start: the armed power-up begins active at full duration.
+  function useBoost() {
+    if (!boostArmed) return;
+    const type = boostArmed;
+    if (type === "shield") shieldTime = SHIELD_DURATION;
+    else if (type === "magnet") magnetTime = MAGNET_DURATION;
+    else if (type === "slowmo") slowTime = SLOWMO_DURATION;
+    shoeFlash = SHOE_FLASH_SECS;
+    if (!reduceMotion) spawnRingBurst(POWER_COLORS[type]);
+    track("boost_used", { type: type });
+    boostArmed = null;
+    saveBoost();
+    renderBoost();
+  }
+  function renderBoost() {
+    for (const panel of boostPanels) {
+      if (!panel) continue;
+      panel.innerHTML = "";
+      const head = document.createElement("div");
+      head.className = "boost-head";
+      head.textContent = "BOOST NEXT RUN";
+      panel.appendChild(head);
+      if (boostArmed) {
+        const b = BOOST_TYPES.find((x) => x.id === boostArmed);
+        const ready = document.createElement("div");
+        ready.className = "boost-ready boost-" + b.id;
+        ready.textContent = "✓ " + b.icon + " " + b.name.toUpperCase() + " READY";
+        panel.appendChild(ready);
+        continue;
+      }
+      const row = document.createElement("div");
+      row.className = "boost-row";
+      for (const b of BOOST_TYPES) {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "boost-chip boost-" + b.id + (b.id === boostPick ? " selected" : "");
+        chip.setAttribute("aria-pressed", b.id === boostPick ? "true" : "false");
+        chip.setAttribute("aria-label", "Boost: " + b.name);
+        chip.dataset.boost = b.id;
+        chip.innerHTML = '<span class="boost-icon">' + b.icon + '</span><span class="boost-name">' + b.name + "</span>";
+        chip.addEventListener("click", (e) => { e.stopPropagation(); boostPick = b.id; audio.coin(); renderBoost(); });
+        row.appendChild(chip);
+      }
+      panel.appendChild(row);
+      const pay = document.createElement("div");
+      pay.className = "boost-pay";
+      if (rewardAdsOn()) {
+        const adBtn = document.createElement("button");
+        adBtn.type = "button";
+        adBtn.className = "boost-btn boost-ad";
+        adBtn.textContent = boostBusy ? "loading…" : "🎬 FREE · watch ad";
+        adBtn.disabled = boostBusy;
+        adBtn.addEventListener("click", (e) => { e.stopPropagation(); buyBoost(boostPick, "ad"); });
+        pay.appendChild(adBtn);
+      }
+      const gemBtn = document.createElement("button");
+      gemBtn.type = "button";
+      gemBtn.className = "boost-btn boost-gems";
+      const short = bank < BOOST_GEM_COST;
+      gemBtn.textContent = short ? "need " + BOOST_GEM_COST + " ◆" : "◆ " + BOOST_GEM_COST;
+      gemBtn.disabled = short || boostBusy;
+      gemBtn.addEventListener("click", (e) => { e.stopPropagation(); buyBoost(boostPick, "gems"); });
+      pay.appendChild(gemBtn);
+      panel.appendChild(pay);
     }
   }
 
@@ -1537,6 +1668,7 @@
     let dt = (now - lastTime) / 1000;
     lastTime = now;
     if (dt > 0.05) dt = 0.05; // clamp after tab-switch / hiccups
+    if (dt < 0) dt = 0; // first frame: rAF's timestamp can predate lastTime
 
     if (state === STATE.PLAYING) {
       if (paused) return; // frozen until resume re-arms the loop
@@ -1619,6 +1751,7 @@
 
   function renderShop() {
     bankEl.textContent = bank;
+    renderBoost();
     skinRow.innerHTML = "";
     for (const s of SKINS) {
       const isOwned = owned.has(s.id);
@@ -1915,6 +2048,8 @@
       setReduceMotion(v) { reduceMotion = !!v; },
       buySkin(id) { const s = SKINS.find((x) => x.id === id); if (s) onSkinClick(s); },
       doubleGems() { return claimDoubleGems(); },
+      buyBoost(type, via) { return buyBoost(type, via); },
+      setBank(n) { bank = n; persistProgress(); renderShop(); },
       revive() { return claimRevive(); },
       progressSummary() { return progress.summary(); },
       getState() {
@@ -1926,6 +2061,7 @@
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,
           shoeMode: shoeLook().mode,
+          boost: boostArmed,
           player: player ? { x: player.x, y: player.y, vy: player.vy, onGround: player.onGround, jumps: player.jumps, size: player.size } : null,
           groundY,
         };
