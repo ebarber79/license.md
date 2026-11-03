@@ -17,6 +17,11 @@ rewarded "double gems" surface are wired through a portal-agnostic adapter
 | Interstitial (commercial break) | every 3rd **Play Again** | resolves instantly | shows a full-screen ad between runs |
 | Rewarded — **Revive** (highest ROI) | **▶ Continue** button on game-over (once/run) | auto-grants | shows a rewarded ad; continues the run only if watched |
 | Rewarded — **Double Gems** | **🎬 Double Gems** button on game-over | auto-grants (so UX is testable) | shows a rewarded ad; gems double only if watched |
+| Rewarded — **Boost** (ND-023) | **BOOST NEXT RUN** panel on start + game-over: pick Shield / Magnet / Slow-mo, then **🎬 FREE · watch ad** or **◆ 40** | gems only | ad `boost_<type>` arms it; next run starts with that power-up; skips the next interstitial |
+
+> **Plain website (ND-022):** with no ad network connected, every "watch ad"
+> option is hidden (Revive, Double Gems, Retro Kicks, Boost ad). Boost stays
+> available for gems. `?test=1` keeps the stub's auto-grant for tests.
 
 > Gems are banked once per run by `bankRun()` (on Play Again / Menu / Quit /
 > tab-hide), applying the double multiplier — never on game-over — so a Revive

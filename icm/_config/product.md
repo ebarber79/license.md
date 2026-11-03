@@ -24,6 +24,7 @@ with gems. Score = `distance / 8`. Combo scoring.
 | `JUMP_VELOCITY` | -1100 px/s (2nd jump ×0.86, 3rd ×0.72) |
 | `START_SPEED` / `MAX_SPEED` / `SPEED_RAMP` | 420 / 1100 / 16 px/s per s |
 | `RETRO_SCORE_UNLOCK` / `RETRO_LEVEL_UNLOCK` | 800 / level 6 (level = √(lifetimeGems/40)+1) |
+| `BOOST_GEM_COST` | 40 gems (ND-023, agreed 2026-11-03) |
 
 When a stage changes a constant, update this table in the same pass.
 

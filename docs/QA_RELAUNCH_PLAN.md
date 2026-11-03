@@ -106,6 +106,7 @@ Full 10-column matrix (Test Case ID, Description, Preconditions, Steps, Expected
 | ND-CORE-07 | Core | Magnet attracts gems | P2 | Gems in range move to player | Yes |
 | ND-CORE-08 | Core | Slow-mo scales world speed | P2 | worldSpeed=speed×factor | Yes |
 | ND-CORE-21 | Core | Power-up shoes: shoes take the power colour (shield teal, magnet gold, slow-mo blue, 2+ rainbow), flash on pickup, blink in the last 1.5 s | P2 | shoeMode matches; normal when power ends; no errors on Classic or Retro; visual playtest per spec ND-021 | Yes (+ manual look) |
+| ND-ADS-04 | Ads | Boost: start a run with a power-up via rewarded ad or 40 gems | P1 | Armed after ad/gems; next run starts with it; used once; saved across reload; no ad option on plain web; no interstitial right after a boost ad | Yes |
 | ND-CORE-09 | Core | Difficulty ramp fair | P1 | speed↑ to cap, no impossible gaps | Yes |
 | ND-CORE-10 | Core | Score = distance/10 | P1 | matches formula | Yes |
 | ND-CORE-11 | Core | Theme shifts | P3 | palette interpolates, no flicker | Partial |
