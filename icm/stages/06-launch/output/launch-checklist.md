@@ -29,5 +29,5 @@ Seeded 2026-10-06. Tick with a date when confirmed. Tracker IDs in brackets.
 ## Phase 3 — public release (later)
 
 - [ ] Store listing: icon, screenshots, short/long description, content rating, data-safety form
-- [ ] Closed testing (Play requires testers for 14 days on new personal accounts before production)
+- [ ] Closed testing (Play requires 12+ testers opted in for 14 days on new personal accounts before production) [ND-028 kit ready]
 - [ ] Production rollout

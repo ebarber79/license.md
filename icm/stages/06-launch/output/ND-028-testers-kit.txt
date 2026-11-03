@@ -1,0 +1,104 @@
+NEON DASH: TESTER RECRUITMENT KIT
+=================================
+
+Why this matters: Google requires new personal developer accounts to run a CLOSED TEST
+with at least 12 testers who stay opted in for 14 days in a row before the game can go
+public. The 14-day clock starts when the test starts, so line people up now.
+
+Aim for 15-20 people. Some will forget to opt in or will uninstall.
+Each tester needs: an Android phone + the Google (Gmail) account they use for the Play Store.
+
+-------------------------------------------------------------------------------
+STEP A. Create the tester group (you, once, 3 minutes)
+-------------------------------------------------------------------------------
+A Google Group is the tester list. Play Console takes the group's address, so anyone who
+joins the group is a tester. No typing emails into Play one by one.
+
+1. On a computer, open https://groups.google.com and sign in with your Google account.
+2. Click "Create group".
+3. Group name: Neon Dash Testers
+   Group email: neondash-testers  (if taken, try neondash-beta or neondashtesters)
+   Description: Testers for the Neon Dash Android game.
+4. Privacy settings:
+   - Who can search for group: Anyone on the web
+   - Who can join group: Anyone can join
+   - Who can view conversations: Group managers
+   - Who can post: Group managers
+   - Who can view members: Group managers
+5. Skip adding members. Click "Create group".
+6. Your join link is:  https://groups.google.com/g/<group-email-name>
+   (for example https://groups.google.com/g/neondash-testers)
+   Send that link with the invite below.
+7. Tell your terminal agent the group email, so it goes into Play Console later.
+
+-------------------------------------------------------------------------------
+STEP B. Invite people now (text / WhatsApp, short)
+-------------------------------------------------------------------------------
+Paste this, replacing <JOIN LINK>:
+
+Hey! I made an Android game, Neon Dash (a neon runner, tap to jump). Before Google lets it
+on the Play Store, 12 people have to test it for 2 weeks. Would you be one? It's free and
+takes 2 minutes. You just keep it installed for 14 days (playing is up to you).
+If you're in, join here with the Google account on your phone: <JOIN LINK>
+I'll send the install link in a few days.
+
+-------------------------------------------------------------------------------
+STEP B (email version)
+-------------------------------------------------------------------------------
+Subject: Can you help test my game for 2 weeks?
+
+Hi <name>,
+
+I've built an Android game called Neon Dash, a fast neon runner where you tap to jump over
+spikes. Google requires new games to be tested by at least 12 people for 14 days before
+they can go public on the Play Store, and I'd love your help.
+
+It's free and quick:
+1. Join the tester group with the Google account you use on your Android phone:
+   <JOIN LINK>
+2. In a few days I'll send you a link to install it from Google Play.
+3. Keep it installed for 14 days. Playing is optional, but feedback is welcome.
+
+Thanks!
+
+-------------------------------------------------------------------------------
+STEP C. When the test opens (send this later; your agent will fill in the link)
+-------------------------------------------------------------------------------
+Neon Dash test is open! On your Android phone:
+1. Open this link: <OPT-IN LINK>
+2. Tap "Become a tester".
+3. Tap "Download it on Google Play" and install.
+4. Please keep it installed for 14 days, and don't tap "Leave the program". Open it now
+   and then if you can.
+It may say "Early access" or "Unreleased" on the Play Store. That's normal.
+If the link says you can't join, make sure you're signed in with the same Google account
+you used to join the group.
+
+-------------------------------------------------------------------------------
+TRACKING (fill in as people say yes)
+-------------------------------------------------------------------------------
+#   Name                 Joined group (Y/N)   Opted in + installed (date)
+1   ____________________ ___                  __________
+2   ____________________ ___                  __________
+3   ____________________ ___                  __________
+4   ____________________ ___                  __________
+5   ____________________ ___                  __________
+6   ____________________ ___                  __________
+7   ____________________ ___                  __________
+8   ____________________ ___                  __________
+9   ____________________ ___                  __________
+10  ____________________ ___                  __________
+11  ____________________ ___                  __________
+12  ____________________ ___                  __________
+13  ____________________ ___                  __________
+14  ____________________ ___                  __________
+15  ____________________ ___                  __________
+16  ____________________ ___                  __________
+17  ____________________ ___                  __________
+18  ____________________ ___                  __________
+
+Notes:
+- Play Console's closed-test page shows how many testers have opted in. Your agent can
+  read that count once the test is running.
+- The 14 days count from when 12+ testers are opted in. If someone leaves early, the count
+  can drop below 12, which is why 15-20 is the safe number.
