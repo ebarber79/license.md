@@ -46,7 +46,7 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 
 | Artifact | Location |
 |---|---|
-| Release AAB (Play) | `~/Desktop/NeonDash-release-v3.aab` (versionCode 3, 2026-11-03). Previous: `NeonDash-release-v2.aab`. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
+| Release AAB (Play) | `~/Desktop/NeonDash-release-v4.aab` (versionCode 4, 2026-11-03). Previous: v3 (never uploaded), v2. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
 | Debug APK (test creatives, safe to tap) | `~/Desktop/NeonDash-debug-admob.apk` |
 | Keystore copy | `~/Desktop/neondash-release.jks` (mode 600) |
 | Off-site | `gdrive:NeonDash/` |
