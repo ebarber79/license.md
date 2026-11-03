@@ -70,6 +70,16 @@
     if (TEST_MODE) return true;
     return !!ads.available && !ads.adsBlocked;
   }
+  // ND-025: silence the music while any ad is on screen.
+  function adRewarded(name) {
+    music.hold(true);
+    return ads.rewarded(name).then((ok) => { music.hold(false); return ok; },
+      (e) => { music.hold(false); throw e; });
+  }
+  function adBreak() {
+    music.hold(true);
+    return Promise.resolve(ads.commercialBreak()).then(() => music.hold(false), () => music.hold(false));
+  }
   Promise.resolve(ads.init()).then(() => {
     renderShoes(); // ND-022: the Retro "WATCH" option depends on ads being ready
     renderBoost(); // ND-023: same for the Boost ad button
@@ -115,6 +125,13 @@
   let lastCrashCause = "unknown";
 
   // ---- Audio (synthesized, no asset files) ----
+  // ---- Music (ND-025): reactive synthwave, generated in music.js ----
+  const musicBtn = document.getElementById("music-btn");
+  const music = window.NeonMusic
+    ? window.NeonMusic.create({ on: safeGet("neondash.music") !== "0" })
+    : { attach() {}, setOn() {}, setMode() {}, setIntensity() {}, hold() {},
+        getState() { return { on: false, mode: "off", bpm: 0, layers: [] }; } };
+
   const audio = {
     ctx: null,
     muted: safeGet("neondash.muted") === "1",
@@ -124,6 +141,7 @@
         if (AC) this.ctx = new AC();
       }
       if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+      if (this.ctx) music.attach(this.ctx); // ND-025: music starts after the first tap
     },
     tone(freq, dur, type = "square", vol = 0.15, slideTo = null) {
       if (this.muted || !this.ctx) return;
@@ -149,7 +167,22 @@
 
   function updateMuteUI() {
     muteBtn.textContent = audio.muted ? "🔇" : "🔊";
+    if (musicBtn) {
+      const st = music.getState();
+      musicBtn.classList.toggle("off", !st.on);
+      musicBtn.setAttribute("aria-pressed", st.on ? "true" : "false");
+      musicBtn.setAttribute("aria-label", st.on ? "Music on (tap to turn off)" : "Music off (tap to turn on)");
+    }
   }
+  // ND-025: 🎵 = music, 🔊 = sound effects. Separate settings.
+  musicBtn && musicBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const nowOn = !music.getState().on;
+    music.setOn(nowOn);
+    safeSet("neondash.music", nowOn ? "1" : "0");
+    audio.ensure();
+    updateMuteUI();
+  });
   muteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     audio.muted = !audio.muted;
@@ -439,7 +472,7 @@
     const skipBreak = boostAdWatched; // ND-023: no interstitial right after a boost ad
     boostAdWatched = false;
     if (runCount > 0 && runCount % 3 === 0 && !skipBreak) {
-      ads.commercialBreak().catch(() => {}).then(() => startGame());
+      adBreak().then(() => startGame());
     } else {
       startGame();
     }
@@ -498,6 +531,7 @@
     track("game_start", { skin: selectedSkin });
     ads.gameplayStart();
     state = STATE.PLAYING;
+    music.setMode("run");
     startScreen.classList.add("hidden");
     gameoverScreen.classList.add("hidden");
     pauseScreen.classList.add("hidden");
@@ -519,6 +553,7 @@
     paused = !paused;
     pauseScreen.classList.toggle("hidden", !paused);
     pauseBtn.textContent = paused ? "▶" : "❚❚";
+    music.setMode(paused ? "paused" : "run");
     if (!paused) {
       audio.ensure(); // BUG-03: ensure audio is unlocked after resume
       lastTime = performance.now(); // avoid a huge dt after resuming
@@ -532,6 +567,7 @@
     ads.gameplayStop(); // balance the gameplayStart() from startGame() on this exit path
     bankRun();
     state = STATE.MENU;
+    music.setMode("menu");
     pauseScreen.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     hud.classList.add("hidden");
@@ -631,6 +667,7 @@
 
   function gameOver() {
     state = STATE.OVER;
+    music.setMode("menu"); // drums drop out, back to the menu loop
     vibrate([40, 30, 80]);
     const newRecord = score > best;
     if (newRecord) { best = score; saveBest(best); }
@@ -678,7 +715,7 @@
     if (doubleClaimed || !rewardAdsOn()) return Promise.resolve(false);
     const token = runId; // bind the reward to THIS game-over run
     doubleGemsBtn.disabled = true;
-    return ads.rewarded("double_gems").then((ok) => {
+    return adRewarded("double_gems").then((ok) => {
       // Ignore a late async reward if the player already left this run.
       if (state !== STATE.OVER || runId !== token) return false;
       if (ok) {
@@ -699,7 +736,7 @@
     if (reviveUsed || state !== STATE.OVER || !rewardAdsOn()) return Promise.resolve(false);
     const token = runId; // bind the reward to THIS game-over run
     reviveBtn.disabled = true;
-    return ads.rewarded("revive").then((ok) => {
+    return adRewarded("revive").then((ok) => {
       // Ignore a late async reward if the player already left this run.
       if (state !== STATE.OVER || runId !== token) return false;
       if (ok) { revive(); }
@@ -709,6 +746,7 @@
   }
   function revive() {
     reviveUsed = true;
+    music.setMode("run");
     track("reward_granted", { type: "revive", score: score });
     // Clear immediate threats and give a short grace window.
     obstacles.length = 0;
@@ -900,7 +938,7 @@
     if (via !== "ad" || !rewardAdsOn()) return Promise.resolve(false);
     boostBusy = true;
     renderBoost();
-    return ads.rewarded("boost_" + type).then((ok) => {
+    return adRewarded("boost_" + type).then((ok) => {
       boostBusy = false;
       if (ok && !boostArmed) {
         boostAdWatched = true;
@@ -1063,6 +1101,7 @@
     if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
     if (magnetTime > 0) magnetTime = Math.max(0, magnetTime - dt);
     if (slowTime > 0) slowTime = Math.max(0, slowTime - dt);
+    music.setIntensity(speed, shieldTime > 0 || magnetTime > 0 || slowTime > 0); // ND-025
     // Power-up shoes: clock, pickup flash, footfall sparks (ND-021).
     shoeClock += dt;
     if (shoeFlash > 0) shoeFlash = Math.max(0, shoeFlash - dt);
@@ -1864,7 +1903,7 @@
       return;
     }
     audio.coin();
-    ads.rewarded("retro_shoes").then((ok) => {
+    adRewarded("retro_shoes").then((ok) => {
       if (ok) {
         unlockShoe(sh.id, "ad");
         selectedShoe = sh.id;
@@ -2062,6 +2101,7 @@
           powerups: powerups ? powerups.length : 0,
           shoeMode: shoeLook().mode,
           boost: boostArmed,
+          music: music.getState(),
           player: player ? { x: player.x, y: player.y, vy: player.vy, onGround: player.onGround, jumps: player.jumps, size: player.size } : null,
           groundY,
         };
