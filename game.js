@@ -61,7 +61,18 @@
     rewarded() { return Promise.resolve(false); },
     available: false,
   };
-  ads.init();
+  // ND-022: reward buttons ("watch ad") only appear when a real ad network is
+  // connected (AdMob in the app, CrazyGames on the portal). The plain web build
+  // has none, and its stub would hand out rewards for free. Test mode keeps
+  // them so the reward flows stay testable.
+  const TEST_MODE = /[?&]test=1/.test(location.search);
+  function rewardAdsOn() {
+    if (TEST_MODE) return true;
+    return !!ads.available && !ads.adsBlocked;
+  }
+  Promise.resolve(ads.init()).then(() => {
+    renderShoes(); // ND-022: the Retro "WATCH" option depends on ads being ready
+  });
 
   // ---- In-app purchases (gem packs; native-only, stub on web) ----
   const iap = window.NeonIAP || {
@@ -625,12 +636,12 @@
     // so it stays claimed across a Revive (no second ad for no extra reward).
     reviveBtn.disabled = false;
     reviveBtn.textContent = "▶ CONTINUE · watch ad";
-    reviveBtn.classList.toggle("hidden", reviveUsed);
+    reviveBtn.classList.toggle("hidden", reviveUsed || !rewardAdsOn());
     if (!doubleClaimed) {
       doubleGemsBtn.disabled = false;
       doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
     }
-    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed);
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed || !rewardAdsOn());
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
@@ -639,7 +650,7 @@
   // Watch a rewarded ad to double this run's gems — applied via gemMultiplier
   // and banked by bankRun() when the run is left. Returns a Promise.
   function claimDoubleGems() {
-    if (doubleClaimed) return Promise.resolve(false);
+    if (doubleClaimed || !rewardAdsOn()) return Promise.resolve(false);
     const token = runId; // bind the reward to THIS game-over run
     doubleGemsBtn.disabled = true;
     return ads.rewarded("double_gems").then((ok) => {
@@ -660,7 +671,7 @@
 
   // Watch a rewarded ad to continue the same run from where it ended.
   function claimRevive() {
-    if (reviveUsed || state !== STATE.OVER) return Promise.resolve(false);
+    if (reviveUsed || state !== STATE.OVER || !rewardAdsOn()) return Promise.resolve(false);
     const token = runId; // bind the reward to THIS game-over run
     reviveBtn.disabled = true;
     return ads.rewarded("revive").then((ok) => {
@@ -1488,7 +1499,7 @@
       chip.type = "button";
       chip.setAttribute("aria-label", sh.name + " shoes" +
         (isOwned ? (isSel ? ", active" : ", owned")
-                 : ", watch a video to unlock, or reach " + RETRO_SCORE_UNLOCK +
+                 : (rewardAdsOn() ? ", watch a video to unlock, or reach " : ", locked: reach ") + RETRO_SCORE_UNLOCK +
                    " score or level " + RETRO_LEVEL_UNLOCK));
 
       const sw = document.createElement("div");
@@ -1505,9 +1516,11 @@
       } else if (retroEarnedByPlay()) {
         label.textContent = "CLAIM";      // already earned by play — free claim
         label.classList.add("afford");
-      } else {
+      } else if (rewardAdsOn()) {
         label.textContent = "🎬 WATCH";   // rewarded-video path
         label.classList.add("afford");
+      } else {
+        label.textContent = "🔒 LOCKED";  // no ad network (web): earn by play
       }
 
       chip.appendChild(sw);
@@ -1520,7 +1533,7 @@
     if (!ownedShoes.has("retro")) {
       const hint = document.createElement("div");
       hint.className = "shoe-hint";
-      hint.textContent = "👟 Retro Kicks — watch a video, score " +
+      hint.textContent = "👟 Retro Kicks — " + (rewardAdsOn() ? "watch a video, " : "") + "score " +
         RETRO_SCORE_UNLOCK + " (best " + best + "), or hit level " +
         RETRO_LEVEL_UNLOCK + " (now " + playerLevel() + ")";
       shoeRow.appendChild(hint);
@@ -1548,8 +1561,12 @@
       renderShoes();
       return;
     }
-    // Otherwise: watch a rewarded video. (Stub auto-grants on web; real ad on
-    // native/portal.) Unlock + equip only if the video actually completed.
+    // Otherwise: watch a rewarded video (app / portal only). Unlock + equip
+    // only if the video actually completed.
+    if (!rewardAdsOn()) {
+      showToast("Score " + RETRO_SCORE_UNLOCK + " or reach level " + RETRO_LEVEL_UNLOCK + " to unlock");
+      return;
+    }
     audio.coin();
     ads.rewarded("retro_shoes").then((ok) => {
       if (ok) {
