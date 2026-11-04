@@ -40,7 +40,7 @@ Hey! I made an Android game, Neon Dash (a neon runner, tap to jump). Before Goog
 on the Play Store, 12 people have to test it for 2 weeks. Would you be one? It's free and
 takes 2 minutes. You just keep it installed for 14 days (playing is up to you).
 If you're in, join here with the Google account on your phone: https://groups.google.com/g/neondash-testers
-I'll send the install link in a few days.
+Then install here: https://play.google.com/apps/testing/io.github.ebarber79.neondash
 
 -------------------------------------------------------------------------------
 STEP B (email version)
@@ -56,16 +56,18 @@ they can go public on the Play Store, and I'd love your help.
 It's free and quick:
 1. Join the tester group with the Google account you use on your Android phone:
    https://groups.google.com/g/neondash-testers
-2. In a few days I'll send you a link to install it from Google Play.
+2. Then open this link on your phone and tap "Become a tester", then install:
+   https://play.google.com/apps/testing/io.github.ebarber79.neondash
 3. Keep it installed for 14 days. Playing is optional, but feedback is welcome.
 
 Thanks!
 
 -------------------------------------------------------------------------------
-STEP C. When the test opens (send this later; your agent will fill in the link)
+STEP C. The test is OPEN (approved 2026-11-04). Send this right after they join the group.
+(For new people you can now send A/B and C together: join the group, then this link.)
 -------------------------------------------------------------------------------
 Neon Dash test is open! On your Android phone:
-1. Open this link: <OPT-IN LINK>
+1. Open this link: https://play.google.com/apps/testing/io.github.ebarber79.neondash
 2. Tap "Become a tester".
 3. Tap "Download it on Google Play" and install.
 4. Please keep it installed for 14 days, and don't tap "Leave the program". Open it now
