@@ -46,6 +46,7 @@ COME BACK DAILY
 
 MADE FOR QUICK RUNS
 • One-tap controls, instant restarts
+• Original synthwave soundtrack that builds as you speed up
 • Plays offline
 • Smooth on phones
 
