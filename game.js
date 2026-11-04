@@ -570,6 +570,31 @@
     }
   }
 
+  // ND-031: Android Back button (and Escape on the web).
+  // Run -> pause; paused or game-over -> menu; menu -> not handled (the app exits).
+  // Returns true if the game used the press.
+  function handleBack() {
+    if (state === STATE.PLAYING) {
+      if (!paused) togglePause();
+      else quitToMenu();
+      return true;
+    }
+    if (state === STATE.OVER) {
+      menuBtn.click();
+      return true;
+    }
+    return false;
+  }
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state !== STATE.MENU) { e.preventDefault(); handleBack(); }
+  });
+  (function wireNativeBack() {
+    const cap = window.Capacitor;
+    const App = cap && cap.isNativePlatform && cap.isNativePlatform() && cap.Plugins && cap.Plugins.App;
+    if (!App || !App.addListener) return;
+    App.addListener("backButton", () => { if (!handleBack()) App.exitApp(); });
+  })();
+
   function quitToMenu() {
     paused = false;
     ads.gameplayStop(); // balance the gameplayStart() from startGame() on this exit path
@@ -2083,6 +2108,7 @@
       start() { startGame(); },
       jump() { jump(); },
       pause() { if (!paused) togglePause(); },
+      back() { return handleBack(); },
       resume() { if (paused) togglePause(); },
       clearObstacles() { obstacles.length = 0; },
       // Advance the simulation deterministically, independent of rAF /

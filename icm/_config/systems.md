@@ -22,7 +22,7 @@ Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attemp
 - Tests: `npm run test:unit` (node --test) · e2e: **`PW_CHROMIUM=/usr/bin/chromium npm run test:e2e`**
   (Playwright, mobile + desktop chrome; drives the game via `?test=1` → `window.NeonDashTest`).
   Playwright's bundled browsers are NOT kept on the Pi (cache was emptied). Use system chromium.
-  Baseline: e2e **34/34**, unit **22/22** (2026-10-06).
+  Baseline: e2e **84/84**, unit **38/38** (2026-11-04). Run e2e with `--workers=1` on the Pi (parallel workers overload it → false timeouts).
 - `www/` is **generated** by `npm run build:www` from a 13-file allowlist. Never hand-edit it, never commit it.
 
 ## Android builds (IONOS VPS — keeps the Pi lean)
