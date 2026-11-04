@@ -28,8 +28,8 @@
   var Purchases = cap.Plugins && cap.Plugins.Purchases;
   if (!Purchases) return;                                   // plugin not linked -> stay stubbed
 
-  // Public Android SDK key from RevenueCat. Placeholder until step 5. ----------
-  var REVENUECAT_ANDROID_API_KEY = "goog_REPLACE_WITH_YOUR_REVENUECAT_ANDROID_KEY";
+  // Public Android SDK key from RevenueCat (not secret: it ships in the app). ---
+  var REVENUECAT_ANDROID_API_KEY = "goog_KfiqVMXosJBBRHkzCPoBxrkdBXF";
 
   // Gem-pack catalog: Play Console / RevenueCat product id -> gems granted.
   // Prices are NOT here — they come from the store at runtime (priceString).
@@ -66,7 +66,11 @@
           .then(function (res) {
             var products = (res && res.products) || [];
             var byId = {};
-            products.forEach(function (pr) { byId[pr.identifier] = pr; });
+            products.forEach(function (pr) {
+              // Play products with a purchase option may come back as "id:buy".
+              var id = String(pr.identifier || "").split(":")[0];
+              if (!byId[id]) byId[id] = pr;
+            });
             // Keep catalog order; only expose packs the store actually returned.
             self._packs = GEM_PACKS
               .filter(function (p) { return byId[p.id]; })
