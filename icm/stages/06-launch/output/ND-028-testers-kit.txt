@@ -9,6 +9,18 @@ Aim for 15-20 people. Some will forget to opt in or will uninstall.
 Each tester needs: an Android phone + the Google (Gmail) account they use for the Play Store.
 
 -------------------------------------------------------------------------------
+EASIEST: SEND ONE LINK (added 2026-11-04)
+-------------------------------------------------------------------------------
+https://ebarber79.github.io/license.md/test.html
+That page walks people through both steps (join the group, then become a tester) with
+two big buttons. Short invite to paste anywhere:
+
+Hey! I made an Android game, Neon Dash (neon runner, tap to jump). Google needs 12 people
+to test it for 2 weeks before it can go on the Play Store. Would you help? Free, 2 minutes:
+https://ebarber79.github.io/license.md/test.html
+(Android phones only. Just keep it installed for 14 days.)
+
+-------------------------------------------------------------------------------
 STEP A. Create the tester group (you, once, 3 minutes)
 -------------------------------------------------------------------------------
 A Google Group is the tester list. Play Console takes the group's address, so anyone who
