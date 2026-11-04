@@ -48,5 +48,5 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 |---|---|
 | Release AAB (Play) | `~/Desktop/NeonDash-release-v4.aab` (versionCode 4, 2026-11-03). Previous: v3 (never uploaded), v2. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
 | Debug APK (test creatives, safe to tap) | `~/Desktop/NeonDash-debug-admob.apk` |
-| Keystore copy | `~/Desktop/neondash-release.jks` (mode 600) |
+| Keystore copy | `~/Desktop/neondash-release.jks` (mode 600); backups: TB `/mnt/storage/apps/neon-dash/signing/`, `gdrive:NeonDash/signing/` (password NOT stored with them) |
 | Off-site | `gdrive:NeonDash/` |
