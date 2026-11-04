@@ -11,13 +11,13 @@ Each tester needs: an Android phone + the Google (Gmail) account they use for th
 -------------------------------------------------------------------------------
 EASIEST: SEND ONE LINK (added 2026-11-04)
 -------------------------------------------------------------------------------
-https://ebarber79.github.io/license.md/test.html
+https://neondash.gridlas.com/test.html
 That page walks people through both steps (join the group, then become a tester) with
 two big buttons. Short invite to paste anywhere:
 
 Hey! I made an Android game, Neon Dash (neon runner, tap to jump). Google needs 12 people
 to test it for 2 weeks before it can go on the Play Store. Would you help? Free, 2 minutes:
-https://ebarber79.github.io/license.md/test.html
+https://neondash.gridlas.com/test.html
 (Android phones only. Just keep it installed for 14 days.)
 
 -------------------------------------------------------------------------------

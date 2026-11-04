@@ -61,8 +61,8 @@ Free to play, with ads. Some are your choice: watch one to continue a run, doubl
 
 ## Contact and links
 
-- **Website:** https://ebarber79.github.io/license.md/
-- **Privacy policy:** https://ebarber79.github.io/license.md/privacy.html
+- **Website:** https://neondash.gridlas.com/
+- **Privacy policy:** https://neondash.gridlas.com/privacy.html
 - **Email:** neondash@gridlas.com (only once its forwarding is set up, ND-015; until then use
   your own address)
 

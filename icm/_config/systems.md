@@ -18,6 +18,7 @@ Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attemp
 ## Local (Pi)
 
 - Source: `~/neon-dash-src`. TB backup: `/mnt/storage/apps/neon-dash` (no node_modules).
+- Live site: **https://neondash.gridlas.com** (GitHub Pages from `master`, CNAME file; Cloudflare DNS CNAME `neondash` → `ebarber79.github.io`, proxy OFF; Enforce HTTPS on). Old `ebarber79.github.io/license.md/` redirects. `app-ads.txt` stays at `ebarber79.github.io` root (ebarber79.github.io repo).
 - Serve: `npm run serve` → http://localhost:8000
 - Tests: `npm run test:unit` (node --test) · e2e: **`PW_CHROMIUM=/usr/bin/chromium npm run test:e2e`**
   (Playwright, mobile + desktop chrome; drives the game via `?test=1` → `window.NeonDashTest`).

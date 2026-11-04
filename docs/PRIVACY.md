@@ -1,7 +1,7 @@
 # Neon Dash — Privacy
 
 The privacy policy now lives at **[privacy.html](../privacy.html)**
-(public URL: https://ebarber79.github.io/license.md/privacy.html). It covers both the web
+(public URL: https://neondash.gridlas.com/privacy.html). It covers both the web
 game and the Android app (Google AdMob ads, consent, Google Play purchases via RevenueCat).
 
 Edit `privacy.html`; don't keep a second copy here. Play Console answers that must match it:
