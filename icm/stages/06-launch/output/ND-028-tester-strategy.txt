@@ -1,0 +1,106 @@
+NEON DASH: PLAN TO GET 12+ TESTERS (AND PASS GOOGLE'S PRODUCTION REVIEW)
+=========================================================================
+Written Nov 5, 2026. Everyone signs up through ONE link:
+    https://neondash.gridlas.com/test.html
+
+-------------------------------------------------------------------------------
+THE RULE YOU HAVE TO MEET
+-------------------------------------------------------------------------------
+- 12 or more testers opted in to the closed test, for 14 days IN A ROW.
+  The 14-day clock only runs while you're at 12+. If you drop to 11, it stops.
+- After that, Play Console asks you questions before granting production
+  (how you found testers, what feedback you got, what you changed).
+  Apps get rejected when testers signed up but never opened the app.
+  So you need testers who PLAY a bit, plus a record of feedback.
+
+TARGET: 20 sign-ups, not 12. People drop out or forget.
+DEADLINE: 12 testers by about Nov 14, so the 14 days finish around Nov 28,
+then apply for production (Google's review is usually a few days to a week).
+
+-------------------------------------------------------------------------------
+WHERE TESTERS COME FROM (in order of how well it works)
+-------------------------------------------------------------------------------
+1. PEOPLE YOU KNOW (aim: 8 to 10). Best by far: they stay 14 days and give
+   honest feedback.
+   - Make a list now: family, friends, coworkers, old classmates, neighbours,
+     group chats. Only Android users count (iPhone can't join).
+   - Send the text below one person at a time. Personal texts beat a group blast.
+   - Ask each yes to forward it to one more Android friend.
+
+2. TESTER-SWAP COMMUNITIES (aim: 6 to 10). Other indie developers stuck on the
+   same 12-tester rule. You test theirs, they test yours.
+   - Reddit: r/AndroidClosedTesting and r/TestersCommunity (read each sub's
+     rules before posting; most want a swap offer in the post).
+   - Search Discord for "closed testing" / "12 testers" swap servers.
+   - The catch: you must actually install their apps and keep them for 14 days.
+     Budget 2 minutes a day. Keep a list so you keep your side of the deal.
+
+3. YOUR OWN CHANNELS (aim: a few, plus feedback).
+   - Post on any social accounts you use (Facebook, Instagram story, X,
+     Threads, a Discord you're in). Use the social post below.
+   - Ask for testers in hobby groups you already belong to (gaming, local).
+
+4. PAID TESTER SERVICES: last resort only. They exist and many developers use
+   them, but the testers rarely play, which is exactly what gets production
+   requests rejected. Try 1 to 3 first.
+
+-------------------------------------------------------------------------------
+KEEP THEM PLAYING (this is what passes the review)
+-------------------------------------------------------------------------------
+- Day 1: thank them. Tell them the one rule: keep it installed 14 days.
+- About day 5 and day 10: a short nudge (text below). Ask for ONE piece of
+  feedback: "what was annoying or confusing?"
+- Write every piece of feedback in the log at the bottom of this file, with
+  the date. Paste them to me and I'll fix what makes sense in the next update.
+  These notes become your answers on the production form.
+- Shipping v6 (Back button + portrait lock) during the test is good: it shows
+  Google you acted on feedback.
+
+-------------------------------------------------------------------------------
+HOW TO COUNT
+-------------------------------------------------------------------------------
+- Group members: https://groups.google.com/g/neondash-testers -> Members.
+  Joining the group is step 1 only; they also need step 2 ("Become a tester").
+- Play Console Dashboard shows the production-access card with the opted-in
+  count once Google tracks it. Ask me "check testers" and I'll read it for you.
+
+-------------------------------------------------------------------------------
+READY-TO-SEND TEXT
+-------------------------------------------------------------------------------
+TEXT / DM (one person):
+  Hey! I made an Android game, Neon Dash (neon runner, tap to jump). Google
+  needs 12 people to test it for 2 weeks before it can go on the Play Store.
+  Would you help? Free, 2 minutes: https://neondash.gridlas.com/test.html
+  (Android phones only. Just keep it installed for 14 days.)
+
+SOCIAL POST:
+  I built a game! Neon Dash is a neon endless runner for Android, and I need
+  a few testers before it can launch on Google Play. Free, takes 2 minutes,
+  and you'd be one of the first players:
+  https://neondash.gridlas.com/test.html  (Android only)
+
+REDDIT / DISCORD SWAP POST:
+  Title: [Swap] Neon Dash, endless runner. I'll test yours back for 14 days.
+  Body: Need testers for my closed test. Join here in 2 minutes:
+  https://neondash.gridlas.com/test.html
+  Comment your app link after you join and I'll join yours the same day and
+  keep it installed the full 14 days.
+
+NUDGE (day 5 and day 10):
+  Thanks for testing Neon Dash! Quick one: please keep it installed a few more
+  days (Google counts it). If you've played, what's one thing that was
+  annoying or confusing? Even one line helps.
+
+-------------------------------------------------------------------------------
+YOUR SIDE OF SWAPS (fill in)
+-------------------------------------------------------------------------------
+App / developer          | Joined (date) | Keep until
+____________________________________________________________
+____________________________________________________________
+
+-------------------------------------------------------------------------------
+TESTER + FEEDBACK LOG (fill in, paste to me anytime)
+-------------------------------------------------------------------------------
+Name (first only) | Source (friend/reddit/discord/social) | Joined | Feedback
+____________________________________________________________
+____________________________________________________________
