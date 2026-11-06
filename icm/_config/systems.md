@@ -47,7 +47,7 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 
 | Artifact | Location |
 |---|---|
-| Release AAB (Play) | `~/Desktop/NeonDash-release-v5.aab` (versionCode 5 / 1.4, gem shop live, 2026-11-04, + Drive). Previous: v4 (on closed test), v3 (never uploaded), v2. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
+| Release AAB (Play) | `~/Desktop/NeonDash-release-v6.aab` (versionCode 6 / 1.5, ND-031 Back + portrait, 2026-11-06, + Drive, same cert as v5). Previous: v5 (on closed test), v4 (on closed test), v3 (never uploaded), v2. Old: `NeonDash-release-v1-OLD-do-not-upload.aab`, `NeonDash-release-admob.apk` (July) |
 | Debug APK (test creatives, safe to tap) | `~/Desktop/NeonDash-debug-admob.apk` |
 | Keystore copy | `~/Desktop/neondash-release.jks` (mode 600); backups: TB `/mnt/storage/apps/neon-dash/signing/`, `gdrive:NeonDash/signing/` (password NOT stored with them) |
 | RevenueCat service-account key | TB `/mnt/storage/apps/neon-dash/signing/revenuecat-gen-lang-client-0188456877-4e6a8e7adf59.json` only (mode 600, Google Cloud project gen-lang-client-0188456877). Already uploaded to RevenueCat; only needed to reconnect. Not on Drive. |
