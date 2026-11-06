@@ -18,7 +18,8 @@ two big buttons. Short invite to paste anywhere:
 Hey! I made an Android game, Neon Dash (neon runner, tap to jump). Google needs 12 people
 to test it for 2 weeks before it can go on the Play Store. Would you help? Free, 2 minutes:
 https://neondash.gridlas.com/test.html
-(Android phones only. Just keep it installed for 14 days.)
+(Android phones only. Just keep it installed for 14 days.
+  Please don't tap the ads to help me: Google counts that as fake clicks.)
 
 -------------------------------------------------------------------------------
 STEP A. Create the tester group (you, once, 3 minutes)
@@ -26,7 +27,7 @@ STEP A. Create the tester group (you, once, 3 minutes)
 A Google Group is the tester list. Play Console takes the group's address, so anyone who
 joins the group is a tester. No typing emails into Play one by one.
 
-1. On a computer, open https://groups.google.com and sign in with your Google account.
+1. On a computer, open https://groups.google.com and sign in as outkast51@gmail.com.
 2. Click "Create group".
 3. Group name: Neon Dash Testers
    Group email: neondash-testers  (if taken, try neondash-beta or neondashtesters)
@@ -51,6 +52,7 @@ Paste this, replacing https://groups.google.com/g/neondash-testers:
 Hey! I made an Android game, Neon Dash (a neon runner, tap to jump). Before Google lets it
 on the Play Store, 12 people have to test it for 2 weeks. Would you be one? It's free and
 takes 2 minutes. You just keep it installed for 14 days (playing is up to you).
+One ask: please don't tap the ads to help me. Google counts that as fake clicks.
 If you're in, join here with the Google account on your phone: https://groups.google.com/g/neondash-testers
 Then install here: https://play.google.com/apps/testing/io.github.ebarber79.neondash
 
@@ -64,6 +66,9 @@ Hi <name>,
 I've built an Android game called Neon Dash, a fast neon runner where you tap to jump over
 spikes. Google requires new games to be tested by at least 12 people for 14 days before
 they can go public on the Play Store, and I'd love your help.
+
+One ask: please don't tap the ads to support me. Google counts that as fake clicks
+and could switch off the game's ads. Watching them normally is fine.
 
 It's free and quick:
 1. Join the tester group with the Google account you use on your Android phone:

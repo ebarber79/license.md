@@ -71,7 +71,8 @@ TEXT / DM (one person):
   Hey! I made an Android game, Neon Dash (neon runner, tap to jump). Google
   needs 12 people to test it for 2 weeks before it can go on the Play Store.
   Would you help? Free, 2 minutes: https://neondash.gridlas.com/test.html
-  (Android phones only. Just keep it installed for 14 days.)
+  (Android phones only. Just keep it installed for 14 days.
+  Please don't tap the ads to help me: Google counts that as fake clicks.)
 
 SOCIAL POST:
   I built a game! Neon Dash is a neon endless runner for Android, and I need
@@ -89,7 +90,8 @@ REDDIT / DISCORD SWAP POST:
 NUDGE (day 5 and day 10):
   Thanks for testing Neon Dash! Quick one: please keep it installed a few more
   days (Google counts it). If you've played, what's one thing that was
-  annoying or confusing? Even one line helps.
+  annoying or confusing? Even one line helps. (And please don't tap the
+  ads to help me: Google counts that as fake clicks and can shut them off.)
 
 -------------------------------------------------------------------------------
 YOUR SIDE OF SWAPS (fill in)
