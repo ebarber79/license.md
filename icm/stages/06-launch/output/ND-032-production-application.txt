@@ -1,0 +1,77 @@
+NEON DASH: GOOGLE PLAY PRODUCTION APPLICATION (DRAFT)
+=====================================================
+Drafted Nov 7, 2026. Apply on or after Nov 23, 2026.
+Where: Play Console -> Neon Dash -> Dashboard -> "Apply for production".
+
+BEFORE YOU APPLY (all must be true)
+[ ] 12+ testers opted in, and they've stayed opted in for the last 14 days in a row
+    (Google's rule for personal accounts). Testers Community started Nov 7 ~11:20 PM,
+    so 14 days = Nov 21-22; their 16-day run ends ~Nov 23-24.
+[ ] Testers Community's 2 feedback reports + their pre-filled answers are in hand
+[ ] Your own v6 phone test is done (NeonDash-PHONE-TEST-CHECKLIST-v6.txt)
+[ ] Merge the real feedback into the [BRACKETS] below. Every answer must be true.
+[ ] Answer every section and press Next on each one (leaving a section without Next
+    loses its answers; "Discard" wipes them). Apply is on the last section.
+
+After applying: Google says review usually takes 7 days or less; they email you.
+If they say more testing is needed, keep the closed test running (don't remove testers).
+
+Sources: Google Play Console Help 14151465 (sections, 12 testers / 14 days, review time).
+Exact question wording below is from a third-party guide (Testers Community, Jul 2026),
+not confirmed by Google. Use what the live form says.
+Keep answers short and specific. Some guides mention a ~300-character limit; these
+drafts stay under it.
+
+-------------------------------------------------------------------------------
+SECTION 1: ABOUT YOUR CLOSED TEST
+-------------------------------------------------------------------------------
+Q1. How did you recruit testers?
+    I invited friends and family through a Google Group (neondash-testers) with a
+    one-page sign-up link, and used a paid testing service (Testers Community) for
+    about 15 more testers who played daily for 16 days.
+
+Q2. How easy was it to recruit testers? (multiple choice)
+    Pick: Difficult  (true: only 1 opt-in came from our own invites before the paid service)
+
+Q3. Describe the engagement you received from testers.
+    [FROM TC REPORT: number of testers, days active, which features they used.]
+    Draft: [N] testers played across 14+ days. They used the core run (jumps,
+    power-ups, gem collecting), the Boost picker, rewarded ads, settings, and the
+    gem shop. This matches how we expect real players to use the game.
+
+Q4. Summarize the feedback and how you collected it.
+    Collected through the Testers Community daily reports, Play's private feedback
+    channel, and my own device test checklist. [FROM TC REPORT: top 2-3 points,
+    include at least one real criticism.] My own testing found the Back button closed
+    the game mid-run and the screen rotated sideways.
+
+-------------------------------------------------------------------------------
+SECTION 2: ABOUT YOUR GAME
+-------------------------------------------------------------------------------
+Q5. Who is the intended audience?
+    Casual mobile gamers aged 13 and up who like quick, one-thumb arcade games they
+    can play in short sessions. Not directed at children; ad content is capped.
+
+Q6. What makes your game unique / how does it provide value?
+    One-tap triple-jump controls in a neon synthwave world. Power-ups show on the
+    runner's shoes (colour per power-up, rainbow when stacked), the music reacts to
+    your speed, and it's free with optional ads and gem packs. Works offline.
+
+Q7. Expected installs in the first year? (multiple choice)
+    Pick: [Under 1k, or 1k-10k if you plan to promote it. Pick what's realistic.]
+
+-------------------------------------------------------------------------------
+SECTION 3: PRODUCTION READINESS
+-------------------------------------------------------------------------------
+Q8. What changes did you make based on the closed test?
+    Shipped v6 during the test: the Back button now pauses the run (press again for
+    the menu) instead of closing the game, and the screen is locked upright.
+    [ADD: any v7 fixes from tester feedback, with the version number.]
+
+Q9. How did you decide the app is ready for production?
+    No crashes or blocking bugs in the last [N] days of testing. Every feature was
+    checked on a real phone (ads, test purchases, Back button, saving progress),
+    automated tests pass, and the Play pre-launch report is clean. [Adjust to what's true.]
+
+Q10. (Only if re-applying after a rejection) What did you do differently?
+    [Leave blank on the first application.]

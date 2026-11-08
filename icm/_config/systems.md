@@ -52,3 +52,18 @@ triple-launched gradle and OOM'd the box); probe with `pgrep -x java`; `rsync --
 | Keystore copy | `~/Desktop/neondash-release.jks` (mode 600); backups: TB `/mnt/storage/apps/neon-dash/signing/`, `gdrive:NeonDash/signing/` (password NOT stored with them) |
 | RevenueCat service-account key | TB `/mnt/storage/apps/neon-dash/signing/revenuecat-gen-lang-client-0188456877-4e6a8e7adf59.json` only (mode 600, Google Cloud project gen-lang-client-0188456877). Already uploaded to RevenueCat; only needed to reconnect. Not on Drive. |
 | Off-site | `gdrive:NeonDash/` |
+
+## Launch watcher (VPS, added 2026-11-07)
+
+`/root/neondash-watch/watch.py` + `schedule.json`, cron hourly at :05 (`# NEONDASH-WATCH`), log `watch.log`.
+Sends each dated launch nudge to the user's Telegram once (daily-triage relay) and forwards every new
+Testers Community email (`from:testerscommunity.io`, onboardingaudit.ai@gmail.com, read-only).
+Copy of the code: `icm/ops/neondash-watch/`. To add a nudge: append to schedule.json on the VPS.
+Also watches forwarded Google Play mail (needs the human's Gmail filter: Desktop
+`CLAUDE-DESKTOP-PLAY-EMAIL-FORWARDING.txt`) and the forwarding-confirmation email; flags approved / not-ready.
+Auto-draft: `drafter.py` runs headless Claude (no tools, token from `/etc/dropzone/env`) over all TC + Play
+emails (bodies + PDF attachments) + `facts.md` + `draft-template.txt` (= ND-032 output). Unknowns stay
+`[NEEDS: ...]`. Triggered by a TC email whose SUBJECT looks like a report (or has an attachment) and by the
+nov21 schedule item; batched to one draft per 6h. Output `drafts/LATEST.txt` + Telegram. Never submits.
+Own venv `/root/neondash-watch/venv` (google libs + pypdf). Keep `facts.md` current when releases ship.
+Can't see Play Console or the TC dashboard (both need a human login).

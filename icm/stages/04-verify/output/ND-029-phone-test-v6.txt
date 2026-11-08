@@ -1,0 +1,124 @@
+NEON DASH v6 (1.5): PHONE TEST CHECKLIST
+========================================
+About 20 minutes. Use your own Android phone, with the game installed FROM GOOGLE PLAY
+(not a sideloaded APK). Mark each line [x] pass, [!] fail, or [-] couldn't check.
+For every [!], write one line about what you saw. A screenshot helps (save it to Drive).
+
+ADS RULE: watch ads all the way through, but NEVER tap on an ad itself (tapping your own
+live ads can get the AdMob account banned). Closing an ad with its X is fine.
+
+-------------------------------------------------------------------------------
+0. INSTALL
+-------------------------------------------------------------------------------
+[ ] On the phone, opened https://neondash.gridlas.com/test.html and did Step 1 (Join group)
+    and Step 2 (Become a tester) with the SAME Google account as the phone's Play Store
+    (skip if you already did this)
+[ ] Installed or updated from the Play Store page (it may say "Early access"; that's normal)
+[ ] Play Store app page shows version 1.5. If it shows 1.4, tap Update.
+    Note: if you have an older sideloaded Neon Dash, uninstall it first.
+
+-------------------------------------------------------------------------------
+1. ICON + LAUNCH (ND-013)
+-------------------------------------------------------------------------------
+[ ] Home-screen icon is the Neon Dash neon art on a dark purple background
+    (NOT the blue Capacitor "X" logo), not cropped or squashed
+[ ] Splash screen on launch is Neon Dash art, not the Capacitor logo
+[ ] Game opens to the start screen within a few seconds
+
+-------------------------------------------------------------------------------
+2. PORTRAIT LOCK (ND-031, new in v6)
+-------------------------------------------------------------------------------
+[ ] Turn auto-rotate ON in quick settings
+[ ] Rotate the phone sideways on the start screen: the game stays upright (portrait)
+[ ] Rotate sideways during a run: the game stays upright, no restart, run continues
+
+-------------------------------------------------------------------------------
+3. BACK BUTTON (ND-031, new in v6)
+   Use the Back gesture (swipe in from the screen edge) or the Back key.
+-------------------------------------------------------------------------------
+[ ] During a run, Back = the game PAUSES (it does not close)
+[ ] While paused, Back again = goes to the menu (start screen)
+[ ] On the game-over screen, Back = goes to the menu
+[ ] On the start screen, Back = the app closes (normal Android behaviour)
+[ ] Reopen after that: gems and best score still there
+
+-------------------------------------------------------------------------------
+4. START SCREEN FITS (ND-020, ND-019)
+-------------------------------------------------------------------------------
+[ ] The NEON DASH title is fully visible (not cut off at the top)
+[ ] PLAY button visible without scrolling
+[ ] If anything is below the screen edge, you can scroll the menu to reach it
+[ ] NO "Scan to play on your phone" QR code on the start screen
+[ ] (Probably won't show in the US) If a "Privacy choices" button appears, it's tappable.
+    Mark [-] if you don't see it.
+
+-------------------------------------------------------------------------------
+5. MUSIC + SOUND (ND-025)
+-------------------------------------------------------------------------------
+[ ] Music plays during a run (synthwave), and gets more intense as you speed up
+[ ] The Music button turns music off/on without killing sound effects
+[ ] The Sound button turns jump/gem effects off/on without killing music
+[ ] Your choices are remembered after closing and reopening the app
+[ ] Music stops when you switch to another app or lock the phone, and doesn't play over ads
+
+-------------------------------------------------------------------------------
+6. GAMEPLAY + SHOES (ND-021)
+-------------------------------------------------------------------------------
+[ ] Tap = jump; tap again in the air = double jump; again = triple jump
+[ ] Picking up a power-up makes the shoes glow (each power-up its own colour)
+[ ] Two power-ups at once = rainbow shoes
+[ ] Shoes blink just before a power-up runs out
+[ ] Game runs smoothly (no obvious stutter or freezing)
+
+-------------------------------------------------------------------------------
+7. GAME-OVER SCREEN + REWARDED ADS (ND-020, ND-022)
+-------------------------------------------------------------------------------
+[ ] Game-over screen fits: score, buttons and MENU visible; sound button doesn't cover MENU
+[ ] "CONTINUE · watch ad" appears. Watch the ad to the end: you continue the same run
+[ ] "DOUBLE GEMS" appears. Watch the ad: gems from that run double
+[ ] Close an ad EARLY (if it allows): you do NOT get the reward (that's correct)
+[ ] Occasional full-screen ad between runs (about every 3rd replay, not every run)
+
+-------------------------------------------------------------------------------
+8. BOOST (ND-023): never tested on a real phone yet
+-------------------------------------------------------------------------------
+[ ] Start (or game-over) screen shows a Boost panel with Shield, Magnet, Slow-mo
+[ ] Pick one and use the WATCH-AD option. Watch to the end: the next run starts with that
+    power-up (shoes glow right away)
+[ ] Right after a Boost ad, the next replay does NOT also show a full-screen ad
+[ ] Pay-with-gems option (40 gems): works if you have 40+ gems, gems go down by 40,
+    and it's refused (not charged) if you have fewer
+[ ] A paid Boost survives closing and reopening the app before the run
+
+-------------------------------------------------------------------------------
+9. GEMS + TEST PURCHASE (ND-005)
+-------------------------------------------------------------------------------
+[ ] Gems collected in a run are added to your total
+[ ] Close the app fully (swipe it away), reopen: gems, best score and unlocks still there
+[ ] The shop shows 4 gem packs: Handful 500, Pouch 1,200, Chest 3,000, Vault 7,000
+    (about $0.99 / $1.99 / $4.99 / $9.99 in your currency)
+[ ] TEST PURCHASE: buy the cheapest pack. Google's payment sheet should say it's a test
+    ("Test card, always approves"). You are NOT charged.
+    STOP if it shows your real card with no "test" wording: cancel and report it.
+    -> gems go up by 500 right away
+[ ] Close the app fully and reopen: the 500 bought gems are still there
+[ ] Start a purchase and cancel it: no gems added, no error message, game still works
+    If any purchase step fails, write the exact message you saw.
+
+-------------------------------------------------------------------------------
+10. GENERAL
+-------------------------------------------------------------------------------
+[ ] No crash during the whole session
+[ ] Anything that felt slow, ugly or confusing (write it below)
+
+-------------------------------------------------------------------------------
+REPORT BACK (paste to the Pi Claude)
+-------------------------------------------------------------------------------
+Phone model + Android version: ___
+Sections with any [!] fail (number + what you saw): ___
+Sections with [-] couldn't check: ___
+Test purchase: worked / failed (message) / not tried: ___
+Anything else that felt off, slow, ugly, or confusing: ___
+
+Your notes here also feed the production application ("tester feedback" and
+"changes made"), so even small things are worth writing down.

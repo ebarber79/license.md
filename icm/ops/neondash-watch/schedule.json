@@ -1,0 +1,43 @@
+[
+ {
+  "id": "nov08-testers",
+  "at": "2026-11-08T10:00",
+  "text": "Check testers + phone test.\n1) Tell Claude Code: \"check testers\" (goal 12+ opted in; if 0 by midday, reply to Testers Community's email).\n2) Phone test v6 (~20 min): Desktop/NeonDash-PHONE-TEST-CHECKLIST-v6.txt (Drive > NeonDash). Includes the free test gem purchase.\n3) Paste the REPORT BACK section to Claude Code."
+ },
+ {
+  "id": "nov10-bank",
+  "at": "2026-11-10T09:00",
+  "text": "Verify Google's test deposit (checking acct ending 611).\nPlay Console > Payments profile > Manage payment methods > Verify > exact amount. You type it, not Claude.\nAlso open the 'urgent issue with your payments account' notice and tell Claude Code what it asks."
+ },
+ {
+  "id": "nov21-14day",
+  "at": "2026-11-21T09:00",
+  "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\n1) Tell Claude Code: \"check testers\".\n2) An auto-draft of the production answers is being made now from the tester emails; it arrives here next. Review it, then tell Claude Code: \"pull the production draft\".",
+  "draft": true
+ },
+ {
+  "id": "nov23-apply",
+  "at": "2026-11-23T11:00",
+  "text": "APPLY FOR PRODUCTION today (once Testers Community's 2 reports are in).\nChecklist at the top of Desktop/NeonDash-PRODUCTION-APPLICATION-DRAFT.txt. Play Console > Dashboard > Apply for production. Press Next on every section, never Discard. Or ask Claude Code for a Claude Desktop handoff that stops before Apply."
+ },
+ {
+  "id": "nov30-review",
+  "at": "2026-11-30T09:30",
+  "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\".\nMore testing needed -> keep the closed test running, tell Claude Code, contact Testers Community about the refund guarantee."
+ },
+ {
+  "id": "jan08-trader-heads-up",
+  "at": "2027-01-08T09:00",
+  "text": "Heads-up: Play trader status must be declared by Feb 1 (scheduled for Jan 15). Handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt."
+ },
+ {
+  "id": "jan15-trader",
+  "at": "2027-01-15T09:00",
+  "text": "Declare Play trader status today (deadline Feb 1, or Google removes the app worldwide).\nPlay Console notice > Declare status. Likely TRADER. Use the F Street business address, never home; email neondash@gridlas.com.\nHandoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt, or tell Claude Code: \"walk me through trader status\"."
+ },
+ {
+  "id": "jan29-trader-final",
+  "at": "2027-01-29T09:00",
+  "text": "FINAL WARNING if not done yet: Play trader status deadline is Feb 1. Ignore if you already declared it."
+ }
+]
