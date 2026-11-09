@@ -27,7 +27,7 @@
 
   // Bump with every release (matches android versionCode / versionName).
   var APP_BUILD = "7 (1.6)";
-  var DEFAULT_ENDPOINT = "https://my-vps-ionos.taile95d57.ts.net:10000/nd/e";
+  var DEFAULT_ENDPOINT = "https://neondash-events.onboardingaudit.workers.dev/nd/e";
 
   function isNative() {
     try {

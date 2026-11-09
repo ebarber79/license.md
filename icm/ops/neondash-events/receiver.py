@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Neon Dash event receiver. Stdlib only. Listens on 127.0.0.1:8796 (local only).
 Stores anonymous game events in SQLite. No IP addresses or headers are stored."""
-import json, sqlite3, time, threading
+import json, os, sqlite3, time, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-DB = "/root/neondash-events/events.db"
+DB = os.environ.get("ND_EVENTS_DB", "/root/neondash-events/events.db")
 MAX_BODY = 8192
 RATE = 30          # events per second, whole server
 lock = threading.Lock()
@@ -27,6 +27,15 @@ def allow():
 
 def s(v, n=64): return str(v)[:n] if v is not None else None
 
+def store(c, p, received):
+    """Insert one event dict. Raises ValueError if it isn't a valid event."""
+    if not isinstance(p, dict) or not isinstance(p.get("event"), str): raise ValueError
+    props = {k: p[k] for k in ("props", "kind", "message", "stack", "extra") if k in p}
+    row = (received, int(p.get("t") or 0), s(p["event"], 40), s(p.get("install")),
+           s(p.get("session")), s(p.get("build"), 32), s(p.get("platform"), 16),
+           json.dumps(props)[:4000])
+    c.execute("insert into events(received,t,event,install,session,build,platform,props) values(?,?,?,?,?,?,?,?)", row)
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a): pass
     def _done(self, code):
@@ -48,13 +57,8 @@ class H(BaseHTTPRequestHandler):
         if not allow(): return self._done(429)
         try:
             p = json.loads(self.rfile.read(n))
-            if not isinstance(p, dict) or not isinstance(p.get("event"), str): raise ValueError
-            props = {k: p[k] for k in ("props", "kind", "message", "stack", "extra") if k in p}
-            row = (time.time(), int(p.get("t") or 0), s(p["event"], 40), s(p.get("install")),
-                   s(p.get("session")), s(p.get("build"), 32), s(p.get("platform"), 16),
-                   json.dumps(props)[:4000])
             with db() as c:
-                c.execute("insert into events(received,t,event,install,session,build,platform,props) values(?,?,?,?,?,?,?,?)", row)
+                store(c, p, time.time())
         except Exception:
             return self._done(400)
         self._done(204)

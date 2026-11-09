@@ -1,0 +1,16 @@
+name = "neondash-events"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+account_id = "e02373cba9480485767a67c4ae4bbaa5"
+workers_dev = true
+
+# One buffer object holds incoming events until the VPS pulls them.
+[[durable_objects.bindings]]
+name = "BUF"
+class_name = "EventBuffer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EventBuffer"]
+
+# Secret (not in git): PULL_TOKEN, shared with /root/neondash-events/pull_token on the VPS.
