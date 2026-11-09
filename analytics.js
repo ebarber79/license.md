@@ -7,9 +7,10 @@
  *    and, with ?debug=1, echoed to the console — enough for QA case ND-AN-*.
  *  - Captures uncaught errors + unhandled promise rejections (ND-AN-05).
  *
- * To wire a real sink later, set before this script loads:
- *   window.NEONDASH_ANALYTICS_URL = "https://your-collector/ingest";
- *   window.NEONDASH_BUILD = "2026-06-17.1";
+ * ND-034: the Android app sends events to DEFAULT_ENDPOINT (the VPS
+ * receiver, /root/neondash-events). The web build never sends anything.
+ * No persistent ID: the session id is random per app launch, kept in memory.
+ * Override for tests: window.NEONDASH_ANALYTICS_URL / window.NEONDASH_BUILD.
  *
  * NOTE: the page ships a strict CSP with `connect-src 'self'`. If you point
  * NEONDASH_ANALYTICS_URL at a cross-origin collector, add that origin to the
@@ -24,9 +25,22 @@
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
+  // Bump with every release (matches android versionCode / versionName).
+  var APP_BUILD = "7 (1.6)";
+  var DEFAULT_ENDPOINT = "https://my-vps-ionos.taile95d57.ts.net:10000/nd/e";
+
+  function isNative() {
+    try {
+      return !!(global.Capacitor && global.Capacitor.isNativePlatform &&
+        global.Capacitor.isNativePlatform());
+    } catch (e) { return false; }
+  }
+
   var sessionId = genId();
-  var buildVersion = global.NEONDASH_BUILD || "dev";
-  var endpoint = global.NEONDASH_ANALYTICS_URL || null;
+  var native = isNative();
+  var platform = native ? "android" : "web";
+  var buildVersion = global.NEONDASH_BUILD || APP_BUILD;
+  var endpoint = global.NEONDASH_ANALYTICS_URL || (native ? DEFAULT_ENDPOINT : null);
   var debug = /[?&]debug=1/.test(global.location ? global.location.search : "");
   var buffer = [];
   var MAX_BUFFER = 200;
@@ -34,6 +48,7 @@
   function emit(payload) {
     payload.session = sessionId;
     payload.build = buildVersion;
+    payload.platform = platform;
     payload.t = Date.now();
     if (endpoint && global.navigator && global.navigator.sendBeacon) {
       try {
@@ -56,7 +71,7 @@
       event: "error",
       kind: kind,
       message: String(message == null ? "" : message),
-      stack: String(stack == null ? "" : stack),
+      stack: String(stack == null ? "" : stack).slice(0, 1500),
       extra: extra || {},
     });
   }
@@ -77,6 +92,9 @@
     track: track,
     trackError: trackError,
     sessionId: sessionId,
+    platform: platform,
+    endpoint: endpoint,
     _buffer: buffer, // exposed for QA harness / ND-AN-* verification
   };
+  track("app_open", {});
 })(window);

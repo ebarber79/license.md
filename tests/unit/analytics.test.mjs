@@ -52,3 +52,9 @@ test("ND-AN-05: unhandled rejection is captured", () => {
   assert.equal(last.kind, "unhandledrejection");
   assert.equal(last.message, "nope");
 });
+
+test("ND-034: web build has no endpoint and reports platform web", () => {
+  assert.equal(window.NeonAnalytics.platform, "web");
+  assert.equal(window.NeonAnalytics.endpoint, null);
+  assert.ok(window.NeonAnalytics._buffer.some((e) => e.event === "app_open"), "app_open buffered");
+});
