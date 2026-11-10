@@ -26,7 +26,7 @@
   }
 
   // Bump with every release (matches android versionCode / versionName).
-  var APP_BUILD = "8 (1.7)";
+  var APP_BUILD = "9 (1.8)";
   var DEFAULT_ENDPOINT = "https://neondash-events.onboardingaudit.workers.dev/nd/e";
 
   function isNative() {
@@ -93,6 +93,7 @@
     trackError: trackError,
     sessionId: sessionId,
     platform: platform,
+    build: buildVersion,
     endpoint: endpoint,
     _buffer: buffer, // exposed for QA harness / ND-AN-* verification
   };

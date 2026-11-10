@@ -93,6 +93,20 @@
     if (ads.showPrivacyOptions) ads.showPrivacyOptions();
   });
 
+  // "Send feedback" (ND-036): opens the player's email app with the version
+  // filled in. Nothing is sent unless the player sends the email themselves.
+  const feedbackLink = document.getElementById("feedback-link");
+  if (feedbackLink) {
+    const na = window.NeonAnalytics || {};
+    const where = na.platform === "android" ? "Android app" : "web";
+    const ver = na.platform === "android" && na.build ? na.build : "web";
+    const body = "What happened, or what would you like to see?\n\n\n\n---\n" +
+      "Neon Dash " + ver + " (" + where + ")";
+    feedbackLink.href = "mailto:neondash@gridlas.com?subject=" +
+      encodeURIComponent("Neon Dash feedback (" + ver + ")") + "&body=" + encodeURIComponent(body);
+    feedbackLink.addEventListener("click", (e) => e.stopPropagation());
+  }
+
   // ---- In-app purchases (gem packs; native-only, stub on web) ----
   const iap = window.NeonIAP || {
     init() { return Promise.resolve(); }, packs() { return []; },
