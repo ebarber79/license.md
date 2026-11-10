@@ -11,3 +11,4 @@ dist/
 # Capacitor: www/ is generated from source by scripts/build-www.mjs
 www/
 .aider*
+__pycache__/
