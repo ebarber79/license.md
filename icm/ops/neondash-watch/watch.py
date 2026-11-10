@@ -9,7 +9,7 @@ Read-only on Gmail. Also watches forwarded Google Play mail and starts drafter.p
 on tester reports (and on schedule items marked "draft"). Sends only to the user's own Telegram via the daily-triage relay.
 State: state.json (sent nudge ids, seen Gmail ids). Log: watch.log via cron.
 """
-import json, sys, html, datetime as dt
+import json, re, sys, html, datetime as dt
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -81,6 +81,34 @@ PLAY_BAD = ("isn't ready", "not ready", "more testing", "rejected", "policy", "s
 DRAFT_GAP = dt.timedelta(hours=6)
 
 
+def body_text(payload):
+    """Plain text of a Gmail message payload (all text/plain parts, else text/html)."""
+    import base64
+    out, stack = [], [payload]
+    while stack:
+        p = stack.pop()
+        stack.extend(p.get("parts") or [])
+        data = (p.get("body") or {}).get("data")
+        if data and p.get("mimeType", "").startswith("text/"):
+            out.append(base64.urlsafe_b64decode(data + "===").decode("utf-8", "replace"))
+    return html.unescape(re.sub(r"<[^>]+>", " ", "\n".join(out)))
+
+
+def note_live_build(x, subj, snip, dry):
+    """ND-035: on Play's "Your update is live", record which build went live (builds.json)."""
+    if "update is live" not in subj.lower():
+        return ""
+    try:
+        import builds_live
+        if dry:
+            return "\n[dry] would update builds.json"
+        lines = builds_live.record(snip + "\n" + body_text(x["payload"]),
+                                   int(x["internalDate"]) / 1000, x["id"])
+    except Exception as e:  # never let this break the watcher
+        lines = [f"builds.json update failed: {e}"]
+    return "".join(f"\n🗂 {l}" for l in lines)
+
+
 def mail(state, now, dry, baseline=False):
     try:
         s = gmail_service()
@@ -116,6 +144,7 @@ def mail(state, now, dry, baseline=False):
             elif any(w in low for w in PLAY_GOOD):
                 head = "🚀 GOOGLE PLAY: looks like good news"
                 hint = '\n➡ Tell Claude Code: "production approved" to plan the release.'
+            hint += note_live_build(x, subj, snip, dry)
         elif kind == "fwd":
             hint = ("\n➡ Gmail forwarding needs this confirmation. Confirm it in the onboardingaudit inbox "
                     "or tell Claude Code: \"confirm Play forwarding\".")

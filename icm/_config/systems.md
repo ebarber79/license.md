@@ -69,4 +69,4 @@ Own venv `/root/neondash-watch/venv` (google libs + pypdf). Keep `facts.md` curr
 Can't see Play Console or the TC dashboard (both need a human login).
 
 ## Gameplay events (ND-034/035)
-App -> Cloudflare Worker `neondash-events.onboardingaudit.workers.dev` -> VPS `pull.py` (*/5) -> `/root/neondash-events/events.db`. Report: `python3 report.py --days N` on the VPS. After every Play go-live, add the build to `/root/neondash-events/builds.json` (go-live time from the Play 'Your update is live' email), or its test-device sessions count as players.
+App -> Cloudflare Worker `neondash-events.onboardingaudit.workers.dev` -> VPS `pull.py` (*/5) -> `/root/neondash-events/events.db`. Report: `python3 report.py --days N` on the VPS. `/root/neondash-events/builds.json` (build go-live times) is filled automatically by the launch watcher from Play's 'Your update is live' emails (`builds_live.py`); check the Telegram '🗂' line after each release.
