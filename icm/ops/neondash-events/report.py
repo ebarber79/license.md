@@ -9,7 +9,8 @@ builds.json (next to the db) holds when each build went live on Play:
   {"7 (1.6)": {"live": "2026-11-10T06:08:00Z", "revive_time_in_duration": true}}
 Sessions that start before their build went live are Google's review / pre-launch
 test devices: shown separately as "Google test devices", never mixed into player
-numbers. Builds missing from the file are treated as players and flagged."""
+numbers. A build missing from the file hasn't gone live yet (the watcher adds it
+from Play's "Your update is live" email), so its sessions are test devices too, flagged."""
 import json, os, sqlite3, sys, time, statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta
@@ -45,6 +46,7 @@ def split(rs):
         lt = live_ts(b.get(build, {}))
         if lt is None:
             unknown.add(build)
+            robot.add(sess)
         elif t0 < lt:
             robot.add(sess)
     return ([r for r in rs if r[2] not in robot], [r for r in rs if r[2] in robot], unknown)
@@ -124,7 +126,7 @@ def text(days):
                 f"{sb['sessions']} sessions, {sb['runs']} runs", ""]
     if unknown:
         out += ["NOTE: no go-live time in builds.json for: " + ", ".join(sorted(unknown))
-                + " (its test-device sessions are counted as players)", ""]
+                + " (not live yet, so counted as test devices; add it if it is live)", ""]
     if not rs:
         return "\n".join(out + ["No player sessions yet."])
     by_day = defaultdict(list)
@@ -153,7 +155,7 @@ def daily_message():
     s = summarize(rs)
     note = f"\n🤖 {summarize(bots)['sessions']} Google test-device session(s) not counted" if bots else ""
     if unknown:
-        note += "\n❓ builds.json has no go-live time for " + ", ".join(sorted(unknown))
+        note += "\n❓ not live yet (counted as test devices): " + ", ".join(sorted(unknown))
     if s["opens"] == 0 and not s["errors"]:
         return "🎮 Neon Dash, last 24h: no player app opens recorded." + note
     msg = (f"🎮 Neon Dash, last 24h: {s['sessions']} sessions, {s['runs']} runs, "
