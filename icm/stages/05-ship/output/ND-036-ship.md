@@ -10,3 +10,10 @@
   channel for the production form. Phone-test fixes not included (v6 report not in).
 - Tests: unit 42/42; e2e 92/92 (2 new in feedback.spec.js; 4 timeouts on the first
   run under load passed on re-run).
+- Built on VPS (build-bundle.sh, gradle exit 0, 17:59 UTC). Artifact
+  `~/Desktop/NeonDash-release-v9.aab` (9.3 MB) + `gdrive:NeonDash/`.
+- Signer CN=Neon Dash, SHA-256 8C:B9:...:8C:8B (same as v6-v8). versionCode 9 / 1.8.
+  IS_TESTING=false (live ads). Assets vs v8: only analytics.js, game.js, index.html,
+  style.css differ (expected).
+- NOT uploaded. Needs human OK ("upload v9"); release note:
+  "New: a Send feedback link on the start screen, so you can tell us about bugs or ideas."
