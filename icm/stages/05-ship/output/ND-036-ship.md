@@ -17,3 +17,4 @@
   style.css differ (expected).
 - NOT uploaded. Needs human OK ("upload v9"); release note:
   "New: a Send feedback link on the start screen, so you can tell us about bugs or ideas."
+- 2026-11-10: human said 'upload v9'. Desktop handoff CLAUDE-DESKTOP-UPLOAD-V9.txt (human drags the AAB; send for review approved).
