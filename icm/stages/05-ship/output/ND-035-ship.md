@@ -10,3 +10,4 @@
   and `analytics.js` (build label "8 (1.7)") differ.
 - No phone-test fixes (v6 test report still not in).
 - Upload to Play closed testing: human step (06), not done.
+- 2026-11-10: human said 'upload v8'. Desktop handoff CLAUDE-DESKTOP-UPLOAD-V8.txt written (human drags the AAB in; send for review approved).
