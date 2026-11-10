@@ -3,7 +3,13 @@
   report.py [--days N]      text report (default 7 days)
   report.py --telegram      short daily summary to Telegram (last 24h)
   report.py --prune         delete events older than 365 days (privacy policy)
-Env ND_EVENTS_DB overrides the database path (tests)."""
+Env ND_EVENTS_DB overrides the database path (tests).
+
+builds.json (next to the db) holds when each build went live on Play:
+  {"7 (1.6)": {"live": "2026-11-10T06:08:00Z", "revive_time_in_duration": true}}
+Sessions that start before their build went live are Google's review / pre-launch
+test devices: shown separately as "Google test devices", never mixed into player
+numbers. Builds missing from the file are treated as players and flagged."""
 import json, os, sqlite3, sys, time, statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone, timedelta
@@ -11,21 +17,87 @@ from datetime import datetime, timezone, timedelta
 DB = os.environ.get("ND_EVENTS_DB", "/root/neondash-events/events.db")
 ET = timezone(timedelta(hours=-5))  # report by Eastern (standard) day
 CORE = ("app_open", "game_start", "game_over", "error")
+BUILDS = os.environ.get("ND_BUILDS", os.path.join(os.path.dirname(DB), "builds.json"))
+
+
+def builds():
+    try:
+        return json.load(open(BUILDS))
+    except (OSError, ValueError):
+        return {}
+
+
+def live_ts(info):
+    try:
+        return datetime.fromisoformat(info["live"].replace("Z", "+00:00")).timestamp()
+    except (KeyError, ValueError, AttributeError):
+        return None
+
+
+def split(rs):
+    """Return (player_rows, robot_rows, builds_without_live_time)."""
+    b = builds()
+    first = {}
+    for r in rs:
+        first.setdefault(r[2], (r[0], r[3]))
+    robot, unknown = set(), set()
+    for sess, (t0, build) in first.items():
+        lt = live_ts(b.get(build, {}))
+        if lt is None:
+            unknown.add(build)
+        elif t0 < lt:
+            robot.add(sess)
+    return ([r for r in rs if r[2] not in robot], [r for r in rs if r[2] in robot], unknown)
+
+
+def runs(rs):
+    """One entry per run. A revived run sends game_over twice with the same run_id;
+    keep the last. Builds flagged revive_time_in_duration counted the game-over
+    screen + revive ad as play time: subtract the gap between each earlier
+    game_over and the revive that followed it (client clock t)."""
+    b = builds()
+    by_run, order = {}, []
+    pending = {}  # session -> t of a game_over waiting for a revive
+    for r in rs:
+        recv, event, sess, build, plat, props, t = r
+        p = json.loads(props).get("props", {})
+        if event == "game_over":
+            rid = p.get("run_id") or f"{sess}-{recv}"
+            if rid not in by_run:
+                order.append(rid)
+                by_run[rid] = {"gap": 0}
+            run = by_run[rid]
+            run.update(p)
+            run["build"] = build
+            pending[sess] = (rid, t)
+        elif event == "reward_granted" and p.get("type") == "revive" and sess in pending:
+            rid, t_over = pending.pop(sess)
+            if t and t_over and t > t_over:
+                by_run[rid]["gap"] += t - t_over
+    out = []
+    for rid in order:
+        run = by_run[rid]
+        d = run.get("duration_ms")
+        if isinstance(d, (int, float)) and b.get(run["build"], {}).get("revive_time_in_duration"):
+            d = max(0, d - run["gap"])
+        run["active_ms"] = d
+        out.append(run)
+    return out
 
 
 def rows(since):
     c = sqlite3.connect(DB)
     return c.execute(
-        "select received,event,session,build,platform,props from events "
+        "select received,event,session,build,platform,props,t from events "
         "where received>=? order by received", (since,)).fetchall()
 
 
 def summarize(rs):
     sessions = {r[2] for r in rs}
     ev = Counter(r[1] for r in rs)
-    overs = [json.loads(r[5]).get("props", {}) for r in rs if r[1] == "game_over"]
+    overs = runs(rs)
     scores = [o["score"] for o in overs if isinstance(o.get("score"), (int, float))]
-    durs = [o["duration_ms"] / 1000 for o in overs if isinstance(o.get("duration_ms"), (int, float))]
+    durs = [o["active_ms"] / 1000 for o in overs if isinstance(o.get("active_ms"), (int, float))]
     return {
         "sessions": len(sessions),
         "opens": ev["app_open"],
@@ -45,6 +117,16 @@ def text(days):
     out = [f"NEON DASH GAMEPLAY, last {days} days (Android)", ""]
     if not rs:
         return "\n".join(out + ["No events received yet."])
+    rs, bots, unknown = split(rs)
+    if bots:
+        sb = summarize(bots)
+        out += [f"Google test devices (before the build went live, not counted below): "
+                f"{sb['sessions']} sessions, {sb['runs']} runs", ""]
+    if unknown:
+        out += ["NOTE: no go-live time in builds.json for: " + ", ".join(sorted(unknown))
+                + " (its test-device sessions are counted as players)", ""]
+    if not rs:
+        return "\n".join(out + ["No player sessions yet."])
     by_day = defaultdict(list)
     for r in rs:
         by_day[datetime.fromtimestamp(r[0], ET).strftime("%a %b %d")].append(r)
@@ -67,14 +149,18 @@ def text(days):
 
 
 def daily_message():
-    s = summarize(rows(time.time() - 86400))
+    rs, bots, unknown = split(rows(time.time() - 86400))
+    s = summarize(rs)
+    note = f"\n🤖 {summarize(bots)['sessions']} Google test-device session(s) not counted" if bots else ""
+    if unknown:
+        note += "\n❓ builds.json has no go-live time for " + ", ".join(sorted(unknown))
     if s["opens"] == 0 and not s["errors"]:
-        return "🎮 Neon Dash, last 24h: no app opens recorded."
+        return "🎮 Neon Dash, last 24h: no player app opens recorded." + note
     msg = (f"🎮 Neon Dash, last 24h: {s['sessions']} sessions, {s['runs']} runs, "
            f"median score {s['median']:.0f}, best {s['best']}, avg run {s['avg_len']:.0f}s")
     if s["errors"]:
         msg += f"\n⚠️ {len(s['errors'])} error(s), latest: {str(s['errors'][-1].get('message'))[:150]}"
-    return msg
+    return msg + note
 
 
 def main(a):

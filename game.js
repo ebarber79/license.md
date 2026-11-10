@@ -130,6 +130,9 @@
 
   let runId = null;
   let runStart = 0;
+  // When the run clock stopped (pause or game over). Paused and revive-ad time
+  // is added back to runStart so duration_ms counts only time spent playing.
+  let stoppedAt = 0;
   let lastCrashCause = "unknown";
 
   // ---- Audio (synthesized, no asset files) ----
@@ -534,6 +537,7 @@
     paused = false;
     runId = (window.NeonAnalytics && window.NeonAnalytics.sessionId ? window.NeonAnalytics.sessionId : "r") + "-" + Date.now().toString(36);
     runStart = performance.now();
+    stoppedAt = 0;
     runCount++;
     runPending = true;
     track("game_start", { skin: selectedSkin });
@@ -559,6 +563,8 @@
   function togglePause() {
     if (state !== STATE.PLAYING) return;
     paused = !paused;
+    if (paused) stoppedAt = performance.now();
+    else if (stoppedAt) { runStart += performance.now() - stoppedAt; stoppedAt = 0; }
     pauseScreen.classList.toggle("hidden", !paused);
     pauseBtn.textContent = paused ? "▶" : "❚❚";
     music.setMode(paused ? "paused" : "run");
@@ -713,11 +719,12 @@
     // NOTE: gems are NOT banked here — bankRun() does that when the run is
     // truly left, so a rewarded Revive can continue the same run cleanly.
     persistProgress();
+    stoppedAt = performance.now();
     track("game_over", {
       run_id: runId,
       score: score,
       gems: coinCount,
-      duration_ms: Math.round(performance.now() - runStart),
+      duration_ms: Math.round(stoppedAt - runStart),
       cause: lastCrashCause,
       new_record: newRecord,
     });
@@ -779,6 +786,7 @@
   }
   function revive() {
     reviveUsed = true;
+    if (stoppedAt) { runStart += performance.now() - stoppedAt; stoppedAt = 0; }
     music.setMode("run");
     track("reward_granted", { type: "revive", score: score });
     // Clear immediate threats and give a short grace window.

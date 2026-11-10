@@ -67,3 +67,6 @@ emails (bodies + PDF attachments) + `facts.md` + `draft-template.txt` (= ND-032 
 nov21 schedule item; batched to one draft per 6h. Output `drafts/LATEST.txt` + Telegram. Never submits.
 Own venv `/root/neondash-watch/venv` (google libs + pypdf). Keep `facts.md` current when releases ship.
 Can't see Play Console or the TC dashboard (both need a human login).
+
+## Gameplay events (ND-034/035)
+App -> Cloudflare Worker `neondash-events.onboardingaudit.workers.dev` -> VPS `pull.py` (*/5) -> `/root/neondash-events/events.db`. Report: `python3 report.py --days N` on the VPS. After every Play go-live, add the build to `/root/neondash-events/builds.json` (go-live time from the Play 'Your update is live' email), or its test-device sessions count as players.

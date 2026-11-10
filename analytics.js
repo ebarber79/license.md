@@ -7,8 +7,8 @@
  *    and, with ?debug=1, echoed to the console — enough for QA case ND-AN-*.
  *  - Captures uncaught errors + unhandled promise rejections (ND-AN-05).
  *
- * ND-034: the Android app sends events to DEFAULT_ENDPOINT (the VPS
- * receiver, /root/neondash-events). The web build never sends anything.
+ * ND-034: the Android app sends events to DEFAULT_ENDPOINT (Cloudflare relay,
+ * pulled every 5 min into the VPS db /root/neondash-events). The web build never sends anything.
  * No persistent ID: the session id is random per app launch, kept in memory.
  * Override for tests: window.NEONDASH_ANALYTICS_URL / window.NEONDASH_BUILD.
  *
