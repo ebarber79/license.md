@@ -9,4 +9,4 @@
 - Bundled web assets vs v6: only `analytics.js` (relay endpoint, app_open, platform/build)
   and `index.html` (CSP connect-src adds the relay) differ.
 - Contents: gameplay tracking only. No phone-test fixes yet (v6 test report not in).
-- Upload to Play closed testing: human step (06), not done.
+- 2026-11-10: uploaded to Closed testing - Alpha, '7 (1.6)', sent for review (Changes in review).
