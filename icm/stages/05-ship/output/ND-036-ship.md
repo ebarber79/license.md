@@ -18,3 +18,4 @@
 - NOT uploaded. Needs human OK ("upload v9"); release note:
   "New: a Send feedback link on the start screen, so you can tell us about bugs or ideas."
 - 2026-11-10: human said 'upload v9'. Desktop handoff CLAUDE-DESKTOP-UPLOAD-V9.txt (human drags the AAB; send for review approved).
+- 2026-11-10: UPLOADED to Alpha: vc 9 '9 (1.8)', notes 'New: a Send feedback link on the start screen, so you can tell us about bugs or ideas.' (Play needs <en-US> tags on their own lines), only warning = no deobfuscation file, SENT FOR REVIEW (Changes in review). Alpha: 9 (1.8) in review, 178 countries; 8 (1.7) live until approval. Watcher will add '9 (1.8)' to builds.json on go-live.
