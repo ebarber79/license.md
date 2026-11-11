@@ -20,6 +20,11 @@
     "text": "Check the tester opt-in count today.\nTell Claude Code: \"check the tester opt-in count\" (Claude Desktop handoff for Play + Testers Community).\nAlso worth asking: \"show me the gameplay report\" (are testers on v8 yet?)."
   },
   {
+    "id": "nov13-testers",
+    "at": "2026-11-13T09:00",
+    "text": "Check Neon Dash testers today. Tell Claude Code: \"check the tester opt-in count\".\nWant: Play still 12+ opted in (should read ~5 days continuously; 14 needed, done ~Nov 21-22). If it dropped below 12 or the day count reset, act today.\nAlso confirm the Nov 8 'urgent payments issue' notice is gone (bank deposit verified Nov 11)."
+  },
+  {
     "id": "nov21-14day",
     "at": "2026-11-21T09:00",
     "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\n1) Tell Claude Code: \"check testers\".\n2) An auto-draft of the production answers is being made now from the tester emails; it arrives here next. Review it, then tell Claude Code: \"pull the production draft\".",
