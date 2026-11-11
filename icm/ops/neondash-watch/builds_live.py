@@ -4,8 +4,10 @@ report.py uses it to keep Google's review / pre-launch test devices (sessions
 that start before a build went live) out of the player numbers.
 
 Play sends the same email for every kind of update (Data safety, store listing,
-a release) and doesn't name the build. Rule: an email belongs to a build when the
-update's "created on" time is at or after the build's first event. Uploading a
+a release) and doesn't name the build. Rule: an email belongs to the NEWEST build
+whose first event is at or before the update's "created on" time (one release =
+one build; older builds already live are left alone, fixed 2026-11-11 after the
+v9 email also moved v8). Uploading a
 bundle starts Google's test devices straight away; the release is created after
 that, while policy/listing changes made before the upload are skipped.
 If a later email also matches a build recorded automatically less than 48 h
@@ -54,9 +56,9 @@ def record(text, live_ts, msg_id):
     except (OSError, ValueError):
         builds = {}
     out = []
-    for build, first in sorted(first_events(live_ts).items(), key=lambda x: x[1]):
-        if created < first:
-            continue  # update created before this build existed: not its release
+    # Newest build that existed when the update was created; older builds keep their entry.
+    candidates = [(first, build) for build, first in first_events(live_ts).items() if first <= created]
+    for first, build in sorted(candidates)[-1:]:
         cur = builds.get(build)
         if cur is None:
             builds[build] = {"live": iso(live_ts), "created": iso(created), "source": f"auto: Play email {msg_id}"}
