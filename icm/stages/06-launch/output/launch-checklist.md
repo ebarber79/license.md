@@ -19,7 +19,7 @@ Seeded 2026-10-06. Tick with a date when confirmed. Tracker IDs in brackets.
 ## Phase 2 — money
 
 - [x] AdMob account + real ad units wired, `IS_TESTING=false` (2026-07-20)
-- [x] AdMob payments: W-9/tax info + bank account [ND-006] (2026-11-03, human-reported; bank test deposit may be pending)
+- [x] AdMob payments: W-9/tax info + bank account [ND-006] (2026-11-03, human-reported; test deposit verified 2026-11-11, human-reported)
 - [ ] Declare a developer website in the Play listing, then publish `app-ads.txt` there [ND-007]
 - [ ] Create 4 consumables in Play: `neondash.gems.500` / `.1200` / `.3000` / `.7000` [ND-005]
 - [ ] RevenueCat account, link Play app, import products, copy the `goog_` key [ND-005]
