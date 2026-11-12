@@ -2023,11 +2023,11 @@
         track("gem_pack_purchased", { pack_id: p.id, gems: res.gems || p.gems, bank_after: bank });
         renderShop();
       } else if (res && res.cancelled) {
-        track("gem_pack_cancelled", { pack_id: p.id });
+        track("gem_pack_cancelled", { pack_id: p.id, code: res && res.code, msg: res && res.msg });
       } else {
         audio.shieldBreak();
         showToast("Purchase didn't complete");
-        track("gem_pack_failed", { pack_id: p.id });
+        track("gem_pack_failed", { pack_id: p.id, code: res && res.code, msg: res && res.msg });
       }
     });
   }

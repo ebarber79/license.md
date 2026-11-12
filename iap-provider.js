@@ -107,7 +107,10 @@
         }, function (err) {
           // RevenueCat flags user-cancel; treat everything else as a failed buy.
           var cancelled = !!(err && (err.userCancelled || err.code === "1" || /cancel/i.test(err.message || "")));
-          return { ok: false, gems: 0, cancelled: cancelled };
+          // Keep Google's/RevenueCat's reason so a missing purchase sheet can be diagnosed (no personal data).
+          var code = err && err.code != null ? String(err.code) : "";
+          var msg = String((err && (err.underlyingErrorMessage || err.message)) || "").slice(0, 120);
+          return { ok: false, gems: 0, cancelled: cancelled, code: code, msg: msg };
         });
     },
 
