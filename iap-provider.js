@@ -58,6 +58,23 @@
         if (REVENUECAT_ANDROID_API_KEY.indexOf("REPLACE") !== -1) return Promise.resolve();
         return Promise.resolve(Purchases.configure({ apiKey: REVENUECAT_ANDROID_API_KEY }))
           .then(function () {
+            // ND-005 diagnosis: forward RevenueCat warnings/errors (and purchase/receipt lines)
+            // to the anonymous event log, capped so it can't flood. No personal data in these.
+            var sent = 0;
+            try {
+              Promise.resolve(Purchases.setLogHandler(function (level, message) {
+                var m = String(message || "");
+                var lv = String(level || "");
+                if (sent >= 40) return;
+                if (/WARN|ERROR/i.test(lv) || /receipt|purchase|billing|acknowledg|consum|token/i.test(m)) {
+                  sent++;
+                  var t = global.NeonAnalytics && global.NeonAnalytics.track;
+                  if (t) t("iap_log", { level: lv, msg: m.slice(0, 300) });
+                }
+              })).catch(function () {});
+            } catch (e) { /* older plugin: no log handler */ }
+          })
+          .then(function () {
             return Purchases.getProducts({
               productIdentifiers: GEM_PACKS.map(function (p) { return p.id; }),
               type: "NON_SUBSCRIPTION",     // consumables
