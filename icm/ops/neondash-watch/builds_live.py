@@ -65,7 +65,9 @@ def record(text, live_ts, msg_id):
             out.append(f"build {build} went live {iso(live_ts)}: its earlier sessions now count as Google test devices")
         elif str(cur.get("source", "")).startswith("auto"):
             old = dt.datetime.fromisoformat(cur["live"].replace("Z", "+00:00")).timestamp()
-            if old < live_ts <= old + MOVE_WINDOW:
+            # A build already live before this update was created is not what this email is about
+            # (2026-11-12: the v10 email moved v9 because v10's first event came 3 min after 'created').
+            if old < live_ts <= old + MOVE_WINDOW and old >= created:
                 cur.update(live=iso(live_ts), created=iso(created), source=f"auto: Play email {msg_id} (moved)")
                 out.append(f"build {build}: a later Play update also matched, go-live moved to {iso(live_ts)}")
     if out:
