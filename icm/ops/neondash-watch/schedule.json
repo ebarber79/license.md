@@ -41,6 +41,11 @@
     "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\".\nMore testing needed -> keep the closed test running, tell Claude Code, contact Testers Community about the refund guarantee."
   },
   {
+    "id": "dec02-trader-decide",
+    "at": "2026-12-02T09:00",
+    "text": "Play trader status: decide the public ADDRESS (on hold since Nov 11; deadline Feb 1).\nAlready done: public dev email = onboardingaudit.ai@gmail.com (verified); trader form NOT submitted.\nOptions: (1) change the Google Payments address to the DC mailbox (may trigger re-verification), (2) LLC organization account (D-U-N-S), (3) publish the current payments address.\nBest after production access is granted. Tell Claude Code: \"resume trader status\" (handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt)."
+  },
+  {
     "id": "jan08-trader-heads-up",
     "at": "2027-01-08T09:00",
     "text": "Heads-up: Play trader status must be declared by Feb 1 (scheduled for Jan 15). Handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt."
@@ -48,7 +53,7 @@
   {
     "id": "jan15-trader",
     "at": "2027-01-15T09:00",
-    "text": "Declare Play trader status today (deadline Feb 1, or Google removes the app worldwide).\nPlay Console notice > Declare status. Likely TRADER. Use the F Street business address, never home; email neondash@gridlas.com.\nHandoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt, or tell Claude Code: \"walk me through trader status\"."
+    "text": "Declare Play trader status today (deadline Feb 1, or Google removes the app worldwide).\nTRADER. Public email onboardingaudit.ai@gmail.com (already set). Address comes from the Google Payments profile, so settle that first (DC mailbox vs home vs LLC org account).\nHandoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt, or tell Claude Code: \"resume trader status\"."
   },
   {
     "id": "jan29-trader-final",

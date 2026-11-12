@@ -10,7 +10,9 @@
   per session, msg <= 300 chars, no personal data). APP_BUILD "10 (1.9)".
 - Tests: unit 42/42, e2e 92/92 (PW_CHROMIUM=/usr/bin/chromium).
 - Built on VPS (build-bundle.sh, gradle exit 0, 13:37 UTC). Artifact
-  `~/Desktop/NeonDash-release-v10.aab` + `gdrive:NeonDash/`.
+  `~/Desktop/NeonDash-release-v10.aab` (9.3 MB, sha256 a7c43110…, matches VPS) + `gdrive:NeonDash/`.
+- Verified: signer CN=Neon Dash SHA-256 8C:B9:...:8C:8B (same as v6-v9), APP_BUILD 10 (1.9),
+  IS_TESTING=false, iap_log + error code/msg present in the bundle.
 - Upload: human said "build v10 and prep the upload". Handoff
   CLAUDE-DESKTOP-UPLOAD-V10.txt (human drags the AAB; send for review approved).
   Notes: "Fixes in progress for gem purchases. Thanks for testing!"
