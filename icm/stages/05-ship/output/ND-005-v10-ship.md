@@ -17,3 +17,6 @@
   CLAUDE-DESKTOP-UPLOAD-V10.txt (human drags the AAB; send for review approved).
   Notes: "Fixes in progress for gem purchases. Thanks for testing!"
 - After live: human buys the 1200 pack (500 is stuck as owned); read iap_log events.
+- 2026-11-12: UPLOADED to Alpha via Desktop: vc 10 '10 (1.9)', notes saved (1 language), only warning =
+  no deobfuscation file, devices unchanged (0 lost), 8.88 MB. Publishing overview had only this release;
+  SENT FOR REVIEW ("Changes in review"). 9 (1.8) stays live until approval. builds_live.py records go-live.
