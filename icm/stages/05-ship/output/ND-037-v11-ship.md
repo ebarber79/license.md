@@ -10,3 +10,8 @@
   cherry-picked to master after v11 is approved (separate proposal).
 - After live: phone check per QA ND-UX-01/02; then fill the [FILL] lines in
   icm/shared/production-access-answers.md (Q4/Q8/Q9) with what shipped.
+- 2026-11-15 Desktop report (handoff step 4): reached Closed testing › Alpha › Create closed testing
+  release, "Drop app bundles here to upload" box shown; no Play App Signing prompt (step 3 skipped,
+  signing already on); 10 (1.9) listed under "Not included" (v11 will replace it); "Declare your
+  trader status" banner present, left alone (ND-030, deadline Feb 2027). Waiting on human drag of
+  NeonDash-release-v11.aab, then Desktop continues from step 5.
