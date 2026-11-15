@@ -25,3 +25,8 @@
 - A new "AI asset declaration" section has appeared. Answer: keep "Don't label assets", the same as Nov 4, because all images are game renders.
 - A Manage languages dialog opened by accident and was cancelled, so the listing is still en-US only.
 - Told Desktop to Save and then report the step 13 list (handoff CLAUDE-DESKTOP-NEONDASH-V11-SAVE.txt).
+
+## Part B, steps 12-13 (2026-11-15)
+- Saved with no warnings. Publishing overview shows "Submit 2 changes for review": the short description and the full description (en-US default listing). Quick checks are running (up to 14 min).
+- The release isn't in the list yet because it is still a draft. Managed publishing is OFF and stays off.
+- Next (handoff CLAUDE-DESKTOP-NEONDASH-V11-RELEASE.txt): Save and publish the draft so it joins Publishing overview (stop at any send dialog), check there are 3 changes, then the human clicks Send for review.
