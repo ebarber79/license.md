@@ -15,3 +15,7 @@
   signing already on); 10 (1.9) listed under "Not included" (v11 will replace it); "Declare your
   trader status" banner present, left alone (ND-030, deadline Feb 2027). Waiting on human drag of
   NeonDash-release-v11.aab, then Desktop continues from step 5.
+- 2026-11-15 Desktop report (steps 5-9): bundle vc 11 "11 (1.10)", release name auto "11 (1.10)",
+  10 (1.9) not included; en-US notes exact; only warning = no deobfuscation file; devices unchanged
+  (Phone 12,620 / Tablet 6,853 / TV 4 / Car 13 / Chromebook 77 / XR 2); 8.89 MB (+~14.4 KB vs v10).
+  Release saved as DRAFT. Recommended "Part B first" so release + store listing go to one review.
