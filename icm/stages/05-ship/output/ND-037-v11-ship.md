@@ -19,3 +19,9 @@
   10 (1.9) not included; en-US notes exact; only warning = no deobfuscation file; devices unchanged
   (Phone 12,620 / Tablet 6,853 / TV 4 / Car 13 / Chromebook 77 / XR 2); 8.89 MB (+~14.4 KB vs v10).
   Release saved as DRAFT. Recommended "Part B first" so release + store listing go to one review.
+
+## Part B, step 12 (2026-11-15)
+- Desktop report: the Review step shows the new short and full descriptions exactly as written. Name, graphics and screenshots are untouched, and there are no warnings.
+- A new "AI asset declaration" section has appeared. Answer: keep "Don't label assets", the same as Nov 4, because all images are game renders.
+- A Manage languages dialog opened by accident and was cancelled, so the listing is still en-US only.
+- Told Desktop to Save and then report the step 13 list (handoff CLAUDE-DESKTOP-NEONDASH-V11-SAVE.txt).
