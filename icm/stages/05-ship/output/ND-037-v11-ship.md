@@ -35,3 +35,7 @@
 - Publishing overview shows "Changes in review", with all 3 changes in one review: Closed testing - Alpha 11 (1.10) (Start full rollout), the en-US short description and the en-US full description.
 - Managed publishing is OFF, so the changes go live on approval. 10 (1.9) stays live until then.
 - After live: the human runs the phone checks ND-UX-01/02, then fill the [FILL] lines in icm/shared/production-access-answers.md.
+
+## LIVE + verified (2026-11-15)
+- Play "update is live" email at 20:35:47 UTC (builds.json: auto).
+- On the human's phone, after uninstalling a sideloaded 1.2 copy and reinstalling from Play: ND-UX-01/02 ALL PASS, and the gems.1200 test purchase completed with gems credited (ND-005).

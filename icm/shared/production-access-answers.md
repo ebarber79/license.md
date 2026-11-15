@@ -5,7 +5,7 @@ Draft 2026-11-15, written from what actually happened. The Testers Community tem
 settings", ASO work and surveys. None of that was built or done. Don't paste those claims:
 Google reviews these answers against the app and the release history.
 
-[FILL] = needs the second TC report (tester feedback) or the purchase test result.
+[FILL] = still open: only the final 14-day numbers in Q3 (re-run report.py first).
 Re-run the numbers on Nov 23 with `report.py --days 14` on the VPS before submitting.
 
 ## 1. How did you recruit users for your closed test?
@@ -28,9 +28,11 @@ I collected feedback three ways: the Testers Community feedback reports, an in-a
 "Send feedback" link I added to the start screen in version 1.8, and the gameplay
 analytics. The analytics showed:
 - Runs are very short (average a few seconds) and every run ended on spikes, so the
-  opening of a run is harder than intended for new players. [FILL if a fix ships]
+  opening of a run is harder than intended for new players. Version 1.10 added a guided
+  first-run tutorial that pauses at the first spike and teaches each jump.
 - Players started gem purchases that failed or were cancelled, which pointed to a
-  problem in the purchase flow.
+  problem in the purchase flow. Version 1.9 added error reporting for purchases, and a
+  test purchase on 1.10 completed and credited the gems.
 - Testers Community feedback report (Nov 15): no crashes or bugs found on any device.
   Suggestions: a first-run tutorial, a Rate button, a Share button, an exit
   confirmation on Back, and a clearer store description.
@@ -56,16 +58,18 @@ Every change below shipped to the closed track during the test:
 - 1.7: fixed how run time is measured (pause and revive no longer counted).
 - 1.8: in-app "Send feedback" link on the start screen.
 - 1.9: fixes and diagnostics for gem purchases after testers' purchases failed.
-[FILL once v11 is live: first-run tutorial (skip + replay), Rate, Share, exit
-  confirmation, rewritten store description. List ONLY what actually shipped.]
+- 1.10: a guided first-run tutorial (skippable, and replayable from "How to play"),
+  Rate and Share buttons on the start screen, a "Leave Neon Dash?" confirmation on
+  Back, and a rewritten store description. These came straight from the testers'
+  feedback report.
 
 ## 9. How did you decide the app is ready for production?
-The app ran for the whole test with no crashes or app errors recorded across six
+The app ran for the whole test with no crashes or app errors recorded across seven
 releases, all 15 testers stayed opted in, the issues the test surfaced (Back button,
-orientation, purchase flow [FILL: difficulty]) were fixed and shipped to testers, and
+orientation, purchase flow, first-run difficulty) were fixed and shipped to testers, and
 the store listing, privacy policy and data safety form are complete.
 
 ## 10. What did you do differently this time?
 This is my first app on Google Play, so there's no previous attempt. What I did on
-purpose this time was ship small updates throughout the test (six releases in two weeks)
+purpose this time was ship small updates throughout the test (seven releases in two weeks)
 and measure real gameplay instead of guessing, so each fix came from what testers did.
