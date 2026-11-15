@@ -30,3 +30,8 @@
 - Saved with no warnings. Publishing overview shows "Submit 2 changes for review": the short description and the full description (en-US default listing). Quick checks are running (up to 14 min).
 - The release isn't in the list yet because it is still a draft. Managed publishing is OFF and stays off.
 - Next (handoff CLAUDE-DESKTOP-NEONDASH-V11-RELEASE.txt): Save and publish the draft so it joins Publishing overview (stop at any send dialog), check there are 3 changes, then the human clicks Send for review.
+
+## SENT FOR REVIEW (2026-11-15)
+- Publishing overview shows "Changes in review", with all 3 changes in one review: Closed testing - Alpha 11 (1.10) (Start full rollout), the en-US short description and the en-US full description.
+- Managed publishing is OFF, so the changes go live on approval. 10 (1.9) stays live until then.
+- After live: the human runs the phone checks ND-UX-01/02, then fill the [FILL] lines in icm/shared/production-access-answers.md.
