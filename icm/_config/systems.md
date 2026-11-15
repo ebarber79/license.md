@@ -31,7 +31,7 @@ Push from the Pi: SSH key, tokenless (skill `github-pages-deploy`). Don't attemp
 | Item | Value |
 |---|---|
 | Host | `root@50.21.191.200` (since ~2026-10-14 the Tailscale address hangs on a browser check) |
-| Source | `/root/neon-dash` (needs `node_modules/@capacitor*` + `@revenuecat/*` beside `android/`) |
+| Source | `/root/neon-dash` (needs `node_modules/@capacitor*` + `@revenuecat/*` beside `android/`; since ND-037 also `@capacitor/share` + `@capacitor-community/in-app-review`) |
 | Toolchain | JDK 21 `/root/jdk-21`, SDK `/root/android-sdk`, Gradle wrapper 8.14.3 |
 | Debug APK | `/root/neon-dash/build-once.sh` (flock-guarded) |
 | Release APK | `/root/neon-dash/build-release.sh` |

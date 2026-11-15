@@ -14,50 +14,45 @@ Neon Dash: Endless Runner
 ## Short description (max 80)
 
 ```
-Triple-jump over neon spikes, grab gems, and light up your shoes with power-ups.
+One-tap neon endless runner: triple-jump spikes, grab gems, unlock skins.
 ```
-80 characters.
+73 characters. (ND-037, 2026-11-15: leads with the search terms "endless runner" + "one-tap".)
 
 ## Full description (max 4000)
 
+ND-037 rewrite (2026-11-15) after the Testers Community ASO note: search terms placed naturally
+(endless runner, arcade, one-tap, offline, jump, neon), a scannable feature list, a clear
+"who it's for" line, and the new tutorial. Every feature named here is in v11 (1.10).
+Nothing about "daily challenges" beyond what exists: daily streak + daily challenge + missions.
+
 ```
-Tap to jump. Tap again in mid-air to double-jump, and once more to triple-jump. That's all you need to know to start, and it takes a while to master.
+Neon Dash is a one-tap endless runner for quick arcade runs. Tap to jump, tap again in mid-air to double-jump, and once more to triple-jump. Hop over spikes, slip past neon bars and grab gems while the world speeds up around you.
 
-Neon Dash is a fast, glowing endless runner. Hop over red spikes, time your jumps past neon bars, and scoop up gems while the world speeds up and the colors shift around you. Every run is a new shot at your best score.
+New to runners? Your first run is a short guided tutorial that pauses at the first spike and shows you each move. You can skip it, or replay it any time from "How to play".
 
-POWER-UPS THAT YOU CAN SEE
-• Shield: survive one hit.
-• Magnet: pulls nearby gems straight to you.
-• Slow-mo: the world slows down so you can thread the tight spots.
-Your shoes light up in the power-up's color: teal for shield, gold for magnet, ice blue for slow-mo. Grab two at once and they go rainbow. They blink when it's about to run out, so you're never caught off guard.
+WHO IT'S FOR
+Anyone who likes short, fast arcade games: a run takes under a minute, the controls are one finger, and there's always a better score to chase.
 
-BOOST YOUR NEXT RUN
-Pick a power-up before you start and begin the run with it already on.
+FEATURES
+• One-tap controls with a triple jump
+• Endless runner levels that speed up and change color as you go
+• Power-ups you can see on your shoes: Shield, Magnet and Slow-mo
+• Boost: start your next run with a power-up already on
+• Gem combos: chain gems without getting hit to multiply their value
+• Six runner skins, from Cyan to an animated Rainbow, plus Retro Kicks you earn by playing
+• Daily streak bonus, a daily challenge and missions with gem rewards
+• Original synthwave soundtrack that builds with your speed
+• Plays offline, no account needed
+• Share the game with friends from the start screen
 
-COLLECT AND UNLOCK
-• Six runner skins, from Cyan to an animated Rainbow
-• Retro Kicks: chunky sneakers you earn by playing
-• Gem combos: chain gems without getting hit to multiply what each one is worth
-
-COME BACK DAILY
-• Daily streak bonus
-• A fresh daily challenge
-• Missions with gem rewards
-
-MADE FOR QUICK RUNS
-• One-tap controls, instant restarts
-• Original synthwave soundtrack that builds as you speed up
-• Plays offline
-• Smooth on phones
-
-Free to play, with ads. Some are your choice: watch one to continue a run, double your gems, or boost your next run.
+Free to play with ads. Some ads are your choice: watch one to continue a run, double your gems or boost your next run. Optional gem packs are available as in-app purchases; everything in the game can be earned by playing.
 ```
 
 ## Category and tags
 
 - **App category:** Game → Arcade
 - **Tags (pick up to 5 in Play Console):** Arcade, Casual, Action, Offline, Single player
-- **Search terms to keep in mind:** endless runner, neon, one tap, jump, arcade
+- **Search terms to keep in mind:** endless runner, neon, one tap, jump, arcade, offline runner, triple jump
 
 ## Contact and links
 

@@ -44,6 +44,20 @@
   const missionsEl = document.getElementById("missions");
   const comboItem = document.getElementById("combo-item");
   const comboMultEl = document.getElementById("combo-mult");
+  const tutorialBanner = document.getElementById("tutorial-banner");
+  const tutorialText = document.getElementById("tutorial-text");
+  const tutorialSkipBtn = document.getElementById("tutorial-skip");
+  const howtoBtn = document.getElementById("howto-btn");
+  const rateLink = document.getElementById("rate-link");
+  const shareBtn = document.getElementById("share-btn");
+  const exitConfirm = document.getElementById("exit-confirm");
+  const exitStayBtn = document.getElementById("exit-stay-btn");
+  const exitLeaveBtn = document.getElementById("exit-leave-btn");
+  const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  function nativePlugin(name) {
+    const cap = window.Capacitor;
+    return NATIVE && cap.Plugins ? cap.Plugins[name] : null;
+  }
 
   // ---- Retention progress (streak / daily / missions); stub-safe ----
   const progress = window.NeonProgress || {
@@ -106,6 +120,64 @@
       encodeURIComponent("Neon Dash feedback (" + ver + ")") + "&body=" + encodeURIComponent(body);
     feedbackLink.addEventListener("click", (e) => e.stopPropagation());
   }
+
+  // ND-037: Rate (Android: opens the Play Store page) and Share.
+  const PLAY_URL = "https://play.google.com/store/apps/details?id=io.github.ebarber79.neondash";
+  const WEB_URL = "https://neondash.gridlas.com/";
+  if (rateLink) {
+    rateLink.classList.toggle("hidden", !NATIVE);
+    rateLink.addEventListener("click", (e) => { e.stopPropagation(); track("rate_tap"); });
+  }
+  if (shareBtn) shareBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    shareGame();
+  });
+  function shareGame() {
+    const url = NATIVE ? PLAY_URL : WEB_URL;
+    const text = "I'm playing Neon Dash, a neon endless runner. Beat my best: " + best + "!";
+    track("share_tap");
+    const Share = nativePlugin("Share");
+    if (Share && Share.share) {
+      return Promise.resolve(Share.share({ title: "Neon Dash", text, url, dialogTitle: "Share Neon Dash" }))
+        .catch(() => {});
+    }
+    if (navigator.share) {
+      return navigator.share({ title: "Neon Dash", text, url }).catch(() => {});
+    }
+    const done = () => showToast("Link copied");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text + " " + url).then(done, () => showToast(url));
+    }
+    showToast(url);
+    return Promise.resolve();
+  }
+
+  // ND-037: ask for a Play review after the 5th and 25th finished run.
+  // Google decides whether the sheet actually shows (and caps it); it's dismissable.
+  const RUNS_KEY = "neondash.runs";
+  function noteFinishedRun() {
+    const n = (parseInt(safeGet(RUNS_KEY), 10) || 0) + 1;
+    safeSet(RUNS_KEY, String(n));
+    if (n !== 5 && n !== 25) return;
+    const Review = nativePlugin("InAppReview");
+    if (!Review || !Review.requestReview) return;
+    setTimeout(() => {
+      track("review_prompt", { runs: n });
+      Promise.resolve(Review.requestReview()).catch(() => {});
+    }, 1200);
+  }
+
+  // ND-037: exit confirmation for Android Back on the start screen.
+  function exitOpen() { return !!exitConfirm && !exitConfirm.classList.contains("hidden"); }
+  function showExit() { exitConfirm.classList.remove("hidden"); exitStayBtn.focus(); }
+  function hideExit() { exitConfirm.classList.add("hidden"); }
+  if (exitStayBtn) exitStayBtn.addEventListener("click", (e) => { e.stopPropagation(); hideExit(); });
+  if (exitLeaveBtn) exitLeaveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const App = nativePlugin("App");
+    if (App && App.exitApp) App.exitApp();
+    else hideExit();
+  });
 
   // ---- In-app purchases (gem packs; native-only, stub on web) ----
   const iap = window.NeonIAP || {
@@ -460,7 +532,9 @@
   // ---- Input ----
   function jump() {
     if (state !== STATE.PLAYING || paused) return;
+    if (tutorialHold) tutorialHold = false; // ND-037: the tap that unfreezes is the jump
     if (player.onGround) {
+      if (tutorial === "jump") tutorialNext("spike", "Nice! Now watch for spikes...");
       player.vy = JUMP_VELOCITY;
       player.onGround = false;
       player.jumps = 1;
@@ -492,6 +566,15 @@
   window.addEventListener("keydown", onPress, { passive: false });
 
   startBtn.addEventListener("click", () => startGame());
+  if (howtoBtn) howtoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    forceTutorial = true;
+    startGame();
+  });
+  if (tutorialSkipBtn) tutorialSkipBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    tutorialEnd(true);
+  });
   // Portal interstitial at a natural break — every 3rd replay, not every run.
   restartBtn.addEventListener("click", () => {
     const skipBreak = boostAdWatched; // ND-023: no interstitial right after a boost ad
@@ -545,6 +628,8 @@
     resize();
     reset();
     useBoost(); // ND-023: armed power-up starts active
+    hideExit();
+    if (tutorialWanted()) tutorialStart(); else tutorialAbort();
     scoreEl.textContent = "0";
     coinsEl.textContent = "0";
     audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
@@ -580,6 +665,7 @@
     if (paused) stoppedAt = performance.now();
     else if (stoppedAt) { runStart += performance.now() - stoppedAt; stoppedAt = 0; }
     pauseScreen.classList.toggle("hidden", !paused);
+    tutorialBanner.classList.toggle("hidden", paused || !tutorial); // ND-037
     pauseBtn.textContent = paused ? "▶" : "❚❚";
     music.setMode(paused ? "paused" : "run");
     if (!paused) {
@@ -591,7 +677,7 @@
   }
 
   // ND-031: Android Back button (and Escape on the web).
-  // Run -> pause; paused or game-over -> menu; menu -> not handled (the app exits).
+  // Run -> pause; paused or game-over -> menu; menu (Android) -> exit panel (ND-037).
   // Returns true if the game used the press.
   function handleBack() {
     if (state === STATE.PLAYING) {
@@ -603,10 +689,13 @@
       menuBtn.click();
       return true;
     }
+    // ND-037: menu -> "Leave Neon Dash?" panel (Android); Back again closes it.
+    if (exitOpen()) { hideExit(); return true; }
+    if (NATIVE) { showExit(); return true; }
     return false;
   }
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && state !== STATE.MENU) { e.preventDefault(); handleBack(); }
+    if (e.key === "Escape" && (state !== STATE.MENU || exitOpen())) { e.preventDefault(); handleBack(); }
   });
   (function wireNativeBack() {
     const cap = window.Capacitor;
@@ -617,6 +706,7 @@
 
   function quitToMenu() {
     paused = false;
+    tutorialAbort();
     ads.gameplayStop(); // balance the gameplayStart() from startGame() on this exit path
     bankRun();
     state = STATE.MENU;
@@ -743,6 +833,7 @@
       new_record: newRecord,
     });
     ads.gameplayStop();
+    noteFinishedRun();
     finalScoreEl.textContent = score;
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
@@ -826,6 +917,105 @@
   }
 
   // ---- Spawning ----
+  // ---- ND-037: first-run tutorial ----
+  // A guided first run (or any run from "How to play"): jump -> one spike with a
+  // freeze-frame prompt -> mid-air jumps -> gems. While guided there's no speed
+  // ramp, no random spawns, and a hit clears the obstacle instead of ending the run.
+  const TUTORIAL_KEY = "neondash.tutorialDone";
+  let tutorial = null;       // null | "jump" | "spike" | "multi" | "gems"
+  let tutorialHold = false;  // world frozen until the player taps
+  let tutorialTimer = 0;
+  let tutorialSpike = null;
+  let forceTutorial = false;
+  let autoTutorial = !TEST_MODE; // e2e runs stay unguided unless a test opts in
+  function tutorialWanted() {
+    return forceTutorial || (autoTutorial && safeGet(TUTORIAL_KEY) !== "1");
+  }
+  function tutorialSay(msg) {
+    tutorialText.textContent = msg;
+    tutorialBanner.classList.remove("hidden");
+  }
+  function tutorialStart() {
+    track("tutorial_start", { replay: forceTutorial });
+    forceTutorial = false;
+    tutorial = "jump";
+    tutorialHold = false;
+    tutorialTimer = 0;
+    tutorialSpike = null;
+    spawnTimer = Infinity;
+    gemTimer = Infinity;
+    powerTimer = Infinity;
+    tutorialSay("Tap anywhere to jump");
+  }
+  function tutorialNext(step, msg) {
+    tutorial = step;
+    tutorialTimer = 0;
+    if (msg) tutorialSay(msg);
+  }
+  function tutorialAbort() {
+    tutorial = null;
+    tutorialHold = false;
+    forceTutorial = false;
+    if (tutorialBanner) tutorialBanner.classList.add("hidden");
+  }
+  function tutorialEnd(skipped) {
+    if (!tutorial) return;
+    const step = tutorial;
+    tutorialAbort();
+    safeSet(TUTORIAL_KEY, "1");
+    spawnTimer = 1.0;
+    gemTimer = 1.4;
+    powerTimer = 7 + rnd() * 4;
+    track(skipped ? "tutorial_skip" : "tutorial_done", { step });
+    if (!skipped) showToast("You're ready. Go!");
+  }
+  // Runs at the top of update(). Returns true while the world is frozen.
+  function tutorialTick(dt) {
+    if (tutorialHold) {
+      for (const s of stars) s.tw += dt * 2;
+      return true;
+    }
+    tutorialTimer += dt;
+    if (tutorial === "spike") {
+      if (!tutorialSpike) {
+        if (tutorialTimer > 0.6 && player.onGround) {
+          tutorialSpike = { type: "spikes", x: W + 40, w: 26, h: 34, count: 1, spikeW: 26 };
+          obstacles.push(tutorialSpike);
+        }
+      } else if (!tutorialSpike.prompted) {
+        // Freeze far enough out that a tap right after the prompt always clears it
+        // (scaled to world speed, so slow-mo boosts work too).
+        const ws = speed * (slowTime > 0 ? SLOWMO_FACTOR : 1);
+        if (player.onGround && tutorialSpike.x - (player.x + player.size) <= ws * 0.22) {
+          tutorialSpike.prompted = true;
+          tutorialHold = true;
+          tutorialSay("Spike ahead! Tap to jump over it");
+          return true;
+        }
+      }
+      if (tutorialSpike && tutorialSpike.x + tutorialSpike.w < player.x) {
+        tutorialSpike = null;
+        tutorialNext("multi", "Tap again in mid-air: double jump, then triple jump");
+      }
+    } else if (tutorial === "multi") {
+      if (tutorialTimer > 0.2 && player.jumps >= 2) {
+        spawnGemArc();
+        tutorialNext("gems", "Grab gems \u25C6 and spend them on skins and shoes");
+      }
+    } else if (tutorial === "gems") {
+      if (coinCount > 0 || tutorialTimer > 4) tutorialEnd(false);
+    }
+    return false;
+  }
+  function tutorialForgiveHit(i) {
+    obstacles.splice(i, 1);
+    tutorialSpike = null;
+    tutorialHold = false;
+    shake = 8;
+    vibrate(40);
+    tutorialNext("spike", "Jump a little earlier. Here comes another one...");
+  }
+
   function spawnObstacle() {
     // Either ground spikes (1-3) or a floating bar to duck/jump-time.
     const r = rnd();
@@ -1107,8 +1297,9 @@
 
   // ---- Update ----
   function update(dt) {
-    // Difficulty ramp
-    speed = Math.min(MAX_SPEED, speed + SPEED_RAMP * dt);
+    if (tutorial && tutorialTick(dt)) return; // ND-037: frozen on a tutorial prompt
+    // Difficulty ramp (held at the start speed during the tutorial)
+    if (!tutorial) speed = Math.min(MAX_SPEED, speed + SPEED_RAMP * dt);
     // Slow-mo scales how fast the world moves toward the player.
     const worldSpeed = speed * (slowTime > 0 ? SLOWMO_FACTOR : 1);
     distance += worldSpeed * dt;
@@ -1185,6 +1376,7 @@
       } else { // bar
         hit = hits(px + 6, py + 4, ps - 12, ps - 8, o.x, o.y, o.w, o.h);
       }
+      if (hit && tutorial) { tutorialForgiveHit(i); continue; }
       if (hit) {
         if (shieldTime > 0) {
           // Shield absorbs the hit: shatter it and clear this obstacle.
@@ -2131,6 +2323,11 @@
       jump() { jump(); },
       pause() { if (!paused) togglePause(); },
       back() { return handleBack(); },
+      setAutoTutorial(v) { autoTutorial = !!v; },
+      howTo() { howtoBtn.click(); },
+      skipTutorial() { tutorialSkipBtn.click(); },
+      exitOpen() { return exitOpen(); },
+      share() { return shareGame(); },
       resume() { if (paused) togglePause(); },
       clearObstacles() { obstacles.length = 0; },
       // Advance the simulation deterministically, independent of rAF /
@@ -2159,6 +2356,7 @@
           state, paused, score, coins: coinCount, bank, best,
           speed, shieldTime, magnetTime, slowTime, reduceMotion,
           gemMultiplier, combo, comboMult, reviveUsed, doubleClaimed,
+          tutorial, tutorialHold,
           obstacles: obstacles ? obstacles.length : 0,
           gems: gems ? gems.length : 0,
           powerups: powerups ? powerups.length : 0,

@@ -26,7 +26,7 @@
   }
 
   // Bump with every release (matches android versionCode / versionName).
-  var APP_BUILD = "10 (1.9)";
+  var APP_BUILD = "11 (1.10)";
   var DEFAULT_ENDPOINT = "https://neondash-events.onboardingaudit.workers.dev/nd/e";
 
   function isNative() {
