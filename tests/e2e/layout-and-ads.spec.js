@@ -52,6 +52,8 @@ test.describe("ND-020 small-phone layout", () => {
 
 // ND-022: the plain web build has no ad network, so no "watch ad" reward is offered.
 test("ND-022: web build without ads offers no ad rewards", async ({ page }) => {
+  // ND-037: a first-ever run is the guided tutorial (no deaths); this test needs a normal run.
+  await page.addInitScript(() => localStorage.setItem("neondash.tutorialDone", "1"));
   await page.goto("/index.html"); // no ?test=1: real web behaviour
   await expect(page.locator("#start-screen")).toBeVisible();
   await expect(page.locator("#shoe-row")).not.toContainText("WATCH");
