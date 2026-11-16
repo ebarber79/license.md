@@ -60,11 +60,16 @@
           .then(function () {
             // ND-005 diagnosis: forward RevenueCat warnings/errors (and purchase/receipt lines)
             // to the anonymous event log, capped so it can't flood. No personal data in these.
+            // setLogHandler is a Capacitor CALLBACK method: the native bridge calls it as
+            // (options, callback) and the callback gets one object {logLevel, message}.
+            // Passing the handler as the first argument (the old code) never registered it,
+            // which is why iap_log never fired.
             var sent = 0;
             try {
-              Promise.resolve(Purchases.setLogHandler(function (level, message) {
-                var m = String(message || "");
-                var lv = String(level || "");
+              Promise.resolve(Purchases.setLogHandler({}, function (data) {
+                data = data || {};
+                var m = String(data.message || data.msg || "");
+                var lv = String(data.logLevel || data.level || "");
                 if (sent >= 40) return;
                 if (/WARN|ERROR/i.test(lv) || /receipt|purchase|billing|acknowledg|consum|token/i.test(m)) {
                   sent++;
@@ -112,23 +117,58 @@
       });
     },
 
-    // Returns { ok, gems, cancelled? }. Grant is by the pack the user initiated.
+    _busy: false,
+    RETRY_DELAY_MS: 800,
+
+    // Fetch one product again so a retry never reuses a handle from a flow that was
+    // just cancelled. Falls back to the cached product if the store doesn't answer.
+    _freshProduct: function (pack) {
+      return Promise.resolve(Purchases.getProducts({ productIdentifiers: [pack.id], type: "NON_SUBSCRIPTION" }))
+        .then(function (res) {
+          var list = (res && res.products) || [];
+          for (var i = 0; i < list.length; i++) {
+            if (String(list[i].identifier || "").split(":")[0] === pack.id) { pack._product = list[i]; break; }
+          }
+          return pack._product;
+        }, function () { return pack._product; });
+    },
+
+    // Returns { ok, gems, cancelled?, code?, msg?, retried? }. Grant is by the pack the user initiated.
     buy: function (packId) {
       var self = this;
       var pack = null;
       for (var i = 0; i < self._packs.length; i++) if (self._packs[i].id === packId) pack = self._packs[i];
       if (!pack || !pack._product) return Promise.resolve({ ok: false, gems: 0 });
-      return Promise.resolve(Purchases.purchaseStoreProduct({ product: pack._product }))
-        .then(function () {
-          return { ok: true, gems: gemsFor(packId) };
-        }, function (err) {
-          // RevenueCat flags user-cancel; treat everything else as a failed buy.
-          var cancelled = !!(err && (err.userCancelled || err.code === "1" || /cancel/i.test(err.message || "")));
-          // Keep Google's/RevenueCat's reason so a missing purchase sheet can be diagnosed (no personal data).
-          var code = err && err.code != null ? String(err.code) : "";
-          var msg = String((err && (err.underlyingErrorMessage || err.message)) || "").slice(0, 120);
-          return { ok: false, gems: 0, cancelled: cancelled, code: code, msg: msg };
-        });
+      // ND-005: one purchase at a time across ALL packs. A second launch while a flow is
+      // open (or still closing) is what Google rejects. Ignore the tap quietly (no error toast).
+      if (self._busy) return Promise.resolve({ ok: false, gems: 0, cancelled: true, code: "busy", msg: "" });
+      self._busy = true;
+
+      function attempt(product) {
+        return Promise.resolve(Purchases.purchaseStoreProduct({ product: product }))
+          .then(function () { return { ok: true, gems: gemsFor(packId) }; }, toResult);
+      }
+      function toResult(err) {
+        // RevenueCat flags user-cancel; treat everything else as a failed buy.
+        var cancelled = !!(err && (err.userCancelled || err.code === "1" || /cancel/i.test(err.message || "")));
+        // Keep Google's/RevenueCat's reason so a missing purchase sheet can be diagnosed (no personal data).
+        var code = err && err.code != null ? String(err.code) : "";
+        var msg = String((err && (err.underlyingErrorMessage || err.message)) || "").slice(0, 120);
+        return { ok: false, gems: 0, cancelled: cancelled, code: code, msg: msg };
+      }
+
+      return attempt(pack._product)
+        .then(function (res) {
+          // ND-005: code 4 ("One or more of the arguments provided are invalid") came back in
+          // 5-60 ms right after a cancel: the sheet never opened. Wait, refetch, retry once.
+          if (res.ok || res.code !== "4") return res;
+          return new Promise(function (r) { setTimeout(r, self.RETRY_DELAY_MS); })
+            .then(function () { return self._freshProduct(pack); })
+            .then(attempt)
+            .then(function (res2) { res2.retried = true; return res2; });
+        })
+        .then(function (res) { self._busy = false; return res; },
+              function (e) { self._busy = false; return toResult(e); });
     },
 
     restore: function () {

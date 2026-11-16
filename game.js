@@ -2212,14 +2212,14 @@
         audio.power();
         vibrate(30);
         showToast("✓ Purchase complete\n+" + (res.gems || p.gems) + " ◆");
-        track("gem_pack_purchased", { pack_id: p.id, gems: res.gems || p.gems, bank_after: bank });
+        track("gem_pack_purchased", { pack_id: p.id, gems: res.gems || p.gems, bank_after: bank, retried: !!res.retried });
         renderShop();
       } else if (res && res.cancelled) {
-        track("gem_pack_cancelled", { pack_id: p.id, code: res && res.code, msg: res && res.msg });
+        track("gem_pack_cancelled", { pack_id: p.id, code: res && res.code, msg: res && res.msg, retried: !!(res && res.retried) });
       } else {
         audio.shieldBreak();
         showToast("Purchase didn't complete");
-        track("gem_pack_failed", { pack_id: p.id, code: res && res.code, msg: res && res.msg });
+        track("gem_pack_failed", { pack_id: p.id, code: res && res.code, msg: res && res.msg, retried: !!(res && res.retried) });
       }
     });
   }
