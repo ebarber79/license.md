@@ -1,63 +1,63 @@
 [
-  {
-    "id": "nov08-testers",
-    "at": "2026-11-08T10:00",
-    "text": "START HERE: ~/Desktop/NEONDASH-README-2026-11-09.txt (to-do list + where everything stands).\nTesters already checked Nov 7: 15/15 joined on Testers Community.\n1) Phone test v6 (~20 min): Desktop/NeonDash-PHONE-TEST-CHECKLIST-v6.txt (Drive > NeonDash). Includes the free test gem purchase.\n2) Paste the REPORT BACK section to Claude Code.\n3) Check Play Console > Neon Dash > Dashboard: Google's opt-in count should be 12+."
-  },
-  {
-    "id": "nov09-readme",
-    "at": "2026-11-09T09:00",
-    "text": "Monday kickoff: START at the handoff README.\nOpen ~/Desktop/NEONDASH-README-2026-11-09.txt (Mousepad) and work its to-do list top-down.\nNew Claude Code session? Paste: Resume Neon Dash from ~/Desktop/NEONDASH-README-2026-11-09.txt\nToday: confirm Google's opt-in count (12+) if not done; v6 phone test if not done. Tomorrow 9:00: bank deposit check."
-  },
-  {
-    "id": "nov10-bank",
-    "at": "2026-11-10T09:00",
-    "text": "Verify Google's test deposit (checking acct ending 611).\nPlay Console > Payments profile > Manage payment methods > Verify > exact amount. You type it, not Claude."
-  },
-  {
-    "id": "nov11-testers",
-    "at": "2026-11-11T09:00",
-    "text": "Check the tester opt-in count today.\nTell Claude Code: \"check the tester opt-in count\" (Claude Desktop handoff for Play + Testers Community).\nAlso worth asking: \"show me the gameplay report\" (are testers on v8 yet?)."
-  },
-  {
-    "id": "nov13-testers",
-    "at": "2026-11-13T09:00",
-    "text": "Check Neon Dash testers today. Tell Claude Code: \"check the tester opt-in count\".\nWant: Play still 12+ opted in (should read ~5 days continuously; 14 needed, done ~Nov 21-22). If it dropped below 12 or the day count reset, act today."
-  },
-  {
-    "id": "nov21-14day",
-    "at": "2026-11-21T09:00",
-    "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\n1) Tell Claude Code: \"check testers\".\n2) An auto-draft of the production answers is being made now from the tester emails; it arrives here next. Review it, then tell Claude Code: \"pull the production draft\".",
-    "draft": true
-  },
-  {
-    "id": "nov23-apply",
-    "at": "2026-11-23T11:00",
-    "text": "APPLY FOR PRODUCTION today (once Testers Community's 2 reports are in).\nChecklist at the top of Desktop/NeonDash-PRODUCTION-APPLICATION-DRAFT.txt. Play Console > Dashboard > Apply for production. Press Next on every section, never Discard. Or ask Claude Code for a Claude Desktop handoff that stops before Apply."
-  },
-  {
-    "id": "nov30-review",
-    "at": "2026-11-30T09:30",
-    "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\".\nMore testing needed -> keep the closed test running, tell Claude Code, contact Testers Community about the refund guarantee."
-  },
-  {
-    "id": "dec02-trader-decide",
-    "at": "2026-12-02T09:00",
-    "text": "Play trader status: decide the public ADDRESS (on hold since Nov 11; deadline Feb 1).\nAlready done: public dev email = onboardingaudit.ai@gmail.com (verified); trader form NOT submitted.\nOptions: (1) change the Google Payments address to the DC mailbox (may trigger re-verification), (2) LLC organization account (D-U-N-S), (3) publish the current payments address.\nBest after production access is granted. Tell Claude Code: \"resume trader status\" (handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt)."
-  },
-  {
-    "id": "jan08-trader-heads-up",
-    "at": "2027-01-08T09:00",
-    "text": "Heads-up: Play trader status must be declared by Feb 1 (scheduled for Jan 15). Handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt."
-  },
-  {
-    "id": "jan15-trader",
-    "at": "2027-01-15T09:00",
-    "text": "Declare Play trader status today (deadline Feb 1, or Google removes the app worldwide).\nTRADER. Public email onboardingaudit.ai@gmail.com (already set). Address comes from the Google Payments profile, so settle that first (DC mailbox vs home vs LLC org account).\nHandoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt, or tell Claude Code: \"resume trader status\"."
-  },
-  {
-    "id": "jan29-trader-final",
-    "at": "2027-01-29T09:00",
-    "text": "FINAL WARNING if not done yet: Play trader status deadline is Feb 1. Ignore if you already declared it."
-  }
+ {
+  "id": "nov08-testers",
+  "at": "2026-11-08T10:00",
+  "text": "START HERE: ~/Desktop/NEONDASH-README-2026-11-09.txt (to-do list + where everything stands).\nTesters already checked Nov 7: 15/15 joined on Testers Community.\n1) Phone test v6 (~20 min): Desktop/NeonDash-PHONE-TEST-CHECKLIST-v6.txt (Drive > NeonDash). Includes the free test gem purchase.\n2) Paste the REPORT BACK section to Claude Code.\n3) Check Play Console > Neon Dash > Dashboard: Google's opt-in count should be 12+."
+ },
+ {
+  "id": "nov09-readme",
+  "at": "2026-11-09T09:00",
+  "text": "Monday kickoff: START at the handoff README.\nOpen ~/Desktop/NEONDASH-README-2026-11-09.txt (Mousepad) and work its to-do list top-down.\nNew Claude Code session? Paste: Resume Neon Dash from ~/Desktop/NEONDASH-README-2026-11-09.txt\nToday: confirm Google's opt-in count (12+) if not done; v6 phone test if not done. Tomorrow 9:00: bank deposit check."
+ },
+ {
+  "id": "nov10-bank",
+  "at": "2026-11-10T09:00",
+  "text": "Verify Google's test deposit (checking acct ending 611).\nPlay Console > Payments profile > Manage payment methods > Verify > exact amount. You type it, not Claude."
+ },
+ {
+  "id": "nov11-testers",
+  "at": "2026-11-11T09:00",
+  "text": "Check the tester opt-in count today.\nTell Claude Code: \"check the tester opt-in count\" (Claude Desktop handoff for Play + Testers Community).\nAlso worth asking: \"show me the gameplay report\" (are testers on v8 yet?)."
+ },
+ {
+  "id": "nov13-testers",
+  "at": "2026-11-13T09:00",
+  "text": "Check Neon Dash testers today. Tell Claude Code: \"check the tester opt-in count\".\nWant: Play still 12+ opted in (should read ~5 days continuously; 14 needed, done ~Nov 21-22). If it dropped below 12 or the day count reset, act today."
+ },
+ {
+  "id": "nov21-14day",
+  "at": "2026-11-21T09:00",
+  "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\n1) Play Console > Neon Dash > Dashboard: note the opted-in count.\n2) The production answers are ready on the Desktop: NeonDash-PRODUCTION-APPLICATION-DRAFT.txt (checklist at the top). Tell Claude Code \"refresh the production answers\" to update the numbers and v12 lines.",
+  "draft": false
+ },
+ {
+  "id": "nov23-apply",
+  "at": "2026-11-23T11:00",
+  "text": "APPLY FOR PRODUCTION today (once Testers Community's 2 reports are in).\nChecklist at the top of Desktop/NeonDash-PRODUCTION-APPLICATION-DRAFT.txt. Play Console > Dashboard > Apply for production. Press Next on every section, never Discard. Or ask Claude Code for a Claude Desktop handoff that stops before Apply."
+ },
+ {
+  "id": "nov30-review",
+  "at": "2026-11-30T09:30",
+  "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\".\nMore testing needed -> keep the closed test running, tell Claude Code, contact Testers Community about the refund guarantee."
+ },
+ {
+  "id": "dec02-trader-decide",
+  "at": "2026-12-02T09:00",
+  "text": "Play trader status: decide the public ADDRESS (on hold since Nov 11; deadline Feb 1).\nAlready done: public dev email = onboardingaudit.ai@gmail.com (verified); trader form NOT submitted.\nOptions: (1) change the Google Payments address to the DC mailbox (may trigger re-verification), (2) LLC organization account (D-U-N-S), (3) publish the current payments address.\nBest after production access is granted. Tell Claude Code: \"resume trader status\" (handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt)."
+ },
+ {
+  "id": "jan08-trader-heads-up",
+  "at": "2027-01-08T09:00",
+  "text": "Heads-up: Play trader status must be declared by Feb 1 (scheduled for Jan 15). Handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt."
+ },
+ {
+  "id": "jan15-trader",
+  "at": "2027-01-15T09:00",
+  "text": "Declare Play trader status today (deadline Feb 1, or Google removes the app worldwide).\nTRADER. Public email onboardingaudit.ai@gmail.com (already set). Address comes from the Google Payments profile, so settle that first (DC mailbox vs home vs LLC org account).\nHandoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt, or tell Claude Code: \"resume trader status\"."
+ },
+ {
+  "id": "jan29-trader-final",
+  "at": "2027-01-29T09:00",
+  "text": "FINAL WARNING if not done yet: Play trader status deadline is Feb 1. Ignore if you already declared it."
+ }
 ]

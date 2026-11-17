@@ -135,8 +135,9 @@ def mail(state, now, dry, baseline=False):
         has_att = any(p.get("filename") for p in x["payload"].get("parts", []) or [])
         head, hint = f"📬 {label} email (onboardingaudit.ai@gmail.com)", ""
         if kind == "tc" and (has_att or any(w in subj.lower() for w in REPORT_WORDS)):
-            hint = "\n➡ Looks like a tester report: auto-drafting the production answers now."
-            state["draft_pending"] = f"Testers Community: {subj[:60]}"
+            # 2026-11-17: auto-draft retired; curated answers live in icm/shared/production-access-answers.md
+            # (Desktop NeonDash-PRODUCTION-APPLICATION-DRAFT.txt). Report emails are still forwarded.
+            hint = "\n➡ Looks like a tester report: tell Claude Code \"refresh the production answers\" if it changes anything."
         elif kind == "play":
             if any(w in low for w in PLAY_BAD):
                 head = "🚨 GOOGLE PLAY: needs attention"

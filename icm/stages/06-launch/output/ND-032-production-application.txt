@@ -1,3 +1,5 @@
+SUPERSEDED 2026-11-17: use icm/shared/production-access-answers.md (also Desktop NeonDash-PRODUCTION-APPLICATION-DRAFT.txt). Kept for history.
+
 NEON DASH: GOOGLE PLAY PRODUCTION APPLICATION (DRAFT)
 =====================================================
 Drafted Nov 7, 2026. Apply on or after Nov 23, 2026.

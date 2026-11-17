@@ -1,75 +1,89 @@
 # Neon Dash: production access answers (ND-032)
 
-Draft 2026-11-15, written from what actually happened. The Testers Community template
-(questionnaire report, pasted 2026-11-15) claims a "dynamic walkthrough", "Rate/Share in
-settings", ASO work and surveys. None of that was built or done. Don't paste those claims:
-Google reviews these answers against the app and the release history.
+Single source of truth for the Play "Apply for production" form. Consolidated 2026-11-17 from
+the 2026-11-15 draft (current releases + TC feedback), the 2026-11-07 Desktop draft (recruiting
+facts) and the watcher's auto-draft (superseded, its facts sheet stopped at v6).
+Every sentence below must stay true: Google checks these against the app and release history.
+The Testers Community template claims a "dynamic walkthrough", "Rate/Share in settings", ASO work
+and surveys. None of that was built or done; don't paste those claims.
 
-[FILL] = still open: only the final 14-day numbers in Q3 (re-run report.py first).
-Re-run the numbers on Nov 23 with `report.py --days 14` on the VPS before submitting.
+## Before you apply (target: Mon Nov 23, 11:00 ET)
+
+- [ ] Play Console > Neon Dash > Dashboard shows 12+ testers opted in for the last 14 days in a
+      row (Google's rule for personal accounts). Note the number for Q3.
+- [ ] v12 (1.11) status: if it is live on Alpha, keep the `[IF 1.11 LIVE]` lines and delete the
+      marker. If it's still in review, delete those lines and use the "six releases" wording.
+- [ ] Re-run `python3 /root/neondash-events/report.py --days 14` on the VPS and update the Q3
+      numbers (snapshot below is from Nov 17).
+- [ ] Answer every section and press **Next** on each one; leaving without Next loses answers,
+      "Discard" wipes them. Apply is on the last section, and the human clicks it.
+- If the form limits answer length, keep the first sentence(s) of each answer; they carry the
+  point. Exact question wording is from a third-party guide; use what the live form says.
+
+After applying: review usually takes 7 days or less; Google emails the result (the VPS watcher
+forwards Play mail to Telegram). If they ask for more testing, keep the closed test running and
+don't remove testers.
 
 ## 1. How did you recruit users for your closed test?
-I used a paid testing service (Testers Community) to get a group of 15 Android testers,
-and I also tested on my own devices as a license tester.
+I invited friends and family through a Google Group with a one-page sign-up link, then used a
+paid testing service (Testers Community) for 15 testers who played over a 16-day run. I also
+tested on my own phone as a license tester.
 
 ## 2. How easy was it to recruit testers?
-Easy (the paid service supplied the testers).
+Pick: **Difficult**. (True: only 1 tester opted in from my own invites before the paid service.)
 
 ## 3. Describe the engagement you received from testers
-All 15 testers stayed opted in for the full test. I added privacy-respecting gameplay
-analytics in version 1.6 so I could see how the game was actually played, not just
-installed. Over the first 6 days after that went live there were 92 sessions and
-17 recorded runs across versions 1.6 to 1.9, with no app errors logged. Testers also
-browsed and used the cosmetic shop (skins and shoes) and the gem shop.
-[FILL: final 14-day numbers; anything the testers wrote in the TC feedback report.]
+All 15 Testers Community testers stayed opted in for the test [CONFIRM: Play Dashboard count on
+Nov 23]. I added privacy-respecting gameplay analytics in version 1.6 to see how the game was
+actually played. Since then there were 163 sessions and 33 recorded runs across versions 1.6 to
+1.10, with no app errors logged [REFRESH on Nov 23 with report.py --days 14]. Testers used the
+cosmetic shop (skins and shoes), the gem shop, Boost, power-ups and the new tutorial.
 
 ## 4. Summary of the feedback, and how you collected it
-I collected feedback three ways: the Testers Community feedback reports, an in-app
-"Send feedback" link I added to the start screen in version 1.8, and the gameplay
-analytics. The analytics showed:
-- Runs are very short (average a few seconds) and every run ended on spikes, so the
-  opening of a run is harder than intended for new players. Version 1.10 added a guided
-  first-run tutorial that pauses at the first spike and teaches each jump.
-- Players started gem purchases that failed or were cancelled, which pointed to a
-  problem in the purchase flow. Version 1.9 added error reporting for purchases, and a
-  test purchase on 1.10 completed and credited the gems.
-- Testers Community feedback report (Nov 15): no crashes or bugs found on any device.
-  Suggestions: a first-run tutorial, a Rate button, a Share button, an exit
-  confirmation on Back, and a clearer store description.
+I collected feedback four ways: the Testers Community feedback reports, an in-app "Send
+feedback" link (added in 1.8), my own on-device test checklist, and gameplay analytics.
+- Analytics: runs were very short (a few seconds) and most ended on spikes, so the start of a
+  run was harder than intended. Version 1.10 added a guided first-run tutorial that pauses at
+  the first spike and teaches each jump.
+- Analytics also showed gem purchases being started and then failing or being cancelled.
+  Version 1.9 added purchase diagnostics, and a test purchase on 1.10 completed and credited
+  the gems. [IF 1.11 LIVE] Version 1.11 fixed buying again right after cancelling a purchase.
+- Testers Community report (Nov 15): no crashes or bugs on any device. Suggestions: a first-run
+  tutorial, a Rate button, a Share button, an exit confirmation on Back, and a clearer store
+  description. All five shipped in 1.10.
 
 ## 5. Intended audience
-Casual mobile players who like short, fast arcade games: endless runners with simple
-one-tap controls, neon visuals and quick high-score sessions. Rated for a general
-audience; not designed for children specifically.
+Casual mobile players aged 13+ who like short, fast arcade games: one-tap controls, neon
+visuals and quick high-score sessions. Not designed for children.
 
 ## 6. How does your app provide value to users?
-It's a free, quick-to-play endless runner: one-tap controls, a jump/triple-jump
-mechanic, power-ups and boosts, and cosmetic skins and shoes to unlock. A run takes
-under a minute, so it fits short breaks. Gem packs are optional and cosmetic; the whole
-game is playable without paying.
+It's a free, quick-to-play endless runner: one-tap jump, double and triple jump, power-ups,
+Boost, music that reacts to speed, and cosmetic skins and shoes to unlock. A run takes under a
+minute, so it fits short breaks, and it works offline. Gem packs are optional and cosmetic; the
+whole game is playable without paying.
 
 ## 7. Installs expected in the first year
 0 - 10K (honest for a first game with no marketing budget).
 
 ## 8. What changes did you make based on the closed test?
 Every change below shipped to the closed track during the test:
-- 1.5: Android Back button now behaves correctly; screen locked to portrait.
-- 1.6: gameplay analytics (with a privacy policy) to see where players struggle.
+- 1.5: Android Back button pauses the run; screen locked to portrait (found in my own testing).
+- 1.6: gameplay analytics (covered by the privacy policy) to see where players struggle.
 - 1.7: fixed how run time is measured (pause and revive no longer counted).
 - 1.8: in-app "Send feedback" link on the start screen.
 - 1.9: fixes and diagnostics for gem purchases after testers' purchases failed.
-- 1.10: a guided first-run tutorial (skippable, and replayable from "How to play"),
-  Rate and Share buttons on the start screen, a "Leave Neon Dash?" confirmation on
-  Back, and a rewritten store description. These came straight from the testers'
-  feedback report.
+- 1.10: from the testers' report: a skippable, replayable first-run tutorial, Rate and Share
+  buttons, a "Leave Neon Dash?" confirmation on Back, and a rewritten store description.
+- [IF 1.11 LIVE] 1.11: gem purchases work again right after cancelling one.
 
 ## 9. How did you decide the app is ready for production?
-The app ran for the whole test with no crashes or app errors recorded across seven
-releases, all 15 testers stayed opted in, the issues the test surfaced (Back button,
-orientation, purchase flow, first-run difficulty) were fixed and shipped to testers, and
-the store listing, privacy policy and data safety form are complete.
+The app ran for the whole test with no crashes or app errors recorded, all 15 testers stayed
+opted in, the issues the test surfaced (Back button, orientation, purchase flow, first-run
+difficulty) were fixed and shipped to testers, and the store listing, privacy policy, terms and
+data safety form are complete.
 
 ## 10. What did you do differently this time?
-This is my first app on Google Play, so there's no previous attempt. What I did on
-purpose this time was ship small updates throughout the test (seven releases in two weeks)
-and measure real gameplay instead of guessing, so each fix came from what testers did.
+This is my first app on Google Play, so there's no previous attempt. What I did on purpose was
+ship small updates throughout the test (six releases, 1.5 to 1.10 [IF 1.11 LIVE: seven releases,
+1.5 to 1.11]) and measure real gameplay instead of guessing, so each fix came from what testers
+actually did.
