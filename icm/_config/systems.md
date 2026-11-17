@@ -5,8 +5,7 @@
 | Branch | Role |
 |---|---|
 | `master` | **What GitHub Pages publishes** (since 2026-10-06, ND-010). The live web game. Push here = deploy. |
-| `mobile-capacitor` | Android/Capacitor work + current dev branch on the Pi. **Never publish this to Pages.** Its `index.html` loads native-only scripts. |
-| `claude/mobile-app-game-tjpjlk` | Old Pages branch, fully merged into master. Pending deletion (ND-011). |
+| `mobile-capacitor` | Android/Capacitor work + current dev branch on the Pi. Feature branches (`nd-###-…`) branch off it and are fast-forwarded/merged back after each release, then deleted (ND-011, 2026-11-17). **Never publish this to Pages.** Its `index.html` loads native-only scripts. |
 
 Web change flow: build on `mobile-capacitor` → cherry-pick the web-safe commit(s) onto `master`
 (keep the CSP, no native script tags) → push → verify live. Merge `master` → `mobile-capacitor` after.
