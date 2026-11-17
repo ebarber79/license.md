@@ -27,13 +27,13 @@
  {
   "id": "nov21-14day",
   "at": "2026-11-21T09:00",
-  "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\n1) Play Console > Neon Dash > Dashboard: note the opted-in count.\n2) The production answers are ready on the Desktop: NeonDash-PRODUCTION-APPLICATION-DRAFT.txt (checklist at the top). Tell Claude Code \"refresh the production answers\" to update the numbers and v12 lines.",
+  "text": "14-day tester mark (Google needs 12+ opted in 14 days straight).\nPlay Console > Neon Dash > Dashboard: note the opted-in count and tell Claude Code.\nProduction answers are ready (1.11 wording done): Desktop/NeonDash-PRODUCTION-APPLICATION-DRAFT.txt.",
   "draft": false
  },
  {
   "id": "nov23-apply",
   "at": "2026-11-23T11:00",
-  "text": "APPLY FOR PRODUCTION today (once Testers Community's 2 reports are in).\nChecklist at the top of Desktop/NeonDash-PRODUCTION-APPLICATION-DRAFT.txt. Play Console > Dashboard > Apply for production. Press Next on every section, never Discard. Or ask Claude Code for a Claude Desktop handoff that stops before Apply."
+  "text": "APPLY FOR PRODUCTION today.\n1) Tell Claude Code \"refresh the production answers\" (updates the 14-day numbers + opt-in count).\n2) Ask for the Claude Desktop handoff that fills the form and stops before Apply. You click Apply.\nPress Next on every section, never Discard."
  },
  {
   "id": "nov30-review",
@@ -44,6 +44,11 @@
   "id": "dec02-trader-decide",
   "at": "2026-12-02T09:00",
   "text": "Play trader status: decide the public ADDRESS (on hold since Nov 11; deadline Feb 1).\nAlready done: public dev email = onboardingaudit.ai@gmail.com (verified); trader form NOT submitted.\nOptions: (1) change the Google Payments address to the DC mailbox (may trigger re-verification), (2) LLC organization account (D-U-N-S), (3) publish the current payments address.\nBest after production access is granted. Tell Claude Code: \"resume trader status\" (handoff: Desktop/CLAUDE-DESKTOP-PLAY-TRADER-STATUS.txt)."
+ },
+ {
+  "id": "dec07-purchases",
+  "at": "2026-12-07T09:00",
+  "text": "Neon Dash purchase health check (ND-038).\nTell Claude Code: \"check purchases for code 4\" (looks for gem_pack_failed code 4 and retried:true since 1.11 went live Nov 17)."
  },
  {
   "id": "jan08-trader-heads-up",
