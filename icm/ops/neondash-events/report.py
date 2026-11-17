@@ -19,6 +19,10 @@ DB = os.environ.get("ND_EVENTS_DB", "/root/neondash-events/events.db")
 ET = timezone(timedelta(hours=-5))  # report by Eastern (standard) day
 CORE = ("app_open", "game_start", "game_over", "error")
 BUILDS = os.environ.get("ND_BUILDS", os.path.join(os.path.dirname(DB), "builds.json"))
+# ND-039: a run that dies on the very first obstacle scores ~82-88. It spawns 0.8 s in
+# (game.js spawnTimer) at START_SPEED 420 px/s, score = distance / 8; the second obstacle
+# comes 1.4-1.85 s later (score ~160-185). Re-check if those tuning constants change.
+FIRST_OBSTACLE_MAX_SCORE = 130
 
 
 def builds():
@@ -100,8 +104,13 @@ def summarize(rs):
     overs = runs(rs)
     scores = [o["score"] for o in overs if isinstance(o.get("score"), (int, float))]
     durs = [o["active_ms"] / 1000 for o in overs if isinstance(o.get("active_ms"), (int, float))]
+    played = {r[2] for r in rs if r[1] in ("game_start", "game_over")}
+    first = [o for o in overs if isinstance(o.get("score"), (int, float))
+             and o["score"] < FIRST_OBSTACLE_MAX_SCORE]
     return {
         "sessions": len(sessions),
+        "played": len(played),
+        "first_obstacle": len(first),
         "opens": ev["app_open"],
         "runs": len(overs),
         "median": statistics.median(scores) if scores else 0,
@@ -112,6 +121,10 @@ def summarize(rs):
         "builds": Counter(r[3] for r in rs if r[1] == "app_open"),
         "events": ev,
     }
+
+
+def pct(n, d):
+    return f"{round(100 * n / d)}%" if d else "-"
 
 
 def text(days):
@@ -132,14 +145,18 @@ def text(days):
     by_day = defaultdict(list)
     for r in rs:
         by_day[datetime.fromtimestamp(r[0], ET).strftime("%a %b %d")].append(r)
-    out.append(f"{'Day':<11}{'Sessions':>9}{'Runs':>6}{'Median':>8}{'Best':>7}{'Avg run':>9}{'Errors':>7}")
+    out.append(f"{'Day':<11}{'Sessions':>9}{'Played':>7}{'Runs':>6}{'1st-obst':>9}{'Median':>8}{'Best':>7}"
+               f"{'Avg run':>9}{'Errors':>7}")
     for day, dr in by_day.items():
         s = summarize(dr)
-        out.append(f"{day:<11}{s['sessions']:>9}{s['runs']:>6}{s['median']:>8.0f}"
-                   f"{s['best']:>7}{s['avg_len']:>8.0f}s{len(s['errors']):>7}")
+        out.append(f"{day:<11}{s['sessions']:>9}{s['played']:>7}{s['runs']:>6}{s['first_obstacle']:>9}"
+                   f"{s['median']:>8.0f}{s['best']:>7}{s['avg_len']:>8.0f}s{len(s['errors']):>7}")
     s = summarize(rs)
     out += ["",
             f"Total: {s['sessions']} sessions, {s['runs']} runs, best score {s['best']}",
+            f"Sessions that started a run: {s['played']} of {s['sessions']} ({pct(s['played'], s['sessions'])})",
+            f"Runs that died at the first obstacle: {s['first_obstacle']} of {s['runs']} "
+            f"({pct(s['first_obstacle'], s['runs'])})",
             "Builds seen: " + ", ".join(f"{b} x{n}" for b, n in s["builds"].most_common()),
             "Runs ended by: " + ", ".join(f"{c} {n}" for c, n in s["causes"].most_common(6)),
             "Other events: " + ", ".join(f"{e} {n}" for e, n in s["events"].most_common() if e not in CORE)]
@@ -158,8 +175,10 @@ def daily_message():
         note += "\n❓ not live yet (counted as test devices): " + ", ".join(sorted(unknown))
     if s["opens"] == 0 and not s["errors"]:
         return "🎮 Neon Dash, last 24h: no player app opens recorded." + note
-    msg = (f"🎮 Neon Dash, last 24h: {s['sessions']} sessions, {s['runs']} runs, "
+    msg = (f"🎮 Neon Dash, last 24h: {s['sessions']} sessions ({s['played']} played), {s['runs']} runs, "
            f"median score {s['median']:.0f}, best {s['best']}, avg run {s['avg_len']:.0f}s")
+    if s["runs"]:
+        msg += f"\n🧱 died at the first obstacle: {s['first_obstacle']} of {s['runs']} runs"
     if s["errors"]:
         msg += f"\n⚠️ {len(s['errors'])} error(s), latest: {str(s['errors'][-1].get('message'))[:150]}"
     return msg + note
