@@ -11,8 +11,7 @@ and surveys. None of that was built or done; don't paste those claims.
 
 - [ ] Play Console > Neon Dash > Dashboard shows 12+ testers opted in for the last 14 days in a
       row (Google's rule for personal accounts). Note the number for Q3.
-- [ ] v12 (1.11) status: if it is live on Alpha, keep the `[IF 1.11 LIVE]` lines and delete the
-      marker. If it's still in review, delete those lines and use the "six releases" wording.
+- [x] v12 (1.11) live on Alpha 2026-11-17 18:27 UTC; 1.11 wording already filled in.
 - [ ] Re-run `python3 /root/neondash-events/report.py --days 14` on the VPS and update the Q3
       numbers (snapshot below is from Nov 17).
 - [ ] Answer every section and press **Next** on each one; leaving without Next loses answers,
@@ -47,7 +46,9 @@ feedback" link (added in 1.8), my own on-device test checklist, and gameplay ana
   the first spike and teaches each jump.
 - Analytics also showed gem purchases being started and then failing or being cancelled.
   Version 1.9 added purchase diagnostics, and a test purchase on 1.10 completed and credited
-  the gems. [IF 1.11 LIVE] Version 1.11 fixed buying again right after cancelling a purchase.
+  the gems. Version 1.11 made purchases more robust: one purchase at a time, and an automatic
+  retry if Google rejects a purchase made right after cancelling one. A test purchase on 1.11
+  also completed.
 - Testers Community report (Nov 15): no crashes or bugs on any device. Suggestions: a first-run
   tutorial, a Rate button, a Share button, an exit confirmation on Back, and a clearer store
   description. All five shipped in 1.10.
@@ -74,7 +75,7 @@ Every change below shipped to the closed track during the test:
 - 1.9: fixes and diagnostics for gem purchases after testers' purchases failed.
 - 1.10: from the testers' report: a skippable, replayable first-run tutorial, Rate and Share
   buttons, a "Leave Neon Dash?" confirmation on Back, and a rewritten store description.
-- [IF 1.11 LIVE] 1.11: gem purchases work again right after cancelling one.
+- 1.11: more robust gem purchases (one at a time, automatic retry right after a cancel).
 
 ## 9. How did you decide the app is ready for production?
 The app ran for the whole test with no crashes or app errors recorded, all 15 testers stayed
@@ -84,6 +85,5 @@ data safety form are complete.
 
 ## 10. What did you do differently this time?
 This is my first app on Google Play, so there's no previous attempt. What I did on purpose was
-ship small updates throughout the test (six releases, 1.5 to 1.10 [IF 1.11 LIVE: seven releases,
-1.5 to 1.11]) and measure real gameplay instead of guessing, so each fix came from what testers
+ship small updates throughout the test (seven releases, 1.5 to 1.11) and measure real gameplay instead of guessing, so each fix came from what testers
 actually did.
