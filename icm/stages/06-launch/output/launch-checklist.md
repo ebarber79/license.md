@@ -1,33 +1,39 @@
-# Neon Dash — launch checklist
+# Neon Dash: launch checklist
 
-Seeded 2026-10-06. Tick with a date when confirmed. Tracker IDs in brackets.
+Seeded 2026-10-06, rewritten 2026-11-20 for the **live-before-Christmas plan**.
+Tick with a date when confirmed. Tracker IDs in brackets.
 
-## Phase 0 — protect what exists
+## Phases 0-2: done
 
-- [ ] Keystore password backed up off the VPS (password manager) [ND-002]
-- [x] Keystore file copied off the VPS: `~/Desktop/neondash-release.jks` (2026-07-20)
-- [x] Gem-shop WIP committed + pushed [ND-001] (2026-10-06)
+- [x] Keystore file + password backed up off the VPS [ND-002]
+- [x] Play developer account (personal), app `io.github.ebarber79.neondash` created [ND-003]
+- [x] AdMob real ad units, UMP consent, payments/tax + Play payout bank verified [ND-006, ND-014]
+- [x] Developer site + `app-ads.txt` published (AdMob crawls only after the listing is public) [ND-007]
+- [x] Gem packs live on Play billing; phone purchase verified on 1.11 [ND-005]
+- [x] Store listing, icon, screenshots, privacy policy, ToS, data safety, content rating [ND-013, ND-015, ND-018]
+- [x] Closed testing - Alpha: v12 (1.11) live 2026-11-17; Testers Community 15 testers [ND-028]
 
-## Phase 1 — get on Play (internal test)
+## Phase 3a: apply (Nov 21-23)
 
-- [ ] Play Console developer account ($25 one-time) [ND-003]
-- [ ] Create app, package `io.github.ebarber79.neondash` [ND-003]
-- [x] Signed release AAB built (versionCode 1): `~/Desktop/NeonDash-release.aab` (2026-07-20)
-- [ ] Upload AAB to the internal-test track, add yourself as tester [ND-004]
-- [ ] Install from the Play test link, confirm it launches
+- [ ] Sat Nov 21: Play Dashboard opt-in count is 12+ for 14 days straight (human reads it) [ND-032]
+- [ ] Sat-Sun: own testers play a few real runs (`~/Desktop/NeonDash-TESTER-PLAY-MESSAGE.txt`, human sends)
+- [ ] Sun Nov 22: "refresh the production answers" (`report.py --days 14` + opt-in count) [ND-032]
+- [ ] Mon Nov 23: apply for production; human clicks Apply [ND-032]
+- [ ] Ask Testers Community what happens after day 16 / on a Google rejection (`~/Desktop/NeonDash-TC-EMAIL.txt`)
 
-## Phase 2 — money
+## Phase 3b: protect the fallback (Nov 23 until approved)
 
-- [x] AdMob account + real ad units wired, `IS_TESTING=false` (2026-07-20)
-- [x] AdMob payments: W-9/tax info + bank account [ND-006] (2026-11-03, human-reported; Play payout account 026 verified 2026-11-11; payments notice cleared)
-- [ ] Declare a developer website in the Play listing, then publish `app-ads.txt` there [ND-007]
-- [ ] Create 4 consumables in Play: `neondash.gems.500` / `.1200` / `.3000` / `.7000` [ND-005]
-- [ ] RevenueCat account, link Play app, import products, copy the `goog_` key [ND-005]
-- [ ] Hand the key to Claude, which wires it, rebuilds (versionCode 2), and you upload it [ND-005]
-- [ ] Test purchase with a license-tester account (no real charge)
+- [ ] NO new builds while production access is in review
+- [ ] Remove NO testers / do not end the closed test until production is approved, so a rejection can be answered with an immediate reapply instead of a fresh 14 days
 
-## Phase 3 — public release (later)
+## Phase 3c: release (target Dec 1-7)
 
-- [ ] Store listing: icon, screenshots, short/long description, content rating, data-safety form
-- [ ] Closed testing (Play requires 12+ testers opted in for 14 days on new personal accounts before production) [ND-028 kit ready]
-- [ ] Production rollout
+- [ ] Production access approved (watcher Telegram Nov 30 / Dec 1)
+- [ ] Production release: v12 AAB (promote from Alpha), all countries, release notes; Claude Desktop handoff, human sends for review
+- [ ] Production release review passed, app public on Play
+- [ ] Post-launch: real ad served, AdMob finds app-ads.txt, one real purchase works, gameplay report shows production build
+- [ ] Start ND-038 / ND-040 (difficulty + engagement) once ~200 real runs exist
+
+## Checkpoint
+
+- **Dec 10:** if production access is not approved, decide: reapply and push for Christmas, or aim for early January. (Watcher Telegram.)

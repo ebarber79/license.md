@@ -31,14 +31,24 @@
   "draft": false
  },
  {
+  "id": "nov22-finalize",
+  "at": "2026-11-22T10:00",
+  "text": "Sunday prep for tomorrow's production application.\nTell Claude Code: \"refresh the production answers\" (14-day report + your opt-in count from yesterday). Then Monday is paste + click Apply.\nAlso: did your friends play a few runs? (Desktop/NeonDash-TESTER-PLAY-MESSAGE.txt)"
+ },
+ {
   "id": "nov23-apply",
   "at": "2026-11-23T11:00",
-  "text": "APPLY FOR PRODUCTION today.\n1) Tell Claude Code \"refresh the production answers\" (updates the 14-day numbers + opt-in count).\n2) Ask for the Claude Desktop handoff that fills the form and stops before Apply. You click Apply.\nPress Next on every section, never Discard."
+  "text": "APPLY FOR PRODUCTION today (Xmas plan: approval by Dec 10).\n1) If you didn't do it Sunday, tell Claude Code \"refresh the production answers\" (14-day numbers + opt-in count).\n2) Ask for the Claude Desktop handoff that fills the form and stops before Apply. You click Apply.\nPress Next on every section, never Discard. After applying: NO new builds and remove NO testers until production is approved."
  },
  {
   "id": "nov30-review",
   "at": "2026-11-30T09:30",
-  "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\".\nMore testing needed -> keep the closed test running, tell Claude Code, contact Testers Community about the refund guarantee."
+  "text": "Production review should be back (usually 7 days or less). Check the Play account email / Play Console Dashboard.\nApproved -> tell Claude Code \"production approved\" (release handoff is pre-written).\nMore testing needed -> testers stay opted in (do not remove anyone), tell Claude Code, contact Testers Community (money-back guarantee). Reapply as soon as Google allows."
+ },
+ {
+  "id": "dec01-release",
+  "at": "2026-12-01T09:00",
+  "text": "Neon Dash production access approved yet?\nYES -> tell Claude Code \"production approved\": start the production release (v12, all countries; handoff is ready). Target: live Dec 3-7.\nNO answer yet -> wait; Xmas checkpoint is Dec 10.\nRejected -> tell Claude Code; testers stay opted in."
  },
  {
   "id": "dec02-trader-decide",
@@ -49,6 +59,11 @@
   "id": "dec07-purchases",
   "at": "2026-12-07T09:00",
   "text": "Neon Dash purchase health check (ND-038).\nTell Claude Code: \"check purchases for code 4\" (looks for gem_pack_failed code 4 and retried:true since 1.11 went live Nov 17)."
+ },
+ {
+  "id": "dec10-xmas-checkpoint",
+  "at": "2026-12-10T09:00",
+  "text": "XMAS CHECKPOINT for Neon Dash.\nIf production access is NOT approved yet, decide today with Claude Code: push for Xmas (reapply now) or aim calmly for early January.\nIf already live: ignore."
  },
  {
   "id": "jan08-trader-heads-up",
