@@ -2321,6 +2321,13 @@
     // QR is non-essential chrome: build it when the main thread is idle so it
     // never competes with first paint / interactivity.
     (window.requestIdleCallback || ((fn) => setTimeout(fn, 200)))(renderQR);
+    // Portal builds that ask for it (CrazyGames Full Launch: "land new users in
+    // gameplay immediately") skip the menu for brand-new players and open the
+    // guided first run. Returning players still get the menu (shop, missions).
+    if (shouldAutostart()) startGame();
+  }
+  function shouldAutostart() {
+    return !!window.NEONDASH_AUTOSTART && best === 0 && safeGet(TUTORIAL_KEY) !== "1";
   }
 
   // ---- Test hooks (H4): only exposed with ?test=1, for E2E automation ----

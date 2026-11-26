@@ -665,3 +665,7 @@ html, body {
   color: #9aa0c8; font: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer; }
 .menu-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px; max-width: 420px; }
 #exit-confirm { z-index: 25; background: rgba(10, 10, 30, .92); }
+
+/* Toasts during the guided run (e.g. the first-day bonus when a portal lands
+   new players straight in gameplay) sit below the tutorial prompt. */
+.tutorial-banner:not(.hidden) ~ .toast { top: calc(22% + 78px); }

@@ -1,5 +1,5 @@
 /* =========================================================================
- * Neon Dash — CrazyGames boot (Full Launch progress save).
+ * Neon Dash — CrazyGames boot (Full Launch progress save + autostart).
  *
  * Loaded instead of the game scripts in the CrazyGames build. It waits for
  * CrazyGames.SDK.init() (which preloads the player's saved data), points
@@ -75,6 +75,10 @@
       global.document.body.appendChild(el);
     })();
   }
+
+  // Full Launch: game.js opens the guided first run for brand-new players
+  // instead of the menu.
+  global.NEONDASH_AUTOSTART = true;
 
   var started = false;
   function start() {

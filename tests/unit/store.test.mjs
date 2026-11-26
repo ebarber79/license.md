@@ -87,6 +87,7 @@ test("boot switches NeonStore to the provider's data module and loads the game s
   assert.equal(globalThis.NeonStore.getItem("neondash.best"), "300", "local save migrated");
   assert.deepEqual(loaded, ["progress.js", "music.js", "engine.js", "game.js"]);
   assert.equal(globalThis.NEONDASH_SAVE_INFO.backend, "crazygames-data");
+  assert.equal(globalThis.NEONDASH_AUTOSTART, true, "CrazyGames build lands new players in gameplay");
   globalThis.NeonStore.use(null);
   delete globalThis.NEONDASH_AD_PROVIDER;
 });
@@ -100,4 +101,14 @@ test("boot falls back to localStorage when the data module is unavailable", () =
   assert.equal(globalThis.NeonStore.backendName, "localStorage");
   assert.equal(globalThis.NEONDASH_SAVE_INFO.backend, "localStorage");
   delete globalThis.NEONDASH_AD_PROVIDER;
+});
+
+test("autostart only in the CrazyGames boot, and game.js gates it to brand-new players", async () => {
+  const fs = await import("node:fs");
+  const game = fs.readFileSync(new URL("../../game.js", import.meta.url), "utf8");
+  assert.match(game, /window\.NEONDASH_AUTOSTART && best === 0 && safeGet\(TUTORIAL_KEY\) !== "1"/);
+  const html = fs.readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+  assert.doesNotMatch(html, /NEONDASH_AUTOSTART/, "main site keeps its menu");
+  const gd = fs.readFileSync(new URL("../../integrations/gamedistribution/ad-provider.gamedistribution.js", import.meta.url), "utf8");
+  assert.doesNotMatch(gd, /NEONDASH_AUTOSTART/);
 });
