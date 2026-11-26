@@ -8,6 +8,8 @@
  *    also means qrcode.js is never fetched, so it's dropped from the bundle)
  *  - swap the CSP for the portal's origins (or remove it for GameDistribution)
  *  - inject the portal SDK + ad-provider <script> tags
+ *  - remove the "Rate Neon Dash" Play link and the Share button, and blank the
+ *    store/web URLs in game.js (portals disallow outgoing links)
  * Output: dist/<portal>/ (+ dist/<portal>.zip)
  */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync } from "node:fs";
@@ -59,6 +61,10 @@ html = replaceOnce(
 // 4. inject portal scripts before analytics.js
 html = replaceOnce(html, /([ \t]*<script src="analytics\.js"><\/script>)/, cfg.scripts.join("\n") + "\n$1", "scripts");
 
+// 5. drop outgoing links: Play rate link + Share button (game.js null-checks both)
+html = replaceOnce(html, /[ \t]*<a id="rate-link"[^\n]*<\/a>\n/, "", "rate-link");
+html = replaceOnce(html, /[ \t]*<button id="share-btn"[^\n]*<\/button>\n/, "", "share-btn");
+
 // Assemble the bundle (core minus register-sw.js + qrcode.js, plus the adapter).
 const CORE = ["style.css", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "manifest.json", "sw.js", "icon.svg"];
 const outDir = join(ROOT, "dist", portal);
@@ -66,6 +72,14 @@ rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "index.html"), html);
 for (const f of CORE) copyFileSync(join(ROOT, f), join(outDir, f));
+// blank the store/web URLs in the portal copy of game.js
+{
+  const gp = join(outDir, "game.js");
+  let g = readFileSync(gp, "utf8");
+  g = replaceOnce(g, /const PLAY_URL = "https:\/\/[^"]*";/, 'const PLAY_URL = "";', "PLAY_URL");
+  g = replaceOnce(g, /const WEB_URL = "https:\/\/[^"]*";/, 'const WEB_URL = "";', "WEB_URL");
+  writeFileSync(gp, g);
+}
 copyFileSync(join(ROOT, cfg.adapter), join(outDir, cfg.adapter.split("/").pop()));
 // sw.js is shipped but harmless/unused without register-sw.js; drop it to be tidy.
 rmSync(join(outDir, "sw.js"), { force: true });
