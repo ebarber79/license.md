@@ -1,6 +1,6 @@
 /* =========================================================================
  * Neon Dash — retention progress (daily streak, daily challenge, missions).
- * Pure logic + localStorage; no DOM. Rewards are returned as gem amounts for
+ * Pure logic + NeonStore (store.js; localStorage by default); no DOM. Rewards are returned as gem amounts for
  * the game to bank (this module never touches the wallet directly).
  *
  *   NeonProgress.startDay()   -> { isNewDay, streak, reward }   // login bonus
@@ -57,7 +57,7 @@
 
   function makeProgress(storage, nowFn) {
     var now = nowFn || function () { return new Date(); };
-    function store() { return storage || global.localStorage; }
+    function store() { return storage || global.NeonStore || global.localStorage; }
     function load() {
       try {
         var s = JSON.parse(store().getItem(KEY));

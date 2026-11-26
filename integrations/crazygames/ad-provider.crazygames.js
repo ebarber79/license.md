@@ -15,6 +15,7 @@
  *   window.CrazyGames.SDK.game.gameplayStart() / gameplayStop()
  *   window.CrazyGames.SDK.ad.requestAd("midgame"|"rewarded",
  *     { adStarted, adFinished, adError })   // adFinished == reward earned
+ *   window.CrazyGames.SDK.data.getItem/setItem/removeItem (localStorage API)
  *   window.CrazyGames.SDK.game.settings.muteAudio  (Full Launch: must win
  *     over in-game audio toggles) + game.addSettingsChangeListener(fn)
  * ========================================================================= */
@@ -27,6 +28,8 @@
   // error, report ads as unavailable so the game hides its "watch ad" buttons
   // instead of offering rewards that can't load.
   var adsFailed = false;
+  // SDK.init() runs once; the boot script and NeonAds both wait on it.
+  var initPromise = null;
 
   function requestAd(type) {
     return new Promise(function (resolve) {
@@ -51,9 +54,28 @@
       return s.environment !== "disabled";
     },
     init: function () {
+      if (!initPromise) {
+        var s = sdk();
+        try { initPromise = Promise.resolve(s && s.init ? s.init() : undefined); }
+        catch (e) { initPromise = Promise.resolve(); }
+      }
+      return initPromise;
+    },
+    // Full Launch progress save: the SDK data module (localStorage API; synced
+    // across devices for signed-in players, local for guests). Null when the
+    // module is missing or disabled (Progress Save not set to Data Module on
+    // the submission form), so the game keeps using localStorage.
+    storage: function () {
       var s = sdk();
-      try { return Promise.resolve(s && s.init ? s.init() : undefined); }
-      catch (e) { return Promise.resolve(); }
+      var d = s && s.data;
+      if (!d || typeof d.getItem !== "function" || typeof d.setItem !== "function") return null;
+      try { d.getItem("neondash.__probe"); } catch (e) { return null; }
+      return {
+        __name: "crazygames-data",
+        getItem: function (k) { return d.getItem(k); },
+        setItem: function (k, v) { d.setItem(k, String(v)); },
+        removeItem: function (k) { d.removeItem(k); },
+      };
     },
     gameplayStart: function () { var s = sdk(); if (s && s.game) s.game.gameplayStart(); },
     gameplayStop: function () { var s = sdk(); if (s && s.game) s.game.gameplayStop(); },

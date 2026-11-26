@@ -7,6 +7,14 @@
 (() => {
   "use strict";
 
+  // All saves go through NeonStore (store.js): localStorage by default, the
+  // CrazyGames SDK data module in that portal build.
+  const NeonStore = window.NeonStore || {
+    getItem: (k) => localStorage.getItem(k),
+    setItem: (k, v) => localStorage.setItem(k, v),
+    removeItem: (k) => localStorage.removeItem(k),
+  };
+
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
 
@@ -191,11 +199,11 @@
     try { if (window.NeonAnalytics) window.NeonAnalytics.track(event, props); } catch (e) { /* ignore */ }
   }
   function safeSet(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) { /* storage may be unavailable (ND-DATA-05) */ }
+    try { NeonStore.setItem(key, value); } catch (e) { /* storage may be unavailable (ND-DATA-05) */ }
   }
   function safeGet(key) {
     // localStorage access can throw in private mode / when storage is blocked.
-    try { return localStorage.getItem(key); } catch (e) { return null; }
+    try { return NeonStore.getItem(key); } catch (e) { return null; }
   }
   // Respect prefers-reduced-motion (BUG-01 / ND-A11Y-01).
   const motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -439,12 +447,12 @@
   }
   function persistProgress() {
     try {
-      localStorage.setItem(BANK_KEY, String(bank));
-      localStorage.setItem(OWNED_KEY, JSON.stringify([...owned]));
-      localStorage.setItem(SKIN_KEY, selectedSkin);
-      localStorage.setItem(SHOES_OWNED_KEY, JSON.stringify([...ownedShoes]));
-      localStorage.setItem(SHOE_KEY, selectedShoe);
-      localStorage.setItem(LIFETIME_KEY, String(lifetimeGems));
+      NeonStore.setItem(BANK_KEY, String(bank));
+      NeonStore.setItem(OWNED_KEY, JSON.stringify([...owned]));
+      NeonStore.setItem(SKIN_KEY, selectedSkin);
+      NeonStore.setItem(SHOES_OWNED_KEY, JSON.stringify([...ownedShoes]));
+      NeonStore.setItem(SHOE_KEY, selectedShoe);
+      NeonStore.setItem(LIFETIME_KEY, String(lifetimeGems));
     } catch (e) { /* ignore */ }
   }
   function activeSkin() {
@@ -1164,8 +1172,8 @@
   })();
   function saveBoost() {
     try {
-      if (boostArmed) localStorage.setItem(BOOST_KEY, boostArmed);
-      else localStorage.removeItem(BOOST_KEY);
+      if (boostArmed) NeonStore.setItem(BOOST_KEY, boostArmed);
+      else NeonStore.removeItem(BOOST_KEY);
     } catch (e) { /* storage may be unavailable */ }
   }
   function armBoost(type, via) {

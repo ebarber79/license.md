@@ -28,6 +28,9 @@ const PORTALS = {
       '  <script src="ad-provider.crazygames.js"></script>',
     ],
     adapter: "integrations/crazygames/ad-provider.crazygames.js",
+    // Full Launch progress save: the game scripts load after SDK.init() so
+    // saves come from the SDK data module (see boot.crazygames.js).
+    boot: "integrations/crazygames/boot.crazygames.js",
   },
   gamedistribution: {
     csp: null, // removed — GD serves programmatic ads from many partner origins
@@ -68,8 +71,16 @@ html = replaceOnce(html, /[ \t]*<button id="share-btn"[^\n]*<\/button>\n/, "", "
 // 6. drop the "Send feedback" mailto link (portals disallow contact details / outgoing links)
 html = replaceOnce(html, /[ \t]*<a id="feedback-link"[^\n]*<\/a>\n/, "", "feedback-link");
 
+// 6. portals with a boot script: it loads the game scripts itself after SDK init
+if (cfg.boot) {
+  const bootName = cfg.boot.split("/").pop();
+  html = replaceOnce(html,
+    /[ \t]*<script src="progress\.js"><\/script>\n[ \t]*<script src="music\.js"><\/script>\n[ \t]*<script src="engine\.js"><\/script>\n[ \t]*<script src="game\.js"><\/script>\n/,
+    `  <script src="${bootName}"></script>\n`, "boot");
+}
+
 // Assemble the bundle (core minus register-sw.js + qrcode.js, plus the adapter).
-const CORE = ["style.css", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "music.js", "manifest.json", "sw.js", "icon.svg"];
+const CORE = ["style.css", "store.js", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "music.js", "manifest.json", "sw.js", "icon.svg"];
 const outDir = join(ROOT, "dist", portal);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
@@ -85,6 +96,7 @@ for (const f of CORE) copyFileSync(join(ROOT, f), join(outDir, f));
   writeFileSync(gp, g);
 }
 copyFileSync(join(ROOT, cfg.adapter), join(outDir, cfg.adapter.split("/").pop()));
+if (cfg.boot) copyFileSync(join(ROOT, cfg.boot), join(outDir, cfg.boot.split("/").pop()));
 // sw.js is shipped but harmless/unused without register-sw.js; drop it to be tidy.
 rmSync(join(outDir, "sw.js"), { force: true });
 
