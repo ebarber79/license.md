@@ -218,12 +218,13 @@
   const musicBtn = document.getElementById("music-btn");
   const music = window.NeonMusic
     ? window.NeonMusic.create({ on: safeGet("neondash.music") !== "0" })
-    : { attach() {}, setOn() {}, setMode() {}, setIntensity() {}, hold() {},
+    : { attach() {}, setOn() {}, setMode() {}, setIntensity() {}, hold() {}, forceMute() {},
         getState() { return { on: false, mode: "off", bpm: 0, layers: [] }; } };
 
   const audio = {
     ctx: null,
     muted: safeGet("neondash.muted") === "1",
+    portalMuted: false, // CrazyGames muteAudio: overrides the in-game toggles
     ensure() {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -233,7 +234,7 @@
       if (this.ctx) music.attach(this.ctx); // ND-025: music starts after the first tap
     },
     tone(freq, dur, type = "square", vol = 0.15, slideTo = null) {
-      if (this.muted || !this.ctx) return;
+      if (this.muted || this.portalMuted || !this.ctx) return;
       const t = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -255,10 +256,14 @@
   };
 
   function updateMuteUI() {
-    muteBtn.textContent = audio.muted ? "🔇" : "🔊";
+    const pm = audio.portalMuted;
+    muteBtn.textContent = (audio.muted || pm) ? "🔇" : "🔊";
+    muteBtn.classList.toggle("off", pm);
+    muteBtn.title = pm ? "Sound is muted by the site" : "";
     if (musicBtn) {
       const st = music.getState();
-      musicBtn.classList.toggle("off", !st.on);
+      musicBtn.classList.toggle("off", !st.on || pm);
+      musicBtn.title = pm ? "Sound is muted by the site" : "";
       musicBtn.setAttribute("aria-pressed", st.on ? "true" : "false");
       musicBtn.setAttribute("aria-label", st.on ? "Music on (tap to turn off)" : "Music off (tap to turn on)");
     }
@@ -278,6 +283,16 @@
     safeSet("neondash.muted", audio.muted ? "1" : "0");
     updateMuteUI();
   });
+  // Full Launch: the portal's mute (CrazyGames muteAudio) silences music and
+  // effects and wins over the buttons; the player's own choices are kept and
+  // apply again once the portal unmutes.
+  if (ads && typeof ads.onMuteChange === "function") {
+    ads.onMuteChange((m) => {
+      audio.portalMuted = m;
+      music.forceMute(m);
+      updateMuteUI();
+    });
+  }
 
   // ---- World constants (in CSS pixels) ----
   const GROUND_RATIO = 0.82;   // ground line as fraction of height

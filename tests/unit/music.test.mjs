@@ -46,3 +46,14 @@ test("midiToFreq: A4 = 440 Hz", () => {
   assert.equal(M.midiToFreq(69), 440);
   assert.ok(Math.abs(M.midiToFreq(57) - 220) < 1e-9);
 });
+
+test("forceMute (portal mute) silences music without changing the player's on/off choice", () => {
+  const m = M.create({ on: true });
+  m.forceMute(true);
+  assert.equal(m.getState().on, true, "player's choice kept");
+  assert.equal(m.getState().forcedMute, true);
+  m.hold(true); m.hold(false); // an ad ending must not unmute
+  assert.equal(m.getState().forcedMute, true);
+  m.forceMute(false);
+  assert.equal(m.getState().forcedMute, false);
+});

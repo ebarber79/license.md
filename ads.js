@@ -13,6 +13,9 @@
  *     gameplayStop()    { portalSdk.gameplayStop(); },
  *     commercialBreak() { return portalSdk.commercialBreak(); }, // Promise
  *     rewarded(name)    { return portalSdk.rewarded(name); },    // Promise<bool>
+ *     // optional: portal-wide mute that overrides in-game audio toggles
+ *     muteAudio()       { return portalSdk.settings.muteAudio; },  // bool
+ *     onSettingsChange(cb) { portalSdk.onSettings(s => cb(s.muteAudio)); },
  *   };
  *
  * See docs/MONETIZATION.md for per-portal adapters (CrazyGames / Poki /
@@ -84,5 +87,24 @@
     commercialBreak: function () { return call("commercialBreak"); },
     rewarded: function (name) { return call("rewarded", name); },
     get available() { return !!(provider && provider.available); },
+    // Calls cb(muted) once after init with the portal's current mute setting,
+    // then again on every change. No-op (never calls back) without a provider
+    // that supports it, so local/PWA audio settings are untouched.
+    onMuteChange: function (cb) {
+      return ensureInit().then(function () {
+        if (!provider || typeof provider.muteAudio !== "function") return;
+        var last;
+        var emit = function (m) {
+          m = !!m;
+          if (m === last) return;
+          last = m;
+          try { cb(m); } catch (e) { log("mute cb error", e); }
+        };
+        try { emit(provider.muteAudio()); } catch (e) { log("muteAudio threw", e); }
+        try {
+          if (typeof provider.onSettingsChange === "function") provider.onSettingsChange(emit);
+        } catch (e) { log("onSettingsChange threw", e); }
+      });
+    },
   };
 })(window);

@@ -74,12 +74,13 @@
     var mode = "menu";          // menu | run | paused
     var speed = SPEED_MIN, powered = false;
     var held = false;           // true while an ad is on screen
+    var forced = false;         // true while the portal mutes all audio
     var bpm = MENU_BPM, step = 0, bar = 0, nextTime = 0, timer = null;
     var LEVEL = opts.level || 0.22; // under the SFX (jump/gem peaks ≈ -14 to -18 dB)
     var LOOKAHEAD = 0.12, TICK_MS = 25;
 
     function current() { return { mode: mode, speed: speed, powered: powered }; }
-    function active() { return on && !held && ctx && mode !== "paused" && !(global.document && global.document.hidden); }
+    function active() { return on && !held && !forced && ctx && mode !== "paused" && !(global.document && global.document.hidden); }
 
     function build() {
       out = ctx.createGain();
@@ -222,9 +223,12 @@
       },
       setIntensity: function (s, p) { speed = s; powered = !!p; },
       hold: function (v) { held = !!v; refresh(); }, // silence during ads
+      // Portal mute (CrazyGames muteAudio): separate from hold() so an ad
+      // ending can't unmute, and from setOn() so the player's choice is kept.
+      forceMute: function (v) { forced = !!v; refresh(); },
       getState: function () {
         var st = current();
-        return { on: on, mode: mode, bpm: tempoFor(st), layers: on ? layersFor(st) : [] };
+        return { on: on, forcedMute: forced, mode: mode, bpm: tempoFor(st), layers: on ? layersFor(st) : [] };
       },
     };
   }

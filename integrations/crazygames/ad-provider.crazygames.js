@@ -15,6 +15,8 @@
  *   window.CrazyGames.SDK.game.gameplayStart() / gameplayStop()
  *   window.CrazyGames.SDK.ad.requestAd("midgame"|"rewarded",
  *     { adStarted, adFinished, adError })   // adFinished == reward earned
+ *   window.CrazyGames.SDK.game.settings.muteAudio  (Full Launch: must win
+ *     over in-game audio toggles) + game.addSettingsChangeListener(fn)
  * ========================================================================= */
 
 (function () {
@@ -55,6 +57,16 @@
     },
     gameplayStart: function () { var s = sdk(); if (s && s.game) s.game.gameplayStart(); },
     gameplayStop: function () { var s = sdk(); if (s && s.game) s.game.gameplayStop(); },
+    // Full Launch requirement: respect the SDK's muteAudio setting.
+    muteAudio: function () {
+      var s = sdk();
+      return !!(s && s.game && s.game.settings && s.game.settings.muteAudio);
+    },
+    onSettingsChange: function (cb) {
+      var s = sdk();
+      if (!s || !s.game || !s.game.addSettingsChangeListener) return;
+      s.game.addSettingsChangeListener(function (ns) { cb(!!(ns && ns.muteAudio)); });
+    },
     commercialBreak: function () { return requestAd("midgame"); },
     rewarded: function () { return requestAd("rewarded"); },
   };
