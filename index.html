@@ -45,6 +45,7 @@
 
     <!-- Reward / event toast -->
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    <div id="ad-wait" class="ad-wait hidden" role="status" aria-live="polite"><span class="ad-spinner" aria-hidden="true"></span><span>Loading video…</span></div>
 
     <!-- Mute toggle -->
     <button id="music-btn" class="icon-btn icon-btn-music" aria-label="Toggle music" aria-pressed="true">🎵</button>
@@ -119,8 +120,9 @@
         <div class="result-row best-row"><span>Best</span><span id="final-best">0</span></div>
       </div>
       <p id="new-record" class="new-record hidden">★ NEW RECORD! ★</p>
-      <button id="revive-btn" class="btn btn-reward hidden">▶ CONTINUE · watch ad</button>
-      <button id="double-gems-btn" class="btn btn-reward hidden">🎬 DOUBLE GEMS</button>
+      <button id="revive-btn" class="btn btn-reward hidden">🎬 CONTINUE · watch ad</button>
+      <button id="double-gems-btn" class="btn btn-reward hidden">🎬 DOUBLE GEMS · watch ad</button>
+      <p id="ad-note" class="ad-note hidden">Ad blocker on: video rewards are off. Gems and play unlocks still work.</p>
       <div class="boost-panel" id="boost-over" aria-label="Boost next run"></div>
       <button id="restart-btn" class="btn">PLAY AGAIN</button>
       <button id="menu-btn" class="btn btn-ghost">MENU &amp; SKINS</button>

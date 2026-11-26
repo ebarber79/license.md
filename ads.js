@@ -62,11 +62,11 @@
     return initPromise;
   }
 
-  function invoke(fn, arg) {
+  function invoke(fn, arg, hooks) {
     var safe = (fn === "rewarded" ? false : undefined);
     try {
       var impl = (provider && provider[fn]) ? provider[fn].bind(provider) : stub[fn];
-      var r = impl(arg);
+      var r = fn === "commercialBreak" ? impl(hooks) : impl(arg, hooks);
       if (r && typeof r.then === "function") {
         // Degrade safely if the provider's promise rejects (ad/init failure).
         return r.then(function (v) { return v; }, function (e) { log("rejected in", fn, e); return safe; });
@@ -78,15 +78,20 @@
     }
   }
   // Non-init calls wait for init to settle first.
-  function call(fn, arg) { return ensureInit().then(function () { return invoke(fn, arg); }); }
+  function call(fn, arg, hooks) { return ensureInit().then(function () { return invoke(fn, arg, hooks); }); }
 
   global.NeonAds = {
     init: function () { return ensureInit(); },
     gameplayStart: function () { return call("gameplayStart"); },
     gameplayStop: function () { return call("gameplayStop"); },
-    commercialBreak: function () { return call("commercialBreak"); },
-    rewarded: function (name) { return call("rewarded", name); },
+    // hooks.onStart (optional) runs when the ad actually starts playing, for
+    // providers that report it (signalsAdStart).
+    commercialBreak: function (hooks) { return call("commercialBreak", undefined, hooks); },
+    rewarded: function (name, hooks) { return call("rewarded", name, hooks); },
     get available() { return !!(provider && provider.available); },
+    get adsBlocked() { return !!(provider && provider.adsBlocked); },
+    get lastAdError() { return provider ? provider.lastAdError || null : null; },
+    get signalsAdStart() { return !!(provider && provider.signalsAdStart); },
     // Calls cb(muted) once after init with the portal's current mute setting,
     // then again on every change. No-op (never calls back) without a provider
     // that supports it, so local/PWA audio settings are untouched.

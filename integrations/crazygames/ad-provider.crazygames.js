@@ -24,40 +24,68 @@
   "use strict";
 
   function sdk() { return window.CrazyGames && window.CrazyGames.SDK; }
-  // Basic Launch has CrazyGames ads switched off. After the first rewarded-ad
-  // error, report ads as unavailable so the game hides its "watch ad" buttons
-  // instead of offering rewards that can't load.
-  var adsFailed = false;
+  // Ad state from adError codes (docs.crazygames.com/sdk/video-ads):
+  //   adsDisabled -> ads are off for this session (Basic Launch, Kids mode):
+  //                  hide every "watch ad" button for the rest of the session.
+  //   adblock     -> an ad blocker is on: hide them and show a notice.
+  //   unfilled / adCooldown / other -> temporary; the game says "try later".
+  var adsDisabled = false;
+  var adsBlocked = false;
+  var lastAdError = null;
   // SDK.init() runs once; the boot script and NeonAds both wait on it.
   var initPromise = null;
 
-  function requestAd(type) {
+  function requestAd(type, hooks) {
+    hooks = hooks || {};
     return new Promise(function (resolve) {
       var s = sdk();
-      if (!s || !s.ad || !s.ad.requestAd) { resolve(type === "rewarded" ? false : undefined); return; }
+      var fail = type === "rewarded" ? false : undefined;
+      if (!s || !s.ad || !s.ad.requestAd) { lastAdError = "nosdk"; resolve(fail); return; }
       var settled = false;
       var done = function (v) { if (!settled) { settled = true; resolve(v); } };
-      s.ad.requestAd(type, {
-        // Mute while the ad plays (CrazyGames requirement); NeonAds callers
-        // don't need it, but it's polite — the game pauses on gameplayStop.
-        adStarted: function () {},
-        adFinished: function () { done(type === "rewarded" ? true : undefined); },
-        adError: function () { if (type === "rewarded") adsFailed = true; done(type === "rewarded" ? false : undefined); },
-      });
+      lastAdError = null;
+      try {
+        s.ad.requestAd(type, {
+          // The game mutes and pauses only once the ad actually starts.
+          adStarted: function () { try { hooks.onStart && hooks.onStart(); } catch (e) { /* ignore */ } },
+          adFinished: function () { done(type === "rewarded" ? true : undefined); },
+          adError: function (err) {
+            var code = (err && err.code) || "other";
+            lastAdError = code;
+            if (code === "adsDisabled" || code === "adsDisabledBasicLaunch") adsDisabled = true;
+            if (code === "adblock") adsBlocked = true;
+            done(fail); // never reward after adError
+          },
+        });
+      } catch (e) { lastAdError = "other"; done(fail); }
     });
+  }
+
+  function detectAdblock() {
+    var s = sdk();
+    if (!s || !s.ad || typeof s.ad.hasAdblock !== "function") return Promise.resolve();
+    try {
+      return Promise.resolve(s.ad.hasAdblock()).then(function (b) { if (b) adsBlocked = true; }, function () {});
+    } catch (e) { return Promise.resolve(); }
   }
 
   window.NEONDASH_AD_PROVIDER = {
     get available() {
       var s = sdk();
-      if (adsFailed || !s) return false;
+      if (adsDisabled || adsBlocked || !s) return false;
       return s.environment !== "disabled";
     },
+    get adsBlocked() { return adsBlocked; },
+    get lastAdError() { return lastAdError; },
+    // adStarted is reported, so the game mutes when the ad starts playing,
+    // not when it's requested (CrazyGames ad requirement).
+    signalsAdStart: true,
     init: function () {
       if (!initPromise) {
         var s = sdk();
         try { initPromise = Promise.resolve(s && s.init ? s.init() : undefined); }
         catch (e) { initPromise = Promise.resolve(); }
+        initPromise = initPromise.then(detectAdblock, detectAdblock);
       }
       return initPromise;
     },
@@ -89,7 +117,7 @@
       if (!s || !s.game || !s.game.addSettingsChangeListener) return;
       s.game.addSettingsChangeListener(function (ns) { cb(!!(ns && ns.muteAudio)); });
     },
-    commercialBreak: function () { return requestAd("midgame"); },
-    rewarded: function () { return requestAd("rewarded"); },
+    commercialBreak: function (hooks) { return requestAd("midgame", hooks); },
+    rewarded: function (name, hooks) { return requestAd("rewarded", hooks); },
   };
 })();

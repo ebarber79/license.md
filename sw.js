@@ -3,7 +3,7 @@
  * offline fallback and is refreshed on every successful fetch. (Cache-first with
  * a fixed cache name used to pin returning players to an old version.)
  * Bump CACHE when the ASSETS list changes. */
-const CACHE = "neondash-v10";
+const CACHE = "neondash-v11";
 const ASSETS = [
   "./",
   "./index.html",

@@ -79,6 +79,8 @@
   // Full Launch: game.js opens the guided first run for brand-new players
   // instead of the menu.
   global.NEONDASH_AUTOSTART = true;
+  // Portal-scoped styles (e.g. ad buttons styled like the no-ad options).
+  try { global.document.documentElement.setAttribute("data-portal", "crazygames"); } catch (e) { /* tests */ }
 
   var started = false;
   function start() {

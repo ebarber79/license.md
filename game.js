@@ -92,15 +92,52 @@
     if (TEST_MODE) return true;
     return !!ads.available && !ads.adsBlocked;
   }
-  // ND-025: silence the music while any ad is on screen.
+  // Ad flow (CrazyGames ad requirements, also fine for the app):
+  //  - the screen is blocked (#ad-wait) from the request until the ad finishes
+  //    or fails, so the player can't progress meanwhile;
+  //  - audio is held when the ad actually starts (providers that report
+  //    adStarted), otherwise from the request (ND-025);
+  //  - no midgame break right after any rewarded ad (no chained ads);
+  //  - an unavailable ad says "try again later"; an ad blocker shows a notice.
+  const adWaitEl = document.getElementById("ad-wait");
+  let skipNextBreak = false;
+  function adBegin() {
+    if (adWaitEl) adWaitEl.classList.remove("hidden");
+    const early = !ads.signalsAdStart;
+    if (early) music.hold(true);
+    return { onStart() { if (!early) music.hold(true); } };
+  }
+  function adEnd() {
+    music.hold(false);
+    if (adWaitEl) adWaitEl.classList.add("hidden");
+  }
+  function adUnavailableNote() {
+    const code = ads.lastAdError;
+    if (ads.adsBlocked || code === "adblock") return "Ad blocker on: video rewards are off";
+    if (code === "adsDisabled" || code === "adsDisabledBasicLaunch") return "";
+    return "No video available right now. Try again later";
+  }
   function adRewarded(name) {
-    music.hold(true);
-    return ads.rewarded(name).then((ok) => { music.hold(false); return ok; },
-      (e) => { music.hold(false); throw e; });
+    const hooks = adBegin();
+    skipNextBreak = true;
+    return ads.rewarded(name, hooks).then((ok) => {
+      adEnd();
+      if (!ok && !TEST_MODE) {
+        const note = adUnavailableNote();
+        if (note) showToast(note);
+        renderAdSurfaces();
+      }
+      return ok;
+    }, (e) => { adEnd(); throw e; });
   }
   function adBreak() {
-    music.hold(true);
-    return Promise.resolve(ads.commercialBreak()).then(() => music.hold(false), () => music.hold(false));
+    const hooks = adBegin();
+    return Promise.resolve(ads.commercialBreak(hooks)).then(adEnd, adEnd);
+  }
+  function renderAdSurfaces() {
+    renderShoes();
+    renderBoost();
+    if (state === STATE.OVER) renderRewardButtons();
   }
   Promise.resolve(ads.init()).then(() => {
     renderShoes(); // ND-022: the Retro "WATCH" option depends on ads being ready
@@ -407,6 +444,7 @@
   let combo = 0;         // consecutive gems collected without an obstacle hit
   let comboMult = 1;     // gem-value multiplier derived from the current combo
   let reviveUsed = false; // a run gets at most one rewarded revive
+  let tutorialRun = false;
   let doubleClaimed = false; // double-gems claimed this run (persists across Revive)
   let best = loadBest();
   let lastTime = 0;
@@ -592,8 +630,10 @@
   });
   // Portal interstitial at a natural break — every 3rd replay, not every run.
   restartBtn.addEventListener("click", () => {
-    const skipBreak = boostAdWatched; // ND-023: no interstitial right after a boost ad
+    // ND-023: no interstitial right after a boost ad, or any rewarded ad.
+    const skipBreak = boostAdWatched || skipNextBreak;
     boostAdWatched = false;
+    skipNextBreak = false;
     if (runCount > 0 && runCount % 3 === 0 && !skipBreak) {
       adBreak().then(() => startGame());
     } else {
@@ -644,7 +684,8 @@
     reset();
     useBoost(); // ND-023: armed power-up starts active
     hideExit();
-    if (tutorialWanted()) tutorialStart(); else tutorialAbort();
+    tutorialRun = tutorialWanted(); // no revive offer on the guided first run
+    if (tutorialRun) tutorialStart(); else tutorialAbort();
     scoreEl.textContent = "0";
     coinsEl.textContent = "0";
     audio.ensure(); // BUG-03: unlock WebAudio on the PLAY/PLAY-AGAIN gesture
@@ -853,20 +894,38 @@
     finalCoinsEl.textContent = coinCount;
     finalBestEl.textContent = best;
     newRecordEl.classList.toggle("hidden", !newRecord);
-    // Rewarded surfaces. Revive: once per run. Double gems: once per run,
-    // so it stays claimed across a Revive (no second ad for no extra reward).
-    reviveBtn.disabled = false;
-    reviveBtn.textContent = "▶ CONTINUE · watch ad";
-    reviveBtn.classList.toggle("hidden", reviveUsed || !rewardAdsOn());
-    if (!doubleClaimed) {
-      doubleGemsBtn.disabled = false;
-      doubleGemsBtn.textContent = "🎬 DOUBLE GEMS";
-    }
-    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed || !rewardAdsOn());
+    reviveOffered = reviveAllowed(); // decided once per game over
+    if (reviveOffered) lastReviveOfferAt = performance.now();
+    renderRewardButtons();
     renderBoost();
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
+  }
+
+  // Rewarded surfaces. Revive: at most once per run, and offered at most once
+  // every REVIVE_OFFER_GAP_MS (CrazyGames: don't offer an out-of-lives ad on
+  // every death), never on the guided first run. Double gems: once per run,
+  // so it stays claimed across a Revive (no second ad for no extra reward).
+  const REVIVE_OFFER_GAP_MS = 3 * 60 * 1000;
+  let lastReviveOfferAt = -Infinity;
+  let reviveOffered = false;
+  function reviveAllowed() {
+    if (reviveUsed || !rewardAdsOn() || tutorialRun) return false;
+    if (TEST_MODE) return true;
+    return performance.now() - lastReviveOfferAt >= REVIVE_OFFER_GAP_MS;
+  }
+  function renderRewardButtons() {
+    reviveBtn.disabled = false;
+    reviveBtn.textContent = "🎬 CONTINUE · watch ad";
+    reviveBtn.classList.toggle("hidden", !reviveOffered || reviveUsed || !rewardAdsOn());
+    if (!doubleClaimed) {
+      doubleGemsBtn.disabled = false;
+      doubleGemsBtn.textContent = "🎬 DOUBLE GEMS · watch ad";
+    }
+    doubleGemsBtn.classList.toggle("hidden", coinCount <= 0 || doubleClaimed || !rewardAdsOn());
+    const note = document.getElementById("ad-note");
+    if (note) note.classList.toggle("hidden", !ads.adsBlocked);
   }
 
   // Watch a rewarded ad to double this run's gems — applied via gemMultiplier
@@ -1205,7 +1264,7 @@
         armBoost(type, "ad");
         return true;
       }
-      if (!ok) { audio.shieldBreak(); showToast("Video didn't finish — try again"); }
+      if (!ok && !ads.lastAdError) { audio.shieldBreak(); showToast("Video didn't finish — try again"); }
       renderBoost();
       return false;
     });
@@ -1256,6 +1315,12 @@
       panel.appendChild(row);
       const pay = document.createElement("div");
       pay.className = "boost-pay";
+      if (ads.adsBlocked && !TEST_MODE) {
+        const note = document.createElement("div");
+        note.className = "ad-note";
+        note.textContent = "Ad blocker on: the free video boost is off";
+        panel.appendChild(note);
+      }
       if (rewardAdsOn()) {
         const adBtn = document.createElement("button");
         adBtn.type = "button";
@@ -2132,7 +2197,8 @@
       hint.className = "shoe-hint";
       hint.textContent = "👟 Retro Kicks — " + (rewardAdsOn() ? "watch a video, " : "") + "score " +
         RETRO_SCORE_UNLOCK + " (best " + best + "), or hit level " +
-        RETRO_LEVEL_UNLOCK + " (now " + playerLevel() + ")";
+        RETRO_LEVEL_UNLOCK + " (now " + playerLevel() + ")" +
+        (ads.adsBlocked && !TEST_MODE ? ". Ad blocker on: video unlock is off" : "");
       shoeRow.appendChild(hint);
     }
   }
