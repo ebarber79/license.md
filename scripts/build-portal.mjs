@@ -69,7 +69,7 @@ html = replaceOnce(html, /[ \t]*<button id="share-btn"[^\n]*<\/button>\n/, "", "
 html = replaceOnce(html, /[ \t]*<a id="feedback-link"[^\n]*<\/a>\n/, "", "feedback-link");
 
 // Assemble the bundle (core minus register-sw.js + qrcode.js, plus the adapter).
-const CORE = ["style.css", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "manifest.json", "sw.js", "icon.svg"];
+const CORE = ["style.css", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "music.js", "manifest.json", "sw.js", "icon.svg"];
 const outDir = join(ROOT, "dist", portal);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });

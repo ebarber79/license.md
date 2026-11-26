@@ -43,3 +43,17 @@ for (const portal of Object.keys(ALLOWED)) {
     assert.equal(bal(html), bal(src), "unbalanced <div> tags in portal index.html");
   });
 }
+
+// Every local <script src> in a portal index.html must ship in the bundle
+// (music.js was missing from the first CrazyGames upload).
+for (const portal of Object.keys(ALLOWED)) {
+  test(`${portal} build ships every local script it loads`, () => {
+    execSync(`node scripts/build-portal.mjs ${portal}`, { cwd: ROOT, stdio: "ignore" });
+    const dir = join(ROOT, "dist", portal);
+    const html = readFileSync(join(dir, "index.html"), "utf8");
+    const files = new Set(readdirSync(dir));
+    const missing = [...html.matchAll(/<script src="([^"]+)"/g)].map((m) => m[1])
+      .filter((s) => !/^https?:/.test(s) && !files.has(s));
+    assert.deepEqual(missing, []);
+  });
+}
