@@ -21,6 +21,10 @@
   "use strict";
 
   function sdk() { return window.CrazyGames && window.CrazyGames.SDK; }
+  // Basic Launch has CrazyGames ads switched off. After the first rewarded-ad
+  // error, report ads as unavailable so the game hides its "watch ad" buttons
+  // instead of offering rewards that can't load.
+  var adsFailed = false;
 
   function requestAd(type) {
     return new Promise(function (resolve) {
@@ -33,13 +37,17 @@
         // don't need it, but it's polite — the game pauses on gameplayStop.
         adStarted: function () {},
         adFinished: function () { done(type === "rewarded" ? true : undefined); },
-        adError: function () { done(type === "rewarded" ? false : undefined); },
+        adError: function () { if (type === "rewarded") adsFailed = true; done(type === "rewarded" ? false : undefined); },
       });
     });
   }
 
   window.NEONDASH_AD_PROVIDER = {
-    available: true,
+    get available() {
+      var s = sdk();
+      if (adsFailed || !s) return false;
+      return s.environment !== "disabled";
+    },
     init: function () {
       var s = sdk();
       try { return Promise.resolve(s && s.init ? s.init() : undefined); }

@@ -24,6 +24,8 @@ for (const portal of Object.keys(ALLOWED)) {
         .replace(/\/\*[\s\S]*?\*\//g, "")          // block comments
         .replace(/(^|[^:])\/\/[^\n]*/g, "$1")      // line comments
         .replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/g, ""); // CSP lists allowed origins, not links
+      for (const m of src.matchAll(/mailto:[^\s"'<>)]*/g)) bad.push(`${f}: ${m[0]}`);
+      for (const m of src.matchAll(/[\w.+-]+@[\w-]+\.[a-z]{2,}/gi)) bad.push(`${f}: email ${m[0]}`);
       for (const m of src.matchAll(/https?:\/\/[^\s"'<>)]+/g)) {
         if (/^http:\/\/www\.w3\.org\//.test(m[0])) continue; // SVG/XML namespaces
         if (!ALLOWED[portal].some((r) => r.test(m[0]))) bad.push(`${f}: ${m[0]}`);
@@ -33,5 +35,11 @@ for (const portal of Object.keys(ALLOWED)) {
     const html = readFileSync(join(dir, "index.html"), "utf8");
     assert.ok(!html.includes('id="rate-link"'), "rate link present");
     assert.ok(!html.includes('id="share-btn"'), "share button present");
+    assert.ok(!html.includes('id="feedback-link"'), "feedback link present");
+    assert.ok(!html.includes("qr-cap") && !html.includes('id="qr'), "QR block not fully removed");
+    // structure must match the canonical page: same <div> balance as the source
+    const src = readFileSync(join(ROOT, "index.html"), "utf8");
+    const bal = (s) => (s.match(/<div\b/g) || []).length - (s.match(/<\/div>/g) || []).length;
+    assert.equal(bal(html), bal(src), "unbalanced <div> tags in portal index.html");
   });
 }

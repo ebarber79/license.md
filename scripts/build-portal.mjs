@@ -10,6 +10,7 @@
  *  - inject the portal SDK + ad-provider <script> tags
  *  - remove the "Rate Neon Dash" Play link and the Share button, and blank the
  *    store/web URLs in game.js (portals disallow outgoing links)
+ *  - remove the "Send feedback" mailto link and blank its address in game.js
  * Output: dist/<portal>/ (+ dist/<portal>.zip)
  */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync } from "node:fs";
@@ -50,7 +51,7 @@ let html = readFileSync(join(ROOT, "index.html"), "utf8");
 // 1. drop the service-worker registration
 html = replaceOnce(html, /[ \t]*<script src="register-sw\.js"><\/script>\n/, "", "register-sw");
 // 2. drop the QR block
-html = replaceOnce(html, /[ \t]*<div id="qr-box">[\s\S]*?<\/div>\s*\n/, "", "qr-box");
+html = replaceOnce(html, /[ \t]*<div id="qr-box">\s*<div id="qr"><\/div>\s*<span class="qr-cap">[^<]*<\/span>\s*<\/div>\s*\n/, "", "qr-box");
 // 3. CSP
 html = replaceOnce(
   html,
@@ -64,6 +65,8 @@ html = replaceOnce(html, /([ \t]*<script src="analytics\.js"><\/script>)/, cfg.s
 // 5. drop outgoing links: Play rate link + Share button (game.js null-checks both)
 html = replaceOnce(html, /[ \t]*<a id="rate-link"[^\n]*<\/a>\n/, "", "rate-link");
 html = replaceOnce(html, /[ \t]*<button id="share-btn"[^\n]*<\/button>\n/, "", "share-btn");
+// 6. drop the "Send feedback" mailto link (portals disallow contact details / outgoing links)
+html = replaceOnce(html, /[ \t]*<a id="feedback-link"[^\n]*<\/a>\n/, "", "feedback-link");
 
 // Assemble the bundle (core minus register-sw.js + qrcode.js, plus the adapter).
 const CORE = ["style.css", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "manifest.json", "sw.js", "icon.svg"];
@@ -78,6 +81,7 @@ for (const f of CORE) copyFileSync(join(ROOT, f), join(outDir, f));
   let g = readFileSync(gp, "utf8");
   g = replaceOnce(g, /const PLAY_URL = "https:\/\/[^"]*";/, 'const PLAY_URL = "";', "PLAY_URL");
   g = replaceOnce(g, /const WEB_URL = "https:\/\/[^"]*";/, 'const WEB_URL = "";', "WEB_URL");
+  g = replaceOnce(g, /"mailto:neondash@gridlas\.com\?subject="/, '""', "mailto");
   writeFileSync(gp, g);
 }
 copyFileSync(join(ROOT, cfg.adapter), join(outDir, cfg.adapter.split("/").pop()));
