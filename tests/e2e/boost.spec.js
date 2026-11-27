@@ -107,6 +107,7 @@ test.describe("ND-023 Boost", () => {
 
 test("ND-023: plain web build offers Boost for gems only (no ad button)", async ({ page }) => {
   await page.goto("/index.html");
+  await page.locator("#tab-btn-boosts").click(); // Step B: boosts live behind a menu tab
   await expect(page.locator("#boost-start")).toBeVisible();
   await expect(page.locator("#boost-start .boost-gems")).toBeVisible();
   await expect(page.locator("#boost-start .boost-ad")).toHaveCount(0);

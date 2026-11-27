@@ -208,6 +208,46 @@
   function exitOpen() { return !!exitConfirm && !exitConfirm.classList.contains("hidden"); }
   function showExit() { exitConfirm.classList.remove("hidden"); exitStayBtn.focus(); }
   function hideExit() { exitConfirm.classList.add("hidden"); }
+  // Step B: menu tabs (Missions / Skins / Boosts) open a sheet over the one-screen menu.
+  const tabSheet = document.getElementById("tab-sheet");
+  const tabTitle = document.getElementById("tab-sheet-title");
+  const TAB_NAMES = { missions: "Missions", skins: "Skins", boosts: "Boosts" };
+  let openTabId = null;
+  function tabOpen() { return !!tabSheet && !tabSheet.classList.contains("hidden"); }
+  function openTab(id) {
+    if (!tabSheet || !TAB_NAMES[id]) return;
+    openTabId = id;
+    tabTitle.textContent = TAB_NAMES[id];
+    for (const k of Object.keys(TAB_NAMES)) {
+      const pane = document.getElementById("tab-" + k);
+      const btn = document.getElementById("tab-btn-" + k);
+      if (pane) pane.classList.toggle("hidden", k !== id);
+      if (btn) { btn.setAttribute("aria-selected", k === id ? "true" : "false"); btn.classList.toggle("active", k === id); }
+    }
+    tabSheet.querySelectorAll(".sheet-tab").forEach((c) => c.classList.toggle("active", c.getAttribute("data-tab") === id));
+    tabSheet.classList.remove("hidden");
+    if (startScreen) startScreen.classList.add("sheet-open");
+    track("menu_tab", { tab: id });
+  }
+  function closeTab() {
+    if (!tabSheet) return;
+    tabSheet.classList.add("hidden");
+    if (startScreen) startScreen.classList.remove("sheet-open");
+    openTabId = null;
+    for (const k of Object.keys(TAB_NAMES)) {
+      const btn = document.getElementById("tab-btn-" + k);
+      if (btn) { btn.setAttribute("aria-selected", "false"); btn.classList.remove("active"); }
+    }
+  }
+  document.querySelectorAll(".sheet-tab").forEach((c) => c.addEventListener("click", (e) => {
+    e.stopPropagation(); openTab(c.getAttribute("data-tab"));
+  }));
+  document.querySelectorAll(".tab-btn").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const id = b.getAttribute("data-tab");
+    if (openTabId === id) closeTab(); else openTab(id);
+  }));
+  { const c = document.getElementById("tab-close"); if (c) c.addEventListener("click", (e) => { e.stopPropagation(); closeTab(); }); }
   if (exitStayBtn) exitStayBtn.addEventListener("click", (e) => { e.stopPropagation(); hideExit(); });
   if (exitLeaveBtn) exitLeaveBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -398,11 +438,14 @@
   // Background themes the world cycles through as the score climbs.
   // Each: [skyTop, skyBottom, accent (ground/grid), hill color].
   const THEMES = [
-    { top: "#1a1a3e", bot: "#3d1f5e", accent: "#00f5ff", hill: "#502878" }, // twilight
-    { top: "#2e1a3e", bot: "#5e1f3d", accent: "#ff5ec7", hill: "#78284f" }, // dusk
-    { top: "#0d2340", bot: "#1f4e5e", accent: "#00ffb4", hill: "#1f5e55" }, // deep sea
-    { top: "#3e2a1a", bot: "#5e3a1f", accent: "#ffb347", hill: "#785028" }, // sunset
-    { top: "#0d0d1a", bot: "#1a1a3e", accent: "#9d6cff", hill: "#3a2878" }, // midnight
+    // Step B: each theme also recolours the hazards (haz = spikes/ceiling/wall,
+    // haz2 = bars, solid = pillars, saw) and the far city. Jump pads stay green
+    // in every theme so "safe" always reads the same.
+    { top: "#1a1a3e", bot: "#3d1f5e", accent: "#00f5ff", hill: "#502878", haz: "#ff4d6d", haz2: "#ff5ec7", solid: "#b26bff", saw: "#ff8a3d", city: "#221643" }, // twilight
+    { top: "#2e1a3e", bot: "#5e1f3d", accent: "#ff5ec7", hill: "#78284f", haz: "#ff3d4d", haz2: "#ffb347", solid: "#8f7bff", saw: "#ff6a3d", city: "#2a1230" }, // dusk
+    { top: "#0d2340", bot: "#1f4e5e", accent: "#00ffb4", hill: "#1f5e55", haz: "#ff5a7a", haz2: "#ff9ae0", solid: "#4dc3ff", saw: "#ff7a45", city: "#0c2233" }, // deep sea
+    { top: "#3e2a1a", bot: "#5e3a1f", accent: "#ffb347", hill: "#785028", haz: "#ff3d6e", haz2: "#d07bff", solid: "#ffe07a", saw: "#ff5ec7", city: "#2a1a10" }, // sunset
+    { top: "#0d0d1a", bot: "#1a1a3e", accent: "#9d6cff", hill: "#3a2878", haz: "#ff4d8d", haz2: "#00e5ff", solid: "#ff8af0", saw: "#ff9a3d", city: "#120f2a" }, // midnight
   ];
 
   // ---- Runtime sizing ----
@@ -450,6 +493,10 @@
   let best = loadBest();
   let lastTime = 0;
   let shake = 0;
+  let nearMissRun = 0; // Step B: near misses this run (analytics)
+  let floaters = [];   // Step B: floating "NEAR MISS" text
+  let hitstop = 0;     // Step B: freeze frame on death (seconds)
+  let flash = 0;       // Step B: white flash on death / near-miss tint
   let paused = false;
   let rafId = 0; // handle of the in-flight animation frame (single loop chain)
 
@@ -540,7 +587,16 @@
       hills.push({ x, h: 0.10 + rnd() * 0.16, w: 0.18 + rnd() * 0.14 });
       x += 0.16 + rnd() * 0.12;
     }
+    // Step B: far city skyline (slowest parallax layer), with lit windows.
+    city = [];
+    x = 0;
+    while (x < 1.5) {
+      const w = 0.035 + rnd() * 0.05;
+      city.push({ x, w, h: 0.10 + rnd() * 0.22, seed: Math.floor(rnd() * 1e6), spire: rnd() < 0.18 });
+      x += w + rnd() * 0.012;
+    }
   }
+  let city = null;
 
   let bgScroll = 0;
 
@@ -555,8 +611,13 @@
       jumps: 0,
       coyote: 0,
       rot: 0,
+      sx: 1, sy: 1, // Step B: squash & stretch
       trail: [],
     };
+    floaters = [];
+    nearMissRun = 0;
+    hitstop = 0;
+    flash = 0;
     obstacles = [];
     gems = [];
     particles = [];
@@ -592,6 +653,7 @@
     if (tutorialHold) tutorialHold = false; // ND-037: the tap that unfreezes is the jump
     // Ground (or coyote) jump, then 2nd and 3rd mid-air jumps at 86% / 72%.
     const j = NP.tryJump(player);
+    if (j >= 1) stretchPlayer();
     if (j === 1) {
       if (tutorial === "jump") tutorialNext("spike", "Nice! Now watch for spikes...");
       spawnJumpDust();
@@ -700,7 +762,9 @@
     state = STATE.PLAYING;
     music.setMode("run");
     startScreen.classList.add("hidden");
+    closeTab();
     gameoverScreen.classList.add("hidden");
+    placeToast();
     pauseScreen.classList.add("hidden");
     hud.classList.remove("hidden");
     pauseBtn.classList.remove("hidden");
@@ -745,13 +809,14 @@
       menuBtn.click();
       return true;
     }
+    if (tabOpen()) { closeTab(); return true; } // Step B: Back closes an open menu tab first
     // ND-037: menu -> "Leave Neon Dash?" panel (Android); Back again closes it.
     if (exitOpen()) { hideExit(); return true; }
     if (NATIVE) { showExit(); return true; }
     return false;
   }
   window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && (state !== STATE.MENU || exitOpen())) { e.preventDefault(); handleBack(); }
+    if (e.key === "Escape" && (state !== STATE.MENU || exitOpen() || tabOpen())) { e.preventDefault(); handleBack(); }
   });
   (function wireNativeBack() {
     const cap = window.Capacitor;
@@ -811,9 +876,16 @@
     }
   }
 
+  // Step B: keep toasts clear of overlay titles (menu: top strip; game over: bottom-left).
+  function placeToast() {
+    if (!toastEl) return;
+    toastEl.classList.toggle("on-menu", !!startScreen && !startScreen.classList.contains("hidden"));
+    toastEl.classList.toggle("on-over", !!gameoverScreen && !gameoverScreen.classList.contains("hidden"));
+  }
   function showToast(msg) {
     if (!toastEl) return;
     toastEl.textContent = msg;
+    placeToast();
     toastEl.classList.remove("hidden");
     requestAnimationFrame(() => toastEl.classList.add("show"));
     clearTimeout(toastTimer);
@@ -844,6 +916,7 @@
   }
   function renderProgress() {
     const s = progress.summary();
+    { const dot = document.getElementById("missions-dot"); if (dot) dot.classList.toggle("hidden", !(s.daily && !s.daily.done && s.daily.target)); }
     if (streakEl) streakEl.textContent = s.streak;
     if (dailyRowEl) {
       const d = s.daily;
@@ -887,6 +960,7 @@
       duration_ms: Math.round(stoppedAt - runStart),
       cause: lastCrashCause,
       new_record: newRecord,
+      near_misses: nearMissRun,
     });
     ads.gameplayStop();
     noteFinishedRun();
@@ -901,6 +975,7 @@
     hud.classList.add("hidden");
     pauseBtn.classList.add("hidden");
     gameoverScreen.classList.remove("hidden");
+    placeToast();
   }
 
   // Rewarded surfaces. Revive: at most once per run, and offered at most once
@@ -1086,7 +1161,7 @@
     obstacles.splice(i, 1);
     tutorialSpike = null;
     tutorialHold = false;
-    shake = 8;
+    flash = 0.35; // Step B: shake is for deaths only
     vibrate(40);
     tutorialNext("spike", "Jump a little earlier. Here comes another one...");
   }
@@ -1161,6 +1236,62 @@
     powerupsUsedRun++;
     track("powerup_collected", { type: type });
     spawnRingBurst(POWER_COLORS[type] || "0,255,180");
+  }
+
+  // ---- Step B: game feel ----
+  function stretchPlayer() { if (!reduceMotion && player) { player.sx = 0.78; player.sy = 1.26; } }
+  function squashPlayer() { if (!reduceMotion && player) { player.sx = 1.3; player.sy = 0.74; } }
+  function rgbOf(c) { // "rgb(r,g,b)" or "#rrggbb" -> "r,g,b" for particles
+    if (c[0] === "#") return parseInt(c.slice(1, 3), 16) + "," + parseInt(c.slice(3, 5), 16) + "," + parseInt(c.slice(5, 7), 16);
+    return c.slice(c.indexOf("(") + 1, c.indexOf(")"));
+  }
+  function spawnLandDust() {
+    const col = rgbOf(theme.accent);
+    for (let i = 0; i < 10; i++) {
+      const dir = i % 2 === 0 ? -1 : 1;
+      particles.push({
+        x: player.x + player.size / 2 + dir * player.size * 0.3,
+        y: player.y + player.size,
+        vx: dir * (60 + rnd() * 140),
+        vy: -rnd() * 70,
+        life: 0.35, max: 0.35, color: col, r: rnd() * 2.5 + 1,
+      });
+    }
+  }
+  const NEAR_MISS_PX = 14;
+  // Clearance between the player box and a hazard while they overlap
+  // horizontally; the smallest value is checked once the hazard is behind.
+  function hazardClearance(o) {
+    const px = player.x, py = player.y, ps = player.size;
+    if (o.type === "spikes" || o.type === "wall") return (groundY - o.h) - (py + ps);
+    if (o.type === "pillar") return (groundY - NP.pillarHeight(o)) - (py + ps);
+    if (o.type === "ceiling") return py - (groundY - o.gap + 12);
+    if (o.type === "bar") return Math.max(o.y - (py + ps), py - (o.y + o.h));
+    if (o.type === "saw") {
+      const cx = o.x + o.w / 2, cy = NP.sawCenterY(o, groundY);
+      const nx = Math.max(px, Math.min(cx, px + ps)), ny = Math.max(py, Math.min(cy, py + ps));
+      return Math.hypot(cx - nx, cy - ny) - o.r;
+    }
+    return Infinity; // pits and pads don't count
+  }
+  function checkNearMiss(o) {
+    if (o.nearDone || tutorial) return;
+    const px = player.x, ps = player.size;
+    if (o.x < px + ps && o.x + o.w > px) {
+      const c = hazardClearance(o);
+      if (c < (o.minClear == null ? Infinity : o.minClear)) o.minClear = c;
+    } else if (o.x + o.w <= px && o.minClear != null) {
+      o.nearDone = true;
+      if (o.minClear < NEAR_MISS_PX) {
+        coinCount += 1;
+        coinsEl.textContent = coinCount;
+        nearMissRun++;
+        floaters.push({ x: px + ps / 2, y: player.y - 10, text: "NEAR MISS +1 ◆", life: 0.8, max: 0.8 });
+        flash = Math.max(flash, 0.12);
+        audio.coin();
+        vibrate(15);
+      }
+    }
   }
 
   // ---- Particles ----
@@ -1288,6 +1419,7 @@
     renderBoost();
   }
   function renderBoost() {
+    { const tb = document.getElementById("tab-btn-boosts"); if (tb) tb.classList.toggle("armed", !!boostArmed); }
     for (const panel of boostPanels) {
       if (!panel) continue;
       panel.innerHTML = "";
@@ -1393,6 +1525,7 @@
     theme = currentTheme();
 
     // Player physics
+    const wasGround = player.onGround;
     if (NP.stepPlayer(player, dt, groundY, obstacles) === "fell") {
       if (shieldTime > 0 && !tutorial) {
         // The shield bounces you out of a pit once (and breaks the gem chain).
@@ -1400,7 +1533,7 @@
         combo = 0;
         comboMult = 1;
         updateComboHud();
-        shake = 10;
+        flash = 0.35; // Step B: shake is for deaths only; a shield break flashes
         audio.shieldBreak();
         vibrate(60);
         spawnRingBurst("0,255,180");
@@ -1411,6 +1544,11 @@
       }
     }
     player.rot = player.onGround ? 0 : player.rot + dt * 8;
+    // Step B: squash on landing, then ease back to the normal shape.
+    if (!wasGround && player.onGround) { squashPlayer(); spawnLandDust(); }
+    const ease = Math.min(1, dt * 14);
+    player.sx += (1 - player.sx) * ease;
+    player.sy += (1 - player.sy) * ease;
 
     // Player trail
     player.trail.unshift({ x: player.x, y: player.y });
@@ -1464,6 +1602,7 @@
       const res = NP.interact(o, player, groundY);
       if (res === "launch") {
         NP.launch(player);
+        stretchPlayer();
         spawnJumpDust();
         audio.doubleJump();
         vibrate(20);
@@ -1480,7 +1619,7 @@
           combo = 0;
           comboMult = 1;
           updateComboHud();
-          shake = 10;
+          flash = 0.35; // Step B: shake is for deaths only; a shield break flashes
           audio.shieldBreak();
           vibrate(60);
           spawnRingBurst("0,255,180");
@@ -1491,6 +1630,15 @@
         }
       }
     }
+
+    // Step B: near misses (passed a hazard with only a few pixels to spare).
+    for (const o of obstacles) checkNearMiss(o);
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      f.life -= dt; f.y -= 46 * dt;
+      if (f.life <= 0) floaters.splice(i, 1);
+    }
+    if (flash > 0) flash = Math.max(0, flash - dt * 2.5);
 
     // Move + collect power-ups
     for (let i = powerups.length - 1; i >= 0; i--) {
@@ -1560,6 +1708,8 @@
     spawnCrash();
     audio.crash();
     shake = 16;
+    hitstop = reduceMotion ? 0 : 0.15; // Step B: 150 ms freeze frame before the burst
+    flash = reduceMotion ? 0.25 : 0.6;
     gameOver();
   }
 
@@ -1592,6 +1742,32 @@
     }
     ctx.globalAlpha = 1;
 
+    // Step B: far city skyline (slowest layer) with a few lit windows.
+    if (!city) buildBackground();
+    const cityScroll = (bgScroll * 0.06) % (W * 1.5);
+    ctx.fillStyle = theme.city;
+    for (const b of city) {
+      let bx = b.x * W - cityScroll;
+      if (bx < -b.w * W) bx += W * 1.5;
+      if (bx > W) continue;
+      const bw = b.w * W, bh = b.h * H, by = groundY - bh;
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = theme.city;
+      ctx.fillRect(bx, by, bw, bh);
+      if (b.spire) ctx.fillRect(bx + bw / 2 - 1.5, by - bh * 0.18, 3, bh * 0.18);
+      // windows: a deterministic pattern per building
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = theme.accent;
+      let k = b.seed;
+      for (let wy = by + 8; wy < groundY - 10; wy += 12) {
+        for (let wx = bx + 5; wx < bx + bw - 6; wx += 9) {
+          k = (k * 1103515245 + 12345) & 0x7fffffff;
+          if (k % 5 === 0) ctx.fillRect(wx, wy, 3, 4);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
     // Distant hills (parallax slow)
     const hillScroll = (bgScroll * 0.2) % (W * 1.4);
     ctx.fillStyle = theme.hill;
@@ -1608,6 +1784,18 @@
       ctx.closePath();
       ctx.fill();
     }
+    // Step B: faint neon rim on the hill ridges.
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = theme.accent;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (const hl of hills) {
+      let hx = hl.x * W - hillScroll;
+      if (hx < -W * 0.4) hx += W * 1.4;
+      const hw = hl.w * W, hh = hl.h * H;
+      ctx.moveTo(hx, groundY); ctx.lineTo(hx + hw / 2, groundY - hh); ctx.lineTo(hx + hw, groundY);
+    }
+    ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
@@ -1637,6 +1825,12 @@
       ctx.moveTo(x, groundY);
       ctx.lineTo(x - 40, H);
       ctx.stroke();
+    }
+    // Step B: receding horizontal lines give the near grid depth.
+    ctx.globalAlpha = 0.14;
+    for (let k = 1; k <= 4; k++) {
+      const y = groundY + (H - groundY) * Math.pow(k / 4.6, 1.6);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
@@ -1765,7 +1959,10 @@
     }
 
     ctx.save();
-    ctx.translate(cx, cy);
+    // Step B: squash & stretch, anchored at the feet so landing squashes down.
+    ctx.translate(cx, player.y + s);
+    ctx.scale(player.sx || 1, player.sy || 1);
+    ctx.translate(0, -s / 2);
     ctx.rotate(player.rot);
     ctx.shadowColor = glow;
     ctx.shadowBlur = 18;
@@ -1777,9 +1974,23 @@
     roundRect(ctx, -s / 2, -s / 2, s, s, 8);
     ctx.fill();
     ctx.shadowBlur = 0;
+    // Step B: bright rim + glint so the body reads as a lit neon tile.
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, -s / 2 + 1.5, -s / 2 + 1.5, s - 3, s - 3, 7);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(-s * 0.36, -s * 0.38, s * 0.3, s * 0.08);
     // Eye
     ctx.fillStyle = "#0d0d1a";
     ctx.fillRect(s * 0.08, -s * 0.18, s * 0.22, s * 0.22);
+    if (hitstop > 0) { // freeze frame: the player flashes white
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = "#ffffff";
+      roundRect(ctx, -s / 2, -s / 2, s, s, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
     ctx.restore();
   }
 
@@ -1902,35 +2113,51 @@
     ctx.restore();
   }
 
+  // Step B: one neon look for every hazard: tinted core, glowing tube outline,
+  // thin white inner highlight. Expects the path to be built already.
+  function neon(color, blur, core) {
+    ctx.globalAlpha = core == null ? 0.42 : core;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = blur || 14;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,255,255,0.65)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
   function drawObstacles() {
     for (const o of obstacles) {
       if (o.type === "spikes") {
-        ctx.fillStyle = "#ff4d6d";
-        ctx.shadowColor = "#ff4d6d";
-        ctx.shadowBlur = 12;
+        ctx.beginPath();
         for (let i = 0; i < o.count; i++) {
           const sx = o.x + i * o.spikeW;
-          ctx.beginPath();
-          ctx.moveTo(sx, groundY);
+          ctx.moveTo(sx + 1, groundY);
           ctx.lineTo(sx + o.spikeW / 2, groundY - o.h);
-          ctx.lineTo(sx + o.spikeW, groundY);
+          ctx.lineTo(sx + o.spikeW - 1, groundY);
           ctx.closePath();
-          ctx.fill();
         }
-        ctx.shadowBlur = 0;
+        neon(theme.haz, 14, 0.55);
       } else if (o.type === "bar") {
-        ctx.fillStyle = "#ff5ec7";
-        ctx.shadowColor = "#ff5ec7";
-        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.moveTo(o.x + o.w / 2, o.y + o.h); ctx.lineTo(o.x + o.w / 2, groundY);
+        ctx.strokeStyle = theme.haz2; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1;
         roundRect(ctx, o.x, o.y, o.w, o.h, 5);
-        ctx.fill();
-        // little support pole
-        ctx.fillRect(o.x + o.w / 2 - 2, o.y + o.h, 4, groundY - (o.y + o.h));
-        ctx.shadowBlur = 0;
+        neon(theme.haz2, 14, 0.55);
       } else if (o.type === "pit") {
         // Cut the ground: dark gap with glowing lips, drawn over the ground slab.
         ctx.fillStyle = "#05050f";
         ctx.fillRect(o.x, groundY - 2, o.w, H - groundY + 2);
+        const g = ctx.createLinearGradient(0, groundY, 0, H);
+        g.addColorStop(0, "rgba(255,77,109,0.18)"); g.addColorStop(1, "rgba(255,77,109,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(o.x, groundY, o.w, H - groundY);
         ctx.strokeStyle = theme.accent;
         ctx.lineWidth = 3;
         ctx.shadowColor = theme.accent;
@@ -1942,68 +2169,60 @@
         ctx.shadowBlur = 0;
       } else if (o.type === "ceiling") {
         const bottom = groundY - o.gap;
-        ctx.fillStyle = "rgba(255,77,109,0.16)";
-        ctx.fillRect(o.x, 0, o.w, bottom);
-        ctx.fillStyle = "#ff4d6d";
-        ctx.shadowColor = "#ff4d6d";
-        ctx.shadowBlur = 14;
-        ctx.fillRect(o.x, bottom - 6, o.w, 6);
-        // downward teeth along the bottom edge
+        ctx.globalAlpha = 0.07;
+        ctx.fillStyle = theme.haz;
+        ctx.fillRect(o.x, 0, o.w, bottom - 6);
+        ctx.globalAlpha = 1;
+        // slab + downward teeth as one outlined shape
         const tw = 18;
         ctx.beginPath();
-        for (let x = o.x; x + tw <= o.x + o.w + 0.5; x += tw) {
-          ctx.moveTo(x, bottom);
-          ctx.lineTo(x + tw / 2, bottom + 12);
-          ctx.lineTo(x + tw, bottom);
+        ctx.moveTo(o.x, bottom - 8);
+        ctx.lineTo(o.x + o.w, bottom - 8);
+        ctx.lineTo(o.x + o.w, bottom);
+        for (let x = o.x + o.w; x - tw >= o.x - 0.5; x -= tw) {
+          ctx.lineTo(x - tw / 2, bottom + 12);
+          ctx.lineTo(x - tw, bottom);
         }
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.lineTo(o.x, bottom);
+        ctx.closePath();
+        neon(theme.haz, 14, 0.6);
       } else if (o.type === "saw") {
         const cx = o.x + o.w / 2, cy = NP.sawCenterY(o, groundY);
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(reduceMotion ? 0 : -(o.age || 0) * 9);
-        ctx.fillStyle = "#ff8a3d";
-        ctx.shadowColor = "#ff8a3d";
-        ctx.shadowBlur = 16;
-        ctx.beginPath();
-        const teeth = 10;
-        for (let k = 0; k < teeth * 2; k++) {
-          const a = (k / (teeth * 2)) * Math.PI * 2;
-          const rr = k % 2 === 0 ? o.r : o.r * 0.72;
-          ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "#1a1030";
-        ctx.beginPath();
-        ctx.arc(0, 0, o.r * 0.28, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
         // tether line to show it is anchored
-        ctx.strokeStyle = "rgba(255,138,61,0.35)";
+        ctx.strokeStyle = theme.saw;
+        ctx.globalAlpha = 0.35;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(cx, 0); ctx.lineTo(cx, cy - o.r);
         ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(reduceMotion ? 0 : -(o.age || 0) * 9);
+        ctx.beginPath();
+        const teeth = 10;
+        for (let k = 0; k < teeth * 2; k++) {
+          const ang = (k / (teeth * 2)) * Math.PI * 2;
+          const rr = k % 2 === 0 ? o.r : o.r * 0.72;
+          ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
+        }
+        ctx.closePath();
+        neon(theme.saw, 16, 0.55);
+        ctx.fillStyle = "#1a1030";
+        ctx.beginPath();
+        ctx.arc(0, 0, o.r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = theme.saw; ctx.lineWidth = 2; ctx.stroke();
+        ctx.restore();
       } else if (o.type === "pillar") {
         const h = NP.pillarHeight(o);
-        ctx.fillStyle = "#b26bff";
-        ctx.shadowColor = "#b26bff";
-        ctx.shadowBlur = 14;
         roundRect(ctx, o.x + 3, groundY - h, o.w - 6, h, 4);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
-        ctx.fillRect(o.x + 6, groundY - h + 4, o.w - 12, 3);
+        neon(theme.solid, 14, 0.5);
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.fillRect(o.x + 7, groundY - h + 5, o.w - 14, 3);
       } else if (o.type === "wall") {
-        ctx.fillStyle = "#ff4d6d";
-        ctx.shadowColor = "#ff4d6d";
-        ctx.shadowBlur = 14;
         roundRect(ctx, o.x + 2, groundY - o.h, o.w - 4, o.h, 4);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        neon(theme.haz, 14, 0.5);
         ctx.strokeStyle = "rgba(20,10,40,0.55)";
         ctx.lineWidth = 2;
         for (let y = groundY - o.h + 22; y < groundY; y += 22) {
@@ -2011,12 +2230,8 @@
         }
       } else if (o.type === "pad") {
         const pulse = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin((o.age || 0) * 10);
-        ctx.fillStyle = "#3dffb0";
-        ctx.shadowColor = "#3dffb0";
-        ctx.shadowBlur = 10 + pulse * 12;
         roundRect(ctx, o.x, groundY - o.h, o.w, o.h, 4);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        neon("#3dffb0", 10 + pulse * 12, 0.75);
         // chevrons pointing up
         ctx.strokeStyle = "rgba(61,255,176," + (0.35 + pulse * 0.5) + ")";
         ctx.lineWidth = 3;
@@ -2112,6 +2327,22 @@
     ctx.globalAlpha = 1;
   }
 
+  function drawFloaters() {
+    if (!floaters || !floaters.length) return;
+    ctx.font = "bold 15px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    for (const f of floaters) {
+      ctx.globalAlpha = Math.max(0, f.life / f.max);
+      ctx.fillStyle = "#ffe9a8";
+      ctx.shadowColor = "#ffd84d";
+      ctx.shadowBlur = 10;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.textAlign = "start";
+  }
+
   function render() {
     ctx.clearRect(0, 0, W, H);
     ctx.save();
@@ -2123,9 +2354,16 @@
     drawObstacles();
     drawGems();
     drawPowerups();
-    if (state === STATE.PLAYING) drawPlayer();
-    drawParticles();
+    if (state === STATE.PLAYING || hitstop > 0) drawPlayer();
+    if (hitstop <= 0) drawParticles();
+    drawFloaters();
     ctx.restore();
+    if (flash > 0) { // Step B: death / shield / near-miss flash (drawn unshaken)
+      ctx.globalAlpha = Math.min(0.28, flash * (reduceMotion ? 0.25 : 0.45));
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
 
     // Full-screen tints for time-based power-ups (drawn unshaken).
     if (slowTime > 0) {
@@ -2158,12 +2396,14 @@
       // Keep particles/shake animating briefly on the game-over backdrop.
       update0Effects(dt);
       render();
-      if (particles.length > 0 || shake > 0) rafId = requestAnimationFrame(loop);
+      if (particles.length > 0 || shake > 0 || hitstop > 0 || flash > 0) rafId = requestAnimationFrame(loop);
     }
   }
 
   // Lightweight effects-only step for the game-over freeze.
   function update0Effects(dt) {
+    if (flash > 0) flash = Math.max(0, flash - dt * 2.5);
+    if (hitstop > 0) { hitstop = Math.max(0, hitstop - dt); return; } // Step B: freeze frame
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.life -= dt;
@@ -2193,6 +2433,11 @@
       bot: lerpColor(a.bot, b.bot, t),
       accent: lerpColor(a.accent, b.accent, t),
       hill: lerpColor(a.hill, b.hill, t),
+      haz: lerpColor(a.haz, b.haz, t),
+      haz2: lerpColor(a.haz2, b.haz2, t),
+      solid: lerpColor(a.solid, b.solid, t),
+      saw: lerpColor(a.saw, b.saw, t),
+      city: lerpColor(a.city, b.city, t),
     };
   }
   let theme = THEMES[0];
@@ -2476,6 +2721,7 @@
 
   function showMenu() {
     startScreen.classList.remove("hidden");
+    placeToast();
     startBestEl.textContent = best;
     dailyCheckin();
     renderShop();
@@ -2524,6 +2770,13 @@
       share() { return shareGame(); },
       resume() { if (paused) togglePause(); },
       clearObstacles() { obstacles.length = 0; },
+      // Step B: game-feel state for tests.
+      fx() { return { groundY, sx: player ? player.sx : 1, sy: player ? player.sy : 1, hitstop, flash, nearMisses: nearMissRun, floaters: floaters.length, haz: theme.haz, city: !!city && city.length }; },
+      openTab(id) { openTab(id); return tabOpen(); },
+      placeToast() { placeToast(); },
+      tabOpen() { return tabOpen(); },
+      // Step B: put a hazard right under a jumping player's path for the near-miss test.
+      spawnObstacle(o) { obstacles.push(Object.assign({ age: 0 }, o)); },
       // Advance the simulation deterministically, independent of rAF /
       // page visibility (which are throttled for backgrounded test pages).
       step(n, dt) {

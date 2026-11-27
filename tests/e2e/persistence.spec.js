@@ -56,6 +56,7 @@ test("ND-A11Y-04b: Space activates a focused shop chip (no gameplay hijack)", as
   await page.evaluate(() => localStorage.setItem("neondash.bank", "500"));
   await page.reload();
   await page.waitForFunction(() => !!window.NeonDashTest);
+  await page.locator("#tab-btn-skins").click(); // Step B: skins live behind a menu tab
   // Focus the magenta chip and activate it with the keyboard. The global
   // key handler must NOT preventDefault Space here, or native activation fails.
   await page.locator(".skin-chip").nth(1).focus();

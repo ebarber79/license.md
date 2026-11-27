@@ -209,3 +209,80 @@ test("ND-STEPA-03: a natural 40 s run (shielded) meets five or more hazard types
   });
   expect(types.length).toBeGreaterThanOrEqual(5);
 });
+
+// ---------- Step B: art, game feel, one-screen menu ----------
+test("ND-STEPB-01: menu fits one screen with tabs; Escape closes an open tab", async ({ page }) => {
+  await page.goto("/index.html?test=1");
+  await page.waitForFunction(() => !!window.NeonDashTest);
+  const r = await page.evaluate(() => {
+    const s = document.getElementById("start-screen");
+    return { scrolls: s.scrollHeight > s.clientHeight + 1, sheetHidden: document.getElementById("tab-sheet").classList.contains("hidden") };
+  });
+  expect(r.scrolls).toBe(false);
+  expect(r.sheetHidden).toBe(true);
+  await page.locator("#tab-btn-missions").click();
+  await expect(page.locator("#tab-missions")).toBeVisible();
+  await expect(page.locator("#missions")).toContainText("MISSIONS");
+  await page.locator(".sheet-tab[data-tab=skins]").click();
+  await expect(page.locator("#skin-row")).toBeVisible();
+  await expect(page.locator("#tab-missions")).toBeHidden();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#tab-sheet")).toBeHidden();
+  await expect(page.locator("#start-screen")).toBeVisible(); // Escape closed the tab, not the menu
+});
+
+test("ND-STEPB-02: squash on landing, stretch on jump", async ({ page }) => {
+  const r = await page.evaluate(() => {
+    const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.step(2);
+    t.jump(); const up = t.fx();
+    t.clearObstacles(); t.step(90); // long enough to land; reset shape check right after
+    return { up, after: t.fx() };
+  });
+  expect(r.up.sy).toBeGreaterThan(1.1); // stretched tall on take-off
+  expect(r.up.sx).toBeLessThan(0.9);
+  expect(Math.abs(r.after.sx - 1)).toBeLessThan(0.05); // eased back after landing
+  // Catch the landing frame itself.
+  const land = await page.evaluate(() => {
+    const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.step(2); t.jump();
+    for (let i = 0; i < 200; i++) { t.clearObstacles(); const was = t.getState().player.onGround; t.step(1); const p = t.getState().player; if (!was && p.onGround) return t.fx(); }
+    return null;
+  });
+  expect(land).not.toBeNull();
+  expect(land.sx).toBeGreaterThan(1.1); // squashed wide on touch-down
+});
+
+test("ND-STEPB-03: death freezes the frame for 150 ms and flashes", async ({ page }) => {
+  const r = await page.evaluate(() => {
+    const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.spawnSpikeAhead(); t.step(10);
+    return { state: t.getState().state, fx: t.fx() };
+  });
+  expect(r.state).toBe("over");
+  expect(r.fx.hitstop).toBeCloseTo(0.15, 2);
+  expect(r.fx.flash).toBeGreaterThan(0);
+});
+
+test("ND-STEPB-04: a near miss awards +1 gem and a floating label", async ({ page }) => {
+  const r = await page.evaluate(() => {
+    const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.step(2);
+    const p = t.getState().player;
+    const before = t.getState().coins;
+    // A low ceiling whose teeth pass just over a running player's head: clear, but close.
+    t.spawnObstacle({ type: "ceiling", x: p.x + p.size + 4, w: 54, gap: p.size + 10 });
+    for (let i = 0; i < 40; i++) { t.step(1); }
+    return { coins: t.getState().coins - before, fx: t.fx(), state: t.getState().state };
+  });
+  expect(r.state).toBe("playing");
+  expect(r.fx.nearMisses).toBe(1);
+  expect(r.coins).toBe(1);
+  expect(r.fx.floaters).toBeGreaterThan(0);
+});
+
+test("ND-STEPB-05: themes recolour hazards and the far city layer exists", async ({ page }) => {
+  const r = await page.evaluate(() => {
+    const t = window.NeonDashTest; t.start(); t.clearObstacles(); t.step(1);
+    const a = t.fx().haz; t.setScore(500); t.step(1); const b = t.fx().haz;
+    return { a, b, city: t.fx().city };
+  });
+  expect(r.a).not.toBe(r.b);
+  expect(r.city).toBeGreaterThan(5);
+});

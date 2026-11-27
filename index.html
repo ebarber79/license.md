@@ -54,32 +54,25 @@
     <!-- Pause toggle (only during play) -->
     <button id="pause-btn" class="icon-btn icon-btn-left hidden" aria-label="Pause">❚❚</button>
 
-    <!-- Start screen -->
-    <div id="start-screen" class="overlay">
+    <!-- Start screen (Step B: one screen, no scrolling; extras live behind tabs) -->
+    <div id="start-screen" class="overlay menu-screen">
       <h1 class="title">NEON<span>DASH</span></h1>
-      <p class="tagline">Tap to jump — up to a triple-jump in mid-air.<br />Dodge the spikes, grab the gems.</p>
-      <button id="start-btn" class="btn">PLAY</button>
-      <div class="boost-panel" id="boost-start" aria-label="Boost next run"></div>
+      <p class="tagline">Tap to jump, up to a triple jump in mid-air.<br />Dodge the hazards, grab the gems.</p>
+      <button id="start-btn" class="btn btn-play">PLAY</button>
+      <p class="hint">Best <span id="start-best">0</span><span class="hint-sep">·</span><span class="hint-streak">🔥 <span id="streak">0</span>-day streak</span></p>
 
-      <div id="progress-panel">
-        <div class="streak-badge">🔥 <span id="streak">0</span>-day streak</div>
-        <div id="daily-row" class="prog-row"></div>
-        <div id="missions"></div>
+      <div class="menu-tabs" role="tablist" aria-label="Menu">
+        <button class="tab-btn" id="tab-btn-missions" role="tab" data-tab="missions" aria-controls="tab-missions" aria-selected="false"><span class="tab-ico" aria-hidden="true">🎯</span><span class="tab-label">Missions</span><span class="tab-dot hidden" id="missions-dot" aria-hidden="true"></span></button>
+        <button class="tab-btn" id="tab-btn-skins" role="tab" data-tab="skins" aria-controls="tab-skins" aria-selected="false"><span class="tab-ico" aria-hidden="true">🎨</span><span class="tab-label">Skins</span></button>
+        <button class="tab-btn" id="tab-btn-boosts" role="tab" data-tab="boosts" aria-controls="tab-boosts" aria-selected="false"><span class="tab-ico" aria-hidden="true">⚡</span><span class="tab-label">Boosts</span></button>
       </div>
 
-      <div id="shop">
-        <div class="shop-head">
-          <span>SKINS</span>
-          <span class="bank">◆ <span id="bank">0</span></span>
-        </div>
-        <div id="skin-row"></div>
-        <div class="shop-head shop-sub"><span>SHOES</span></div>
-        <div id="shoe-row"></div>
-        <!-- Gem packs (native IAP). Hidden on web / until the store has products. -->
-        <div id="gem-shop" class="hidden">
-          <div class="shop-head"><span>GET GEMS</span></div>
-          <div id="gem-pack-row"></div>
-        </div>
+      <div class="menu-links">
+        <button id="howto-btn" class="link-btn">How to play</button>
+        <a id="rate-link" class="link-btn hidden" href="https://play.google.com/store/apps/details?id=io.github.ebarber79.neondash">Rate Neon Dash</a>
+        <button id="share-btn" class="link-btn">Share</button>
+        <a id="feedback-link" class="link-btn" href="mailto:neondash@gridlas.com">Send feedback</a>
+        <button id="privacy-btn" class="link-btn hidden">Privacy choices</button>
       </div>
 
       <div id="qr-box">
@@ -87,13 +80,39 @@
         <span class="qr-cap">Scan to play on your phone</span>
       </div>
 
-      <p class="hint">Best: <span id="start-best">0</span></p>
-      <div class="menu-links">
-        <button id="howto-btn" class="link-btn">How to play</button>
-        <a id="rate-link" class="link-btn hidden" href="https://play.google.com/store/apps/details?id=io.github.ebarber79.neondash">Rate Neon Dash</a>
-        <button id="share-btn" class="link-btn">Share</button>
-        <a id="feedback-link" class="link-btn" href="mailto:neondash@gridlas.com">Send feedback</a>
-        <button id="privacy-btn" class="link-btn hidden">Privacy choices</button>
+      <!-- Tab sheet: slides up over the menu; content scrolls inside it. -->
+      <div id="tab-sheet" class="tab-sheet hidden" role="dialog" aria-modal="false" aria-labelledby="tab-sheet-title">
+        <div class="sheet-head">
+          <span id="tab-sheet-title" class="sheet-title visually-hidden">Missions</span>
+          <div class="sheet-tabs" role="tablist" aria-label="Menu sections"><button class="sheet-tab" data-tab="missions">🎯 Missions</button><button class="sheet-tab" data-tab="skins">🎨 Skins</button><button class="sheet-tab" data-tab="boosts">⚡ Boosts</button></div>
+          <span class="bank sheet-bank">◆ <span id="bank">0</span></span>
+          <button id="tab-close" class="sheet-close" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+          <section id="tab-missions" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-missions">
+            <div id="progress-panel">
+              <div class="streak-badge">🔥 Daily streak</div>
+              <div id="daily-row" class="prog-row"></div>
+              <div id="missions"></div>
+            </div>
+          </section>
+          <section id="tab-skins" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-btn-skins">
+            <div id="shop">
+              <div class="shop-head"><span>SKINS</span></div>
+              <div id="skin-row"></div>
+              <div class="shop-head shop-sub"><span>SHOES</span></div>
+              <div id="shoe-row"></div>
+              <!-- Gem packs (native IAP). Hidden on web / until the store has products. -->
+              <div id="gem-shop" class="hidden">
+                <div class="shop-head"><span>GET GEMS</span></div>
+                <div id="gem-pack-row"></div>
+              </div>
+            </div>
+          </section>
+          <section id="tab-boosts" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-btn-boosts">
+            <div class="boost-panel" id="boost-start" aria-label="Boost next run"></div>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -113,6 +132,7 @@
 
     <!-- Game over screen -->
     <div id="gameover-screen" class="overlay hidden">
+      <div class="go-summary">
       <h2 class="gameover-title">GAME OVER</h2>
       <div class="results">
         <div class="result-row"><span>Score</span><span id="final-score">0</span></div>
@@ -120,12 +140,15 @@
         <div class="result-row best-row"><span>Best</span><span id="final-best">0</span></div>
       </div>
       <p id="new-record" class="new-record hidden">★ NEW RECORD! ★</p>
+      </div>
+      <div class="go-actions">
       <button id="revive-btn" class="btn btn-reward hidden">🎬 CONTINUE · watch ad</button>
       <button id="double-gems-btn" class="btn btn-reward hidden">🎬 DOUBLE GEMS · watch ad</button>
       <p id="ad-note" class="ad-note hidden">Ad blocker on: video rewards are off. Gems and play unlocks still work.</p>
       <div class="boost-panel" id="boost-over" aria-label="Boost next run"></div>
       <button id="restart-btn" class="btn">PLAY AGAIN</button>
       <button id="menu-btn" class="btn btn-ghost">MENU &amp; SKINS</button>
+      </div>
     </div>
   </div>
 
