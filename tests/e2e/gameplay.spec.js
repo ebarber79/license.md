@@ -29,20 +29,22 @@ test("ND-NAV-01: Start -> Play enters playing state", async ({ page }) => {
 });
 
 test("ND-CORE-01/02: single + double + triple jump, capped at three", async ({ page }) => {
-  await page.evaluate(() => { const t = window.NeonDashTest; t.start(); t.clearObstacles(); });
-  // First jump leaves the ground.
-  await page.evaluate(() => window.NeonDashTest.jump());
-  await expect.poll(async () => (await state(page)).player.onGround).toBe(false);
-  expect((await state(page)).player.jumps).toBe(1);
-  // Second jump = double jump.
-  await page.evaluate(() => window.NeonDashTest.jump());
-  expect((await state(page)).player.jumps).toBe(2);
-  // Third jump = triple jump.
-  await page.evaluate(() => window.NeonDashTest.jump());
-  expect((await state(page)).player.jumps).toBe(3);
-  // Fourth tap ignored.
-  await page.evaluate(() => window.NeonDashTest.jump());
-  expect((await state(page)).player.jumps).toBe(3);
+  // Run every jump and check in one synchronous evaluate so real-time rAF
+  // frames can't land the player or spawn a chunk between steps (was flaky).
+  const r = await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.start(); t.clearObstacles();
+    const p = () => t.getState().player;
+    const out = [];
+    t.jump(); t.clearObstacles(); t.step(1);
+    out.push([p().onGround, p().jumps]);
+    for (let i = 0; i < 3; i++) { t.jump(); out.push([p().onGround, p().jumps]); }
+    return out;
+  });
+  expect(r[0]).toEqual([false, 1]); // first jump leaves the ground
+  expect(r[1][1]).toBe(2);          // double jump
+  expect(r[2][1]).toBe(3);          // triple jump
+  expect(r[3][1]).toBe(3);          // fourth tap ignored
 });
 
 test("ND-CORE-03: spike collision ends the run", async ({ page }) => {
