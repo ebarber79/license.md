@@ -341,8 +341,9 @@
 
   // ---- World constants (in CSS pixels) ----
   const GROUND_RATIO = 0.82;   // ground line as fraction of height
-  const GRAVITY = 3800;        // px/s^2
-  const JUMP_VELOCITY = -1100; // px/s
+  // Gravity and jump strengths live in patterns.js (NeonPatterns), shared with
+  // the solver test that proves every obstacle pattern can be cleared.
+  const NP = window.NeonPatterns;
   const PLAYER_X_RATIO = 0.22; // player horizontal position
   const PLAYER_SIZE = 46;
   const START_SPEED = 420;     // px/s
@@ -552,6 +553,7 @@
       size: PLAYER_SIZE,
       onGround: true,
       jumps: 0,
+      coyote: 0,
       rot: 0,
       trail: [],
     };
@@ -571,6 +573,8 @@
     doubleClaimed = false;
     powerupsUsedRun = 0;
     spawnTimer = 0.8;
+    lastChunkId = null;
+    breatherIn = NP.nextBreatherIn(rnd);
     gemTimer = 1.4;
     powerTimer = 7 + rnd() * 4;
     shieldTime = 0;
@@ -586,17 +590,13 @@
   function jump() {
     if (state !== STATE.PLAYING || paused) return;
     if (tutorialHold) tutorialHold = false; // ND-037: the tap that unfreezes is the jump
-    if (player.onGround) {
+    // Ground (or coyote) jump, then 2nd and 3rd mid-air jumps at 86% / 72%.
+    const j = NP.tryJump(player);
+    if (j === 1) {
       if (tutorial === "jump") tutorialNext("spike", "Nice! Now watch for spikes...");
-      player.vy = JUMP_VELOCITY;
-      player.onGround = false;
-      player.jumps = 1;
       spawnJumpDust();
       audio.jump();
-    } else if (player.jumps < 3) {
-      // 2nd and 3rd mid-air jumps, each a bit weaker (86% then 72%).
-      player.vy = JUMP_VELOCITY * (player.jumps === 1 ? 0.86 : 0.72);
-      player.jumps += 1;
+    } else if (j > 1) {
       spawnJumpDust();
       audio.doubleJump();
     }
@@ -978,6 +978,7 @@
       player.vy = 0;
       player.onGround = true;
       player.jumps = 0;
+      player.coyote = 0;
     }
     gameoverScreen.classList.add("hidden");
     hud.classList.remove("hidden");
@@ -1090,36 +1091,38 @@
     tutorialNext("spike", "Jump a little earlier. Here comes another one...");
   }
 
-  function spawnObstacle() {
-    // Either ground spikes (1-3) or a floating bar to duck/jump-time.
-    const r = rnd();
-    if (r < 0.78) {
-      const count = 1 + Math.floor(rnd() * 3);
-      const spikeW = 26;
-      obstacles.push({
-        type: "spikes",
-        x: W + 40,
-        w: spikeW * count,
-        h: 34,
-        count,
-        spikeW,
-      });
+  // Step A: runs are built from hand-made chunks (patterns.js), picked by
+  // difficulty tier, with a hazard-free breather every 20-30 s from tier 1.
+  let lastChunkId = null;
+  let breatherIn = 25;
+  function spawnChunk() {
+    const tier = NP.tierForScore(score);
+    let chunk;
+    if (tier >= 1 && breatherIn <= 0) {
+      chunk = NP.BREATHER;
+      breatherIn = NP.nextBreatherIn(rnd);
     } else {
-      const h = 30;
-      const gap = 120; // height of opening above ground the player jumps through
-      obstacles.push({
-        type: "bar",
-        x: W + 40,
-        w: 34,
-        h,
-        y: groundY - gap - h,
-      });
+      chunk = NP.pickChunk(tier, rnd, lastChunkId);
+      lastChunkId = chunk.id;
     }
+    const built = NP.buildChunk(chunk, speed, W + 40, groundY);
+    for (const o of built.obstacles) obstacles.push(o);
+    for (const g of built.gems) gems.push({ x: g.x, y: g.y, r: 11, got: false, bob: rnd() * Math.PI * 2 });
+    if (chunk.breather) gemTimer = Math.max(gemTimer, built.length + 0.6);
+    track("chunk", { id: chunk.id, tier: tier });
+    return built.length + NP.chunkGap(tier, rnd);
+  }
+  // A ceiling overlapping [x0, x1] (screen px)? Gems and power-ups avoid it.
+  function ceilingOver(x0, x1) {
+    for (const o of obstacles) if (o.type === "ceiling" && o.x < x1 && o.x + o.w > x0) return true;
+    return false;
   }
 
   function spawnGemArc() {
     const n = 3 + Math.floor(rnd() * 3);
-    const baseY = groundY - 70 - rnd() * 120;
+    let baseY = groundY - 70 - rnd() * 120;
+    // Under a ceiling, gems sit at running height: a reward for staying low.
+    if (ceilingOver(W + 20, W + 60 + n * 46)) baseY = groundY - 28;
     for (let i = 0; i < n; i++) {
       gems.push({
         x: W + 40 + i * 46,
@@ -1133,6 +1136,7 @@
 
   const POWER_TYPES = ["shield", "magnet", "slowmo"];
   function spawnPowerup() {
+    if (ceilingOver(W + 20, W + 90)) return false;
     powerups.push({
       type: POWER_TYPES[Math.floor(rnd() * POWER_TYPES.length)],
       x: W + 50,
@@ -1389,13 +1393,22 @@
     theme = currentTheme();
 
     // Player physics
-    player.vy += GRAVITY * dt;
-    player.y += player.vy * dt;
-    if (player.y >= groundY - player.size) {
-      player.y = groundY - player.size;
-      player.vy = 0;
-      player.onGround = true;
-      player.jumps = 0;
+    if (NP.stepPlayer(player, dt, groundY, obstacles) === "fell") {
+      if (shieldTime > 0 && !tutorial) {
+        // The shield bounces you out of a pit once (and breaks the gem chain).
+        shieldTime = 0;
+        combo = 0;
+        comboMult = 1;
+        updateComboHud();
+        shake = 10;
+        audio.shieldBreak();
+        vibrate(60);
+        spawnRingBurst("0,255,180");
+        NP.launch(player);
+      } else {
+        lastCrashCause = "pit";
+        return crash();
+      }
     }
     player.rot = player.onGround ? 0 : player.rot + dt * 8;
 
@@ -1404,13 +1417,11 @@
     if (player.trail.length > 8) player.trail.pop();
 
     // Spawn obstacles
-    spawnTimer -= dt;
-    if (spawnTimer <= 0) {
-      spawnObstacle();
-      // Spacing shrinks as speed rises, but never unfair.
-      const base = Math.max(0.5, 1.4 - (speed - START_SPEED) / 700);
-      spawnTimer = base + rnd() * 0.45;
-    }
+    // Timers run on world time, so slow-mo stretches the pattern spacing too.
+    const worldDt = dt * (slowTime > 0 ? SLOWMO_FACTOR : 1);
+    spawnTimer -= worldDt;
+    if (!tutorial) breatherIn -= dt;
+    if (spawnTimer <= 0) spawnTimer = spawnChunk();
     // Spawn gems
     gemTimer -= dt;
     if (gemTimer <= 0) {
@@ -1420,8 +1431,7 @@
     // Spawn shield power-ups (rare)
     powerTimer -= dt;
     if (powerTimer <= 0) {
-      spawnPowerup();
-      powerTimer = 12 + rnd() * 8;
+      powerTimer = spawnPowerup() === false ? 1 : 12 + rnd() * 8;
     }
     // Countdown active power-ups
     if (shieldTime > 0) shieldTime = Math.max(0, shieldTime - dt);
@@ -1447,15 +1457,19 @@
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const o = obstacles[i];
       o.x -= worldSpeed * dt;
+      o.age = (o.age || 0) + worldDt;
       if (o.x + o.w < -10) { obstacles.splice(i, 1); continue; }
 
-      let hit = false;
-      if (o.type === "spikes") {
-        // Slightly forgiving hitbox: inset the spikes.
-        hit = hits(px + 6, py + 6, ps - 12, ps - 6, o.x + 4, groundY - o.h, o.w - 8, o.h);
-      } else { // bar
-        hit = hits(px + 6, py + 4, ps - 12, ps - 8, o.x, o.y, o.w, o.h);
+      // Forgiving hitboxes per type live in patterns.js (spikes/bar unchanged).
+      const res = NP.interact(o, player, groundY);
+      if (res === "launch") {
+        NP.launch(player);
+        spawnJumpDust();
+        audio.doubleJump();
+        vibrate(20);
+        continue;
       }
+      const hit = res === "hit";
       if (hit && tutorial) { tutorialForgiveHit(i); continue; }
       if (hit) {
         if (shieldTime > 0) {
@@ -1472,7 +1486,7 @@
           spawnRingBurst("0,255,180");
           obstacles.splice(i, 1);
         } else {
-          lastCrashCause = o.type; // "spikes" | "bar"
+          lastCrashCause = o.type; // spikes | bar | ceiling | saw | pillar | wall
           return crash();
         }
       }
@@ -1904,7 +1918,7 @@
           ctx.fill();
         }
         ctx.shadowBlur = 0;
-      } else {
+      } else if (o.type === "bar") {
         ctx.fillStyle = "#ff5ec7";
         ctx.shadowColor = "#ff5ec7";
         ctx.shadowBlur = 14;
@@ -1913,6 +1927,105 @@
         // little support pole
         ctx.fillRect(o.x + o.w / 2 - 2, o.y + o.h, 4, groundY - (o.y + o.h));
         ctx.shadowBlur = 0;
+      } else if (o.type === "pit") {
+        // Cut the ground: dark gap with glowing lips, drawn over the ground slab.
+        ctx.fillStyle = "#05050f";
+        ctx.fillRect(o.x, groundY - 2, o.w, H - groundY + 2);
+        ctx.strokeStyle = theme.accent;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = theme.accent;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.moveTo(o.x, groundY); ctx.lineTo(o.x, groundY + 26);
+        ctx.moveTo(o.x + o.w, groundY); ctx.lineTo(o.x + o.w, groundY + 26);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      } else if (o.type === "ceiling") {
+        const bottom = groundY - o.gap;
+        ctx.fillStyle = "rgba(255,77,109,0.16)";
+        ctx.fillRect(o.x, 0, o.w, bottom);
+        ctx.fillStyle = "#ff4d6d";
+        ctx.shadowColor = "#ff4d6d";
+        ctx.shadowBlur = 14;
+        ctx.fillRect(o.x, bottom - 6, o.w, 6);
+        // downward teeth along the bottom edge
+        const tw = 18;
+        ctx.beginPath();
+        for (let x = o.x; x + tw <= o.x + o.w + 0.5; x += tw) {
+          ctx.moveTo(x, bottom);
+          ctx.lineTo(x + tw / 2, bottom + 12);
+          ctx.lineTo(x + tw, bottom);
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else if (o.type === "saw") {
+        const cx = o.x + o.w / 2, cy = NP.sawCenterY(o, groundY);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(reduceMotion ? 0 : -(o.age || 0) * 9);
+        ctx.fillStyle = "#ff8a3d";
+        ctx.shadowColor = "#ff8a3d";
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        const teeth = 10;
+        for (let k = 0; k < teeth * 2; k++) {
+          const a = (k / (teeth * 2)) * Math.PI * 2;
+          const rr = k % 2 === 0 ? o.r : o.r * 0.72;
+          ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#1a1030";
+        ctx.beginPath();
+        ctx.arc(0, 0, o.r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        // tether line to show it is anchored
+        ctx.strokeStyle = "rgba(255,138,61,0.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, cy - o.r);
+        ctx.stroke();
+      } else if (o.type === "pillar") {
+        const h = NP.pillarHeight(o);
+        ctx.fillStyle = "#b26bff";
+        ctx.shadowColor = "#b26bff";
+        ctx.shadowBlur = 14;
+        roundRect(ctx, o.x + 3, groundY - h, o.w - 6, h, 4);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.fillRect(o.x + 6, groundY - h + 4, o.w - 12, 3);
+      } else if (o.type === "wall") {
+        ctx.fillStyle = "#ff4d6d";
+        ctx.shadowColor = "#ff4d6d";
+        ctx.shadowBlur = 14;
+        roundRect(ctx, o.x + 2, groundY - o.h, o.w - 4, o.h, 4);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(20,10,40,0.55)";
+        ctx.lineWidth = 2;
+        for (let y = groundY - o.h + 22; y < groundY; y += 22) {
+          ctx.beginPath(); ctx.moveTo(o.x + 6, y); ctx.lineTo(o.x + o.w - 6, y); ctx.stroke();
+        }
+      } else if (o.type === "pad") {
+        const pulse = reduceMotion ? 0.6 : 0.5 + 0.5 * Math.sin((o.age || 0) * 10);
+        ctx.fillStyle = "#3dffb0";
+        ctx.shadowColor = "#3dffb0";
+        ctx.shadowBlur = 10 + pulse * 12;
+        roundRect(ctx, o.x, groundY - o.h, o.w, o.h, 4);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // chevrons pointing up
+        ctx.strokeStyle = "rgba(61,255,176," + (0.35 + pulse * 0.5) + ")";
+        ctx.lineWidth = 3;
+        for (let k = 0; k < 2; k++) {
+          const yy = groundY - o.h - 8 - k * 10;
+          ctx.beginPath();
+          ctx.moveTo(o.x + 12, yy + 6); ctx.lineTo(o.x + o.w / 2, yy); ctx.lineTo(o.x + o.w - 12, yy + 6);
+          ctx.stroke();
+        }
       }
     }
   }
@@ -2418,6 +2531,18 @@
         const d = dt || 1 / 60;
         for (let i = 0; i < frames && state === STATE.PLAYING; i++) update(d);
       },
+      // Step A: place a named pattern just ahead of the player (for tests and screenshots).
+      spawnChunk(id, lead) {
+        const c = NP.CHUNKS.find((x) => x.id === id) || (id === "breather" ? NP.BREATHER : null);
+        if (!c) return false;
+        const built = NP.buildChunk(c, speed, player.x + player.size + (lead == null ? 260 : lead), groundY);
+        for (const o of built.obstacles) obstacles.push(o);
+        for (const g of built.gems) gems.push({ x: g.x, y: g.y, r: 11, got: false, bob: 0 });
+        return built.obstacles.length;
+      },
+      chunkIds() { return NP.CHUNKS.map((c) => c.id); },
+      obstacleTypes() { return obstacles.map((o) => o.type); },
+      setScore(n) { distance = n * 8; score = n; },
       spawnSpikeAhead() {
         obstacles.push({ type: "spikes", x: player.x, w: 60, h: 34, count: 2, spikeW: 26 });
       },

@@ -168,3 +168,42 @@ test("ND-021: Retro Kicks + shield draw for 120 frames with no errors", async ({
   expect((await state(page)).shoeMode).toBe("shield");
   expect(errors).toEqual([]);
 });
+
+test("ND-STEPA-01: every pattern spawns, draws and runs without errors (shielded)", async ({ page }) => {
+  const res = await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    const out = {};
+    for (const id of t.chunkIds()) {
+      t.seed(5); t.start(); t.clearObstacles(); t.giveShield(99);
+      out[id] = t.spawnChunk(id, 200);
+      for (let i = 0; i < 240; i++) { t.giveShield(99); t.step(1); }
+      if (t.getState().state !== "playing") return { out, state: "over after " + id };
+    }
+    return { out, state: t.getState().state };
+  });
+  for (const [id, n] of Object.entries(res.out)) expect(n, id).toBeGreaterThan(0);
+  expect(res.state).toBe("playing");
+  expect(initErrors).toEqual([]);
+});
+
+test("ND-STEPA-02: running into a pit ends the run with cause pit", async ({ page }) => {
+  const s = await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.seed(1); t.start(); t.giveShield(0); t.clearObstacles();
+    t.spawnChunk("pit", 40);
+    t.step(90);
+    return t.getState();
+  });
+  expect(s.state).toBe("over");
+});
+
+test("ND-STEPA-03: a natural 40 s run (shielded) meets five or more hazard types", async ({ page }) => {
+  const types = await page.evaluate(() => {
+    const t = window.NeonDashTest;
+    t.seed(11); t.start(); t.clearObstacles();
+    const seen = new Set();
+    for (let i = 0; i < 800; i++) { t.giveShield(99); t.step(3); t.obstacleTypes().forEach((x) => seen.add(x)); }
+    return [...seen];
+  });
+  expect(types.length).toBeGreaterThanOrEqual(5);
+});

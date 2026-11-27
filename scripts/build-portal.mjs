@@ -75,12 +75,12 @@ html = replaceOnce(html, /[ \t]*<a id="feedback-link"[^\n]*<\/a>\n/, "", "feedba
 if (cfg.boot) {
   const bootName = cfg.boot.split("/").pop();
   html = replaceOnce(html,
-    /[ \t]*<script src="progress\.js"><\/script>\n[ \t]*<script src="music\.js"><\/script>\n[ \t]*<script src="engine\.js"><\/script>\n[ \t]*<script src="game\.js"><\/script>\n/,
+    /[ \t]*<script src="progress\.js"><\/script>\n[ \t]*<script src="music\.js"><\/script>\n[ \t]*<script src="engine\.js"><\/script>\n[ \t]*<script src="patterns\.js"><\/script>\n[ \t]*<script src="game\.js"><\/script>\n/,
     `  <script src="${bootName}"></script>\n`, "boot");
 }
 
 // Assemble the bundle (core minus register-sw.js + qrcode.js, plus the adapter).
-const CORE = ["style.css", "store.js", "game.js", "engine.js", "ads.js", "analytics.js", "progress.js", "music.js", "manifest.json", "sw.js", "icon.svg"];
+const CORE = ["style.css", "store.js", "game.js", "engine.js", "patterns.js", "ads.js", "analytics.js", "progress.js", "music.js", "manifest.json", "sw.js", "icon.svg"];
 const outDir = join(ROOT, "dist", portal);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });

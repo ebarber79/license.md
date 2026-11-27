@@ -13,7 +13,7 @@ ZIP="$OUT/neon-dash.zip"
 
 CORE=(
   index.html style.css
-  game.js engine.js ads.js analytics.js progress.js qrcode.js register-sw.js
+  game.js engine.js patterns.js ads.js analytics.js progress.js qrcode.js register-sw.js
   manifest.json sw.js icon.svg
 )
 

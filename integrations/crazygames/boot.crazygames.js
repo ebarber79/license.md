@@ -16,7 +16,7 @@
 (function (global) {
   "use strict";
 
-  var GAME_SCRIPTS = ["progress.js", "music.js", "engine.js", "game.js"];
+  var GAME_SCRIPTS = ["progress.js", "music.js", "engine.js", "patterns.js", "game.js"];
   var BOOT_TIMEOUT_MS = 10000;
   var PREFIX = "neondash.";
   // Keys whose presence means "this player already has a data-module save".

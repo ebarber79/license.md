@@ -85,7 +85,7 @@ test("boot switches NeonStore to the provider's data module and loads the game s
   require("../../integrations/crazygames/boot.crazygames.js");
   assert.equal(globalThis.NeonStore.backendName, "crazygames-data");
   assert.equal(globalThis.NeonStore.getItem("neondash.best"), "300", "local save migrated");
-  assert.deepEqual(loaded, ["progress.js", "music.js", "engine.js", "game.js"]);
+  assert.deepEqual(loaded, ["progress.js", "music.js", "engine.js", "patterns.js", "game.js"]);
   assert.equal(globalThis.NEONDASH_SAVE_INFO.backend, "crazygames-data");
   assert.equal(globalThis.NEONDASH_AUTOSTART, true, "CrazyGames build lands new players in gameplay");
   globalThis.NeonStore.use(null);
